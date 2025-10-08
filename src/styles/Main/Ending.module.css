@@ -1,0 +1,232 @@
+/* ===== Design Tokens (Figma palette) ===== */
+:root {
+  /* Palette */
+  --c-ink-xx: #2B3037;
+  --c-white: #FFFFFF;
+  --c-navy: #052461;
+  --c-ink: #121316;
+  --c-ink-soft: #1F2226;
+  --c-gray-100: #F1F2F3;
+  --c-gray-300: #DDDFE3;
+  --c-gray-500: #8B94A4;
+  --c-gray-600: #B5BAC2;
+  --c-green: #049153;
+
+  /* UI tokens */
+  --end-white: var(--c-white);
+  --end-ink: var(--c-ink);
+  --end-title: var(--c-ink-xx);
+  --end-dim: var(--c-gray-600);
+  --end-muted: var(--c-gray-300);
+  --end-bd: rgba(31, 34, 38, 0.08);
+  --end-green: var(--c-green);
+  --end-price: var(--c-ink);
+
+  /* Shadows */
+  --shadow-card: 0 6px 20px rgba(5, 11, 32, 0.10), 0 2px 6px rgba(5, 11, 32, 0.06);
+  --shadow-card-hover: 0 12px 32px rgba(5, 11, 32, 0.14), 0 6px 14px rgba(5, 11, 32, 0.08);
+  --shadow-nav: 0 6px 14px rgba(0,0,0,.15);
+  --shadow-nav-hover: 0 10px 18px rgba(0,0,0,.22);
+
+  /* Layout */
+  --end-card-w: 296px;
+  --end-card-gap: 24px;
+  --end-maxw-4: calc(4 * var(--end-card-w) + 3 * var(--end-card-gap)); /* 1256px */
+  --end-maxw-2: calc(2 * var(--end-card-w) + 1 * var(--end-card-gap)); /* 616px */
+}
+
+/* ===== Section ===== */
+.endingSec {
+  margin-top: 56px;
+  background: #F1F2F3;
+  font-family: "Pretendard",  "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+}
+
+/* ===== Container ===== */
+.container {
+  max-width: var(--end-maxw-4);
+  margin: 0 auto;
+  padding:80px 0 50px 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ===== Header & Pagination Nav ===== */
+.head { position: relative; display: block; margin-bottom: 18px; }
+
+.title {
+  margin: 0;
+  font-size: 32px !important;
+  line-height: 1.2 !important;
+  font-weight: 700 !important;
+  color: var(--end-title);
+}
+
+.navBtns { position: absolute; top: 4px; right: 0; display: flex; gap: 10px; }
+
+.navBtn {
+  width: 36px; height: 36px;
+  border: none; border-radius: 50%;
+  background: var(--c-white);
+  box-shadow: var(--shadow-nav);
+  display: grid; place-items: center;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .2s ease, opacity .2s ease;
+}
+.navBtn:hover { transform: translateY(-1px); box-shadow: var(--shadow-nav-hover); }
+.navBtn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; transform: none; }
+.navBtn:disabled:hover { box-shadow: none; transform: none; }
+.navBtn :global(svg) { font-size: 18px; color: var(--end-title); }
+
+/* ===== Grid ===== */
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0 28px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--end-card-gap);
+  justify-items: stretch;
+}
+
+/* ===== Card ===== */
+.card { position: relative; }
+
+.cardInner {
+  width: 100%;
+  background: var(--end-white);
+  border: 1px solid var(--end-bd);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  outline: none;
+  cursor: pointer;
+  text-align: left;
+  transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease, translate .15s ease;
+  will-change: transform, box-shadow;
+}
+.cardInner:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+  border-color: rgba(31, 34, 38, 0.14);
+}
+
+/* ===== Image (fill card fully) ===== */
+.thumbWrap {
+  aspect-ratio: 4 / 3;            /* 필요 시 1 / 1로 변경 가능 */
+  width: 100%;
+  overflow: hidden;
+  background: var(--c-gray-100);  /* 로딩/빈 공간용 아주 옅은 회색 */
+}
+.thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;               /* ✅ 카드 영역 꽉 채움 */
+  display: block;
+  transform: translateZ(0);
+}
+
+/* ===== Body ===== */
+.body {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.views {
+  margin: 0;
+  font-size: 12px;
+  color: var(--c-gray-500);
+}
+.viewsNum { font-variant-numeric: tabular-nums; }
+
+.cardTitle {
+  margin: 0;
+  font-size: 16px !important;
+  line-height: 1.35 !important;
+  font-weight: 700 !important;
+  color: var(--end-ink);
+}
+
+/* Time + Badge row */
+.rows {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+.leftTime {
+  margin: 0;
+  font-size: 13px;
+  color: var(--end-ink);
+}
+
+/* Badge (button-like) — #049153 with white text */
+.badge {
+  display: inline-block;
+  font-size: 12px;
+  line-height: 1;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #049153;     /* 버튼 색 */
+  color: #FFFFFF;          /* 글씨 색 */
+  border: none;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(4, 145, 83, 0.28);
+  transition: filter .2s ease, transform .12s ease, box-shadow .2s ease;
+}
+.badge:hover { filter: brightness(0.96); box-shadow: 0 4px 10px rgba(4,145,83,.34); }
+.badge:active { transform: translateY(1px); }
+.badge:focus-visible {
+  outline: 2px solid rgba(4,145,83,.35);
+  outline-offset: 2px;
+}
+
+/* Footer — divider removed; price label & value stuck together */
+.footer {
+  margin-top: 12px;
+  padding-top: 0;
+  border: none;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+.priceWrap {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;               /* ✅ 라벨-가격 간격 0 */
+  letter-spacing: 0;
+}
+.priceWrap .dim { margin-right: 0; padding-right: 0; }
+.priceWrap .price { margin-left: 0; padding-left: 0; }
+
+.dim { color: var(--end-dim); font-size: 13px; }
+.price {
+  font-weight: 800;
+  color: var(--end-price);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 0 rgba(255,255,255,.4);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 1200px) {
+  .container { max-width: 1040px; }
+  .grid { grid-template-columns: repeat(3, 1fr); }
+  .title { font-size: 30px !important; }
+}
+
+@media (max-width: 980px) {
+  .container { max-width: var(--end-maxw-2); }
+  .grid { grid-template-columns: repeat(2, 1fr); }
+  .title { font-size: 26px !important; }
+}
+
+@media (max-width: 560px) {
+  .container { max-width: 420px; }
+  .grid { grid-template-columns: 1fr; }
+  .title { font-size: 22px !important; }
+}
