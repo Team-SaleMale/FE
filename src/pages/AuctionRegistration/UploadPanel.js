@@ -5,17 +5,10 @@ import styles from "../../styles/AuctionRegistration/UploadPanel.module.css";
 
 /**
  * UploadPanel (API 미연결 버전)
- * - 최소 5장 업로드 유도
+ * - 최소 1장 업로드
  * - 상품명(필수)
- * - "AI 분석하기" 클릭 → (onAnalyze가 있으면 호출, 없으면 mock 계산) → 결과와 요약문 노출
+ * - "AI 분석하기" → (onAnalyze가 있으면 호출, 없으면 mock 계산) → 결과/요약 노출
  * - 부모 저장: onChange(이미지 배열), onMetaChange('modelName' | 'aiResult' | 'aiText', value)
- *
- * props
- *  - images: [{ file: File, url: string }]
- *  - onChange(newImages)
- *  - onMetaChange(key, value)
- *  - onAnalyze?: async ({ modelName, images }) => ({ marketPrice, suggestedPrice })
- *  - maxCount?: number (default 10)
  */
 export default function UploadPanel({
   images = [],
@@ -57,8 +50,8 @@ export default function UploadPanel({
     onChange?.(list);
   };
 
-  /** 검증 */
-  const hasMinImages = images.length >= 5;
+  /** 검증 (❗️최소 1장으로 변경) */
+  const hasMinImages = images.length >= 1;
   const hasModel = modelName.trim().length > 0;
   const canAnalyze = hasMinImages && hasModel && !analyzing;
 
@@ -75,9 +68,9 @@ export default function UploadPanel({
     }
   };
 
-  /** 업로드 카운터 라벨 */
+  /** 업로드 카운터 라벨 (좌측 1장 기준으로 보정) */
   const counterLabel = useMemo(
-    () => `${images.length} / ${Math.max(5, maxCount)} 장`,
+    () => `${images.length} / ${Math.max(1, maxCount)} 장`,
     [images.length, maxCount]
   );
 
@@ -128,7 +121,7 @@ export default function UploadPanel({
     <div className={styles.wrap}>
       {/* 제목/설명 */}
       <h3 className={styles.title}>상품 등록 & AI 시세 분석</h3>
-      <p className={styles.sub}>상품 이미지 업로드 ( 최소 5가지의 사진 업로드)</p>
+      <p className={styles.sub}>상품 이미지 업로드 ( 1장 이상 업로드 )</p>
 
       {/* 업로드 박스 */}
       <div className={styles.row}>
@@ -179,7 +172,7 @@ export default function UploadPanel({
           {counterLabel}
         </span>
         {!hasMinImages && (
-          <span className={styles.hint}>최소 5장을 업로드해주세요.</span>
+          <span className={styles.hint}>최소 1장을 업로드해주세요.</span>
         )}
       </div>
 
@@ -200,7 +193,7 @@ export default function UploadPanel({
           className={styles.aiBtn}
           onClick={handleAnalyze}
           disabled={!canAnalyze}
-          title={!hasMinImages ? "이미지 5장 이상 필요" : !hasModel ? "상품명 입력 필요" : ""}
+          title={!hasMinImages ? "이미지 1장 이상 필요" : !hasModel ? "상품명 입력 필요" : ""}
         >
           <Icon icon="solar:ghost-smile-linear" className={styles.iconAi} />
           {analyzing ? "분석 중..." : "AI 분석하기"}

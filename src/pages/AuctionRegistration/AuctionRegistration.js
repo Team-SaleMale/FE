@@ -72,9 +72,9 @@ export default function AuctionRegistration() {
     dispatch({ type: "SET_FIELD", key, value });
   };
 
-  /** 간단 검증 */
+  /** 간단 검증 (✅ 이미지 1장 이상으로 변경) */
   const validate = () => {
-    if (state.images.length < 5) return "이미지를 최소 5장 업로드해주세요.";
+    if (state.images.length < 1) return "이미지를 1장 이상 업로드해주세요.";
     if (!state.modelName.trim()) return "상품 모델명을 입력해주세요.";
     if (!state.title.trim()) return "제목을 입력해주세요.";
     if (!state.startPrice) return "초기 가격을 입력해주세요.";
@@ -140,7 +140,7 @@ export default function AuctionRegistration() {
         images: state.images.map((i) => ({ name: i.file?.name, size: i.file?.size })),
       });
 
-      // ✅ 등록 성공했다고 가정하고 완료 페이지로 이동 + 프리뷰/날짜 전달
+      // ✅ 등록 성공 가정 후 완료 페이지로 이동
       navigate("/auctions/success", {
         state: {
           preview: previewData,
