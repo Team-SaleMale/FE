@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import styles from "../../styles/AuctionProductDetails/CalendarPanel.module.css";
 
-/** util: yyyy-mm-dd -> Date (local) */
+/** util: yyyy-mm-dd -> Date (local, 00:00) */
 function parseISO(d) {
   if (!d) return null;
   const [y, m, day] = d.split("-").map(Number);
@@ -14,6 +14,16 @@ function fmt(d) {
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
+/** yyyy-mm-dd + HH:mm(:ss) -> Date (로컬) */
+function toDateTime(dateStr, timeStr, fallback = "00:00:00") {
+  if (!dateStr) return null;
+  const t = (timeStr && timeStr.trim()) ? timeStr.trim() : fallback;
+  const [h, mi, s = "00"] = t.split(":").map(Number);
+  const d = parseISO(dateStr);
+  d.setHours(h || 0, mi || 0, s || 0, 0);
+  return d;
+}
+
 /** month meta (6주 고정, 일요일 시작) */
 function getMonthMatrix(year, monthIdx /* 0-11 */) {
   const first = new Date(year, monthIdx, 1);
@@ -23,19 +33,16 @@ function getMonthMatrix(year, monthIdx /* 0-11 */) {
   const prevDays = firstDow;
   const cells = [];
 
-  // 앞쪽: 이전 달
   const prevMonthDays = new Date(year, monthIdx, 0).getDate();
   for (let i = prevDays - 1; i >= 0; i--) {
     const day = prevMonthDays - i;
     const d = new Date(year, monthIdx - 1, day);
     cells.push({ date: d, current: false, key: fmt(d) });
   }
-  // 현재 달
   for (let day = 1; day <= daysInMonth; day++) {
     const d = new Date(year, monthIdx, day);
     cells.push({ date: d, current: true, key: fmt(d) });
   }
-  // 뒤쪽: 다음 달로 채우기 (6주 그리드 고정)
   while (cells.length % 7 !== 0 || cells.length < 42) {
     const last = cells[cells.length - 1].date;
     const d = new Date(last);
@@ -116,23 +123,17 @@ function MonthView({ baseDate, rangeStart, rangeEnd, side, onPrev, onNext }) {
 }
 
 export default function CalendarPanel({ calendar }) {
-  // 1) API 값 파싱 및 보정
+  // 안전 파싱
   let start = parseISO(calendar?.startDate);
   let end = parseISO(calendar?.endDate);
-
   const today = new Date();
   if (!start) start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  if (!end) {
-    const tmp = new Date(start);
-    tmp.setDate(tmp.getDate() + 6);
-    end = tmp;
-  }
+  if (!end) { const t = new Date(start); t.setDate(t.getDate() + 6); end = t; }
   if (start > end) [start, end] = [end, start];
 
-  // 2) 좌측 카드 기준 월 상태 (로컬)
+  // 월 네비 (좌측 기준)
   const [baseLeft, setBaseLeft] = useState(new Date(start.getFullYear(), start.getMonth(), 1));
   const baseRight = new Date(baseLeft.getFullYear(), baseLeft.getMonth() + 1, 1);
-
   const prevMonth = () => setBaseLeft(new Date(baseLeft.getFullYear(), baseLeft.getMonth() - 1, 1));
   const nextMonth = () => setBaseLeft(new Date(baseLeft.getFullYear(), baseLeft.getMonth() + 1, 1));
 
@@ -140,35 +141,25 @@ export default function CalendarPanel({ calendar }) {
     <div className={styles.card}>
       <h3 className={styles.title}>Calendar</h3>
 
-      {/* 상단 텍스트 블록 (기존 그대로 유지) */}
+      {/* 날짜 + 시간 */}
       <div className={styles.row}>
         <div className={styles.item}>
           <div className={styles.label}>Start Day</div>
           <div className={styles.value}>{calendar?.startDate}</div>
+          <div className={styles.time}>{calendar?.startTime ?? "00:00"}</div>
         </div>
         <div className={styles.item}>
           <div className={styles.label}>End Day</div>
           <div className={styles.value}>{calendar?.endDate}</div>
+          <div className={styles.time}>{calendar?.endTime ?? "23:59"}</div>
         </div>
       </div>
 
-      {/* 달력 UI */}
+      {/* 두 달 달력 */}
       <div className={styles.calendarWrap} role="group" aria-label="Auction calendar">
         <div className={styles.months}>
-          <MonthView
-            side="left"
-            baseDate={baseLeft}
-            rangeStart={start}
-            rangeEnd={end}
-            onPrev={prevMonth}
-          />
-          <MonthView
-            side="right"
-            baseDate={baseRight}
-            rangeStart={start}
-            rangeEnd={end}
-            onNext={nextMonth}
-          />
+          <MonthView side="left"  baseDate={baseLeft}  rangeStart={start} rangeEnd={end} onPrev={prevMonth} />
+          <MonthView side="right" baseDate={baseRight} rangeStart={start} rangeEnd={end} onNext={nextMonth} />
         </div>
 
         <div className={styles.legend}>

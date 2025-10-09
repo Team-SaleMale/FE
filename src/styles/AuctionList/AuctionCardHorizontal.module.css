@@ -1,0 +1,210 @@
+/* ===== Theme ===== */
+:root{
+  --ink-121:#121316;
+  --ink-900:#1F2226;
+  --ink-700:#383E48;
+  --muted:#8B94A4;
+  --line:#D7D7D7;
+  --card-border: rgba(5,11,32,.08);
+  --blue-600:#0046CC;
+  --bg-soft:#F3F5FA;
+  --white:#FFFFFF;
+
+  /* 썸네일(좌측) 너비 + 패딩 → 카드 높이 = 썸네일(정사각) + 패딩*2 */
+  --thumb-col: 260px;   /* ≥1440 */
+  --thumb-pad: 12px;
+  --radius: 16px;
+}
+
+/* ===== Card shell ===== */
+.card{
+  box-sizing: border-box;
+  width: 100%;
+
+  display: grid;
+  grid-template-columns: var(--thumb-col) minmax(0,1fr);
+  gap: 16px;
+
+  /* 썸네일이 정사각이라 카드 전체 높이를 썸네일 높이에 맞춰 고정 */
+  min-height: calc(var(--thumb-col) + var(--thumb-pad) * 2);
+
+  background: var(--white);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  overflow: hidden;                 /* 컨텐츠가 밖으로 못 나감 */
+
+  font-family:"Pretendard","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  transition: box-shadow .22s ease, transform .22s ease, border-color .22s ease;
+  will-change: transform;
+}
+
+@media (hover:hover){
+  .card:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(31,34,38,.08);
+    border-color: rgba(5,11,32,.12);
+  }
+}
+
+/* ===== Thumbnail (고정 정사각) ===== */
+.thumb{
+  position: relative;
+  padding: var(--thumb-pad);
+}
+.thumbImg{
+  width: 100%;
+  aspect-ratio: 1 / 1;              /* 항상 정사각 */
+  object-fit: cover;
+  display: block;
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+  border: 1px solid #EEF1F6;
+  transition: transform .25s ease;
+}
+@media (hover:hover){
+  .card:hover .thumbImg{ transform: scale(1.02); }
+}
+.empty{ width:100%; aspect-ratio:1/1; border-radius:var(--radius); background:var(--bg-soft); border:1px solid #EEF1F6; }
+
+/* 배지(오늘 마감) */
+.badge{
+  position:absolute; top:20px; left:20px; z-index:2;
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:7px 12px; border-radius:9999px;
+  font-size:13px; font-weight:700; letter-spacing:.1px;
+  color:var(--ink-900); background:#f6f8fb91; border:1px solid #e6e9f0d3;
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,.02);
+}
+
+/* 썸네일 컨트롤 */
+.nav{
+  position:absolute; top:50%; transform:translateY(-50%);
+  width:30px; height:30px; border-radius:999px;
+  display:flex; align-items:center; justify-content:center;
+  line-height:0; padding:0;
+  background:rgba(255,255,255,.16); border:1px solid rgba(0,0,0,.04);
+  box-shadow:0 2px 6px rgba(0,0,0,.06);
+  opacity:.18; transition:opacity .15s ease, transform .15s ease; z-index:1;
+}
+@media (hover:hover){
+  .nav:hover{ opacity:.35; transform:translateY(-50%) scale(1.03); }
+}
+.prev{ left:18px; } .next{ right:18px; }
+.nav svg{ width:16px; height:16px; }
+
+.dots{
+  position:absolute; left:0; right:0; bottom:25px;
+  display:flex; justify-content:center; align-items:center; gap:8px;
+  z-index:1;
+}
+.dot{
+  width:7px; height:7px; border-radius:999px;
+  background:#FFFFFF; opacity:.35;
+  border:1px solid rgba(0,0,0,.08);
+  box-shadow:0 0 0 1px rgba(0,0,0,.04);
+  padding:0; cursor:pointer; transition:opacity .15s ease;
+}
+.activeDot{ opacity:1; box-shadow:0 0 0 2px rgba(0,0,0,.06); }
+
+/* ===== Body ===== */
+.body{
+  min-width: 0;                      /* ellipsis가 먹도록 */
+  padding: 6px 16px 12px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 헤더: 제목 말줄임을 확실히 하려면 min-width:0 + flex:1 */
+.header{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:8px;
+}
+.title{
+  display:block;
+  flex: 1 1 auto;
+  min-width: 0;                     /* ← 중요 */
+  max-width: 100%;
+
+  font-size: clamp(18px, 1.65vw, 22px);
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--ink-121);
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 10px;
+}
+.metaRight{ font-size:12px; flex: 0 0 auto; }
+.views{ color:var(--blue-600); font-weight:600; font-size:14px; }
+
+/* 메타 2열 (본문 공간을 채우고, 가격 줄을 아래로 밀도록) */
+.meta{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  column-gap: 18px; row-gap: 18px;
+  color: var(--ink-700);
+  font-size: 17px;
+
+  flex: 1 1 auto;                   /* 남은 세로공간 차지 */
+  min-height: 0;
+}
+.metaItem{
+  display:flex; align-items:flex-start; gap:15px;
+  min-width: 0;
+}
+.metaItem svg{ width:16px; height:16px; flex:none; color:var(--ink-700); opacity:.9; }
+.metaCol{ min-width:0; display:flex; flex-direction:column; gap:8px; }
+.metaLabel{ font-size:15px; color:var(--muted); line-height:1.2; }
+.metaValue{
+  font-size:15px; color:var(--ink-900);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* 가격: 항상 카드 하단에 붙도록 */
+.priceRow{
+  display:flex; align-items:flex-end; gap:24px;
+  margin-top:auto;                   /* ← 하단 고정 */
+  padding-top:10px;
+  border-top:1px dashed var(--line);
+}
+.label{ color:var(--muted); font-size:12px; display:inline-block; margin-bottom:4px; }
+.priceItem strong{ font-size:18px; color:var(--ink-900); margin-left:6px; font-weight:600; }
+.current{ color:var(--ink-900); }
+.priceRow .priceItem:first-child strong{ color:var(--ink-700); opacity:.5; font-weight:700; }
+.priceItem + .priceItem .label::before{ content:"|"; display:inline-block; margin:0 10px 0 2px; color:var(--muted); }
+
+/* ===== Responsive ===== */
+/* 1200~1439: 썸네일 240 */
+@media (max-width:1439px){
+  :root{ --thumb-col: 240px; }
+  .card{ min-height: calc(var(--thumb-col) + var(--thumb-pad) * 2); }
+}
+
+/* 768~1199: 썸네일 220 + 글자 조금 축소 */
+@media (max-width:1199px){
+  :root{ --thumb-col: 220px; }
+  .card{
+    grid-template-columns: var(--thumb-col) minmax(0,1fr);
+    gap:14px;
+    min-height: calc(var(--thumb-col) + var(--thumb-pad) * 2);
+  }
+  .title{ font-size: clamp(18px, 2vw, 20px); }
+  .meta{ column-gap:14px; row-gap:10px; font-size: 15px; }
+}
+
+/* ≤768: 1열(모바일) — 카드 높이 자동, 썸네일 위에 본문 */
+@media (max-width:768px){
+  .card{
+    grid-template-columns: 1fr;
+    gap: 12px;
+    min-height: auto;               /* 모바일은 자연 높이 */
+  }
+  .thumb{ padding: 12px 12px 0; }
+  .title{ font-size: 18px; }
+  .views{ font-size: 13px; }
+}

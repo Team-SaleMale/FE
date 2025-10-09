@@ -75,7 +75,7 @@ export default function AuctionProductDetails() {
         reviews: 120,
         transactions: 58,
         auctionIndex: 4.5,
-        profileImage: "/assets/img/AuctionProductDetails/ProfileImage/profile-07.png",
+        profileImage: profile07, // import 방식으로 통일
         updatedAt: "2025-10-05T12:03:00Z",
       },
 
@@ -92,6 +92,7 @@ export default function AuctionProductDetails() {
         views: 12543,
         watchers: 620,
         bids: 17,
+        // 텍스트 버전 요구사항: "직거래, 택배거래, 기타" 한 줄 출력 + 기타는 hover 시 상세
         tradeMethod: "직거래/택배거래/기타",
         tradeOther:
           "평일 저녁 강남/양재 직거래 가능 • 제주/도서산간 택배 추가비용 • 상황에 따라 퀵 가능",
@@ -133,16 +134,24 @@ export default function AuctionProductDetails() {
         },
       ],
 
-      calendar: { startDate: "2025-10-14", endDate: "2025-11-28" },
+      // ✅ 시간 포함(새 요구사항)
+      calendar: {
+        startDate: "2025-10-14",
+        startTime: "10:00", // HH:mm 또는 HH:mm:ss
+        endDate: "2025-11-28",
+        endTime: "18:00",
+      },
+
       price: { current: 1120000, unitStep: 10000, startPrice: 700000 },
+
       bidHistory: [
         { id: "b1", user: "bidder***", price: 1120000, timeText: "방금 전", tag: "recent", avatarUrl: profile01 },
         { id: "b2", user: "bidder***", price: 1100000, timeText: "방금 전", tag: "recent", avatarUrl: profile02 },
-        { id: "b3", user: "bidder***", price: 1050000, timeText: "어제", tag: "min", avatarUrl: profile03 },
-        { id: "b4", user: "bidder***", price: 1120000, timeText: "어제", avatarUrl: profile04 },
-        { id: "b5", user: "bidder***", price: 1400000, timeText: "어제", tag: "max", avatarUrl: profile05 },
-        { id: "b6", user: "bidder***", price: 1320000, timeText: "어제", avatarUrl: profile06 },
-        { id: "b7", user: "bidder***", price: 1290000, timeText: "2일 전", avatarUrl: profile07 },
+        { id: "b3", user: "bidder***", price: 1050000, timeText: "어제", tag: "min",   avatarUrl: profile03 },
+        { id: "b4", user: "bidder***", price: 1120000, timeText: "어제",               avatarUrl: profile04 },
+        { id: "b5", user: "bidder***", price: 1400000, timeText: "어제", tag: "max",   avatarUrl: profile05 },
+        { id: "b6", user: "bidder***", price: 1320000, timeText: "어제",               avatarUrl: profile06 },
+        { id: "b7", user: "bidder***", price: 1290000, timeText: "2일 전",             avatarUrl: profile07 },
       ],
     }),
     [id]
@@ -162,14 +171,8 @@ export default function AuctionProductDetails() {
       if (!prev) return prev;
       return {
         ...prev,
-        price: {
-          ...prev.price,
-          current: Math.max(prev.price.current ?? 0, bidPrice),
-        },
-        metrics: {
-          ...prev.metrics,
-          bids: (prev.metrics?.bids ?? 0) + 1,
-        },
+        price: { ...prev.price, current: Math.max(prev.price.current ?? 0, bidPrice) },
+        metrics: { ...prev.metrics, bids: (prev.metrics?.bids ?? 0) + 1 },
         bidHistory: [
           {
             id: `b-${Date.now()}`,
@@ -193,9 +196,9 @@ export default function AuctionProductDetails() {
       <AuctionTitle title={auction.title} category={auction.category} />
       <TopSectionNav sectionRefs={sectionRefs} />
 
-      {/* ==== 본문 + BidPanel 2열 레이아웃 (sticky는 이 컨테이너까지) ==== */}
+      {/* ==== 본문 + BidPanel 2열 레이아웃 ==== */}
       <div className={styles.layout}>
-        {/* 좌측: 본문 컬럼 */}
+        {/* 좌측: 본문 */}
         <div className={styles.leftCol}>
           <section id="overview" ref={sectionRefs.overview} className={styles.section}>
             <MediaGallery images={auction.images} />
@@ -211,6 +214,7 @@ export default function AuctionProductDetails() {
           </section>
 
           <section id="calendar" ref={sectionRefs.calendar} className={styles.section}>
+            {/* ⬇️ 시간 포함된 calendar 전달 */}
             <CalendarPanel calendar={auction.calendar} />
           </section>
 
@@ -227,7 +231,7 @@ export default function AuctionProductDetails() {
         <aside className={styles.rightCol}>
           <BidPanel
             price={auction.price}
-            calendar={auction.calendar}
+            calendar={auction.calendar}      // ⬅️ start/end + time
             bidItems={auction.bidHistory}
             watchers={auction.metrics?.watchers}
             onBid={handleBid}
@@ -235,7 +239,7 @@ export default function AuctionProductDetails() {
         </aside>
       </div>
 
-      {/* ==== 추천 섹션: sticky 경계 밖으로 분리 (BidPanel이 내려오지 않음) ==== */}
+      {/* ==== 추천 섹션 ==== */}
       <div className={styles.layoutSingle}>
         <section className={styles.section}>
           <RecommendedList items={auction.recommended} />
