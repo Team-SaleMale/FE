@@ -1,0 +1,39 @@
+.vb-footer {
+  background: #0b0e14;
+  color: #e5e7eb;
+  padding: 28px 0 36px;
+  margin-top: 48px;
+}
+
+.vb-footer__inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.vb-footer__title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 6px;
+}
+
+.vb-footer__subtitle {
+  color: #9ca3af;
+  margin-bottom: 16px;
+}
+
+.vb-footer__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px 24px;
+  line-height: 1.8;
+  font-size: 14px;
+}
+
+@media (max-width: 900px) {
+  .vb-footer__grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .vb-footer__grid { grid-template-columns: 1fr; }
+}

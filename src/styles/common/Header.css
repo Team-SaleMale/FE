@@ -1,0 +1,87 @@
+.vb-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: saturate(180%) blur(8px);
+  -webkit-backdrop-filter: saturate(180%) blur(8px);
+  border-bottom: 1px solid #d1d5db;
+}
+
+/* 중앙 고정 + 좌우 여백 최소화 */
+.vb-header__wrap {
+  max-width: 1600px;  /* 폭을 더 넓혀 좌우에 여유 확보 */
+  margin: 0 auto;
+  padding: 0 12px;    /* 여백을 줄여 끝쪽으로 더 붙이기 */
+  box-sizing: border-box;
+}
+
+/* Grid로 좌/중/우 고정 */
+.vb-header__container {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+  height: 64px;
+}
+
+/* 왼쪽 로고 */
+.vb-left {
+  justify-self: start;
+}
+.vb-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+.vb-brand__icon {
+  font-size: 18px;
+  line-height: 1;
+  color: #1e3a8a;
+}
+.vb-brand__text {
+  font-weight: 700;
+  font-size: 18px;
+  color: #1e3a8a;
+}
+
+/* 중앙 메뉴 */
+.vb-center {
+  display: flex;
+  justify-content: center;
+  gap: 80px;
+}
+
+/* 오른쪽 로그인 */
+.vb-right {
+  justify-self: end;
+}
+
+/* 항상 검정, 눌러도 색 안 바뀜 */
+.vb-link {
+  text-decoration: none;
+  color: #000;
+  font-weight: 500;
+}
+.vb-link:hover,
+.vb-link:active,
+.vb-link:focus {
+  color: #000;
+}
+.vb-login {
+  font-weight: 600;
+}
+
+/* 밑줄 제거 */
+.vb-header a {
+  text-decoration: none;
+}
+
+/* 스크롤바 유무로 인한 폭 변동 방지 */
+html {
+  overflow-y: scroll;
+}
+:root {
+  scrollbar-gutter: stable;
+}
