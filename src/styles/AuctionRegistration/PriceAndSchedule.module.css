@@ -1,0 +1,146 @@
+:root {
+  --ink-strong: #121316;
+  --ink: #383E48;
+  --muted: #8B94A4;
+  --line: #DDDFE3;
+  --bg-soft: #F1F2F3;
+  --brand: #0057FF;
+  --brand-soft: #E8EFFC;
+  --danger: #EE0000;
+  --radius: 12px;
+}
+
+.wrap {
+  display: block;
+  font-family: "Pretendard","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-strong);
+  margin: 6px 0 10px;
+}
+
+.required {
+  color: var(--danger);
+  margin-left: 4px;
+}
+
+.priceRow {
+  margin-bottom: 22px;
+}
+
+.priceInput {
+  width: 100%;
+  background: #fff;
+  border-radius: var(--radius);
+}
+
+.dateInputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.dateField :global(.MuiOutlinedInput-root) {
+  background: #fff;
+  border-radius: var(--radius);
+}
+
+.calendars {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.calendarCol {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 8px 8px 0;
+}
+
+.monthLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  padding: 6px 8px 0;
+}
+
+/* ====== Responsive ====== */
+
+/* 1200px ↓ : 여백/갭 살짝 축소 */
+@media (max-width: 1200px) {
+  .calendars { gap: 18px; }
+  .calendarCol { padding: 6px 6px 0; }
+  .monthLabel { padding: 4px 6px 0; }
+}
+
+/* 1180px ↓ : 달력 1열 스택 전환 */
+@media (max-width: 1180px) {
+  .dateInputs { grid-template-columns: 1fr; gap: 12px; }
+  .calendars {
+    grid-template-columns: 1fr;  /* ✅ 두 달 → 한 줄 스택 */
+    gap: 16px;
+    padding-top: 10px;
+  }
+}
+
+/* 960px ↓ : 달력 1열 스택 + 인풋 1열 */
+@media (max-width: 960px) {
+  .dateInputs { grid-template-columns: 1fr; gap: 12px; }
+  .calendars {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding-top: 10px;
+  }
+  .calendarCol { border-radius: 14px; }
+  .monthLabel {
+    text-align: left;      /* 필요 시 center */
+    font-size: 13px;
+  }
+
+  /* MUI Day 셀 높이 살짝 줄이기 */
+  :global(.MuiPickersDay-root) {
+    margin: 0 2px;
+  }
+}
+
+/* 720px ↓ : 폰트/여백 더 축소 */
+@media (max-width: 720px) {
+  .sectionTitle { font-size: 13px; margin: 4px 0 8px; }
+  .priceRow { margin-bottom: 16px; }
+  .calendarCol { padding: 4px 4px 0; }
+  .monthLabel { font-size: 12px; }
+  
+  /* 달력 헤더/요일 라벨 축소 */
+  :global(.MuiPickersCalendarHeader-label) { font-size: 13px; }
+  :global(.MuiDayCalendar-weekDayLabel) { font-size: 11px; }
+
+  /* Day 크기 축소 */
+  :global(.MuiPickersDay-root) {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+}
+
+/* 480px ↓ : 극소 화면 대응 */
+@media (max-width: 480px) {
+  .wrap { padding: 0; }
+  .calendarCol { border-radius: 12px; }
+  .monthLabel { padding: 2px 4px 0; }
+  .calendars { gap: 12px; }
+
+  /* Day 더 축소 + 터치 간격 보장 */
+  :global(.MuiPickersDay-root) {
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    margin: 0 1px;
+  }
+}
