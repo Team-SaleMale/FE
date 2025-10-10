@@ -1,6 +1,6 @@
 // src/pages/AuctionList/AuctionList.js
 import { useEffect, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom"; // ✅ navigate 추가
 import styles from "../../styles/AuctionList/AuctionList.module.css";
 
 import Toolbar from "./Toolbar";
@@ -371,7 +371,9 @@ const RAW_API_ITEMS = [
    Component
    ========================= */
 export default function AuctionList() {
-  const { search } = useLocation();
+  const location = useLocation();               // ✅ location 보존
+  const { search } = location;
+  const navigate = useNavigate();               // ✅ navigate 사용
 
   const [layout, setLayout] = useState("horizontal");
   const [page, setPage] = useState(1);
@@ -464,10 +466,8 @@ export default function AuctionList() {
         return ed >= startMs && ed <= endMs;
       });
     } else if (startMs != null) {
-      // start만 있으면 종료일이 start 이후인 것
       arr = arr.filter((x) => new Date(x.endAtISO).getTime() >= startMs);
     } else if (endMs != null) {
-      // end만 있으면 종료일이 end 이전인 것
       arr = arr.filter((x) => new Date(x.endAtISO).getTime() <= endMs);
     }
 
@@ -534,9 +534,15 @@ export default function AuctionList() {
             onChangePrice={setPrice}
             onChangeSort={setSort}
             onClear={() => {
+              // ✅ 상태 리셋
               setCategory("all");
               setPrice({ min: 0, max: 0 });
               setSort("");
+              setDateFilter({ start: "", end: "" });
+              setTab("ongoing");
+              setPage(1);
+              // ✅ URL 쿼리 제거 → 현재 경로만 남김
+              navigate({ pathname: location.pathname }, { replace: true });
             }}
           />
         </aside>

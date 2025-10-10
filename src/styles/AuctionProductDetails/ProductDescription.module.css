@@ -5,21 +5,22 @@
   --ink-600: #454C58;
   --muted: #8B94A4;
   --line: rgba(5, 11, 32, 0.08);
+  --card-border: rgba(5, 11, 32, 0.08); /* 사용 일관성 확보 */
   --brand: #405FF2;
   --brand-soft: #EEF2FF;
   --radius-xl: 16px;
   --shadow-card: 0 4px 20px rgba(5, 11, 32, 0.06);
-  --bg-soft: #F7F9FF; /* 카드 색상 살짝 톤업 (요청사항) */
 }
 
-/* 카드 베이스(요청 주신 스타일에서 톤만 부드럽게) */
+/* 카드 베이스 */
 .card {
-  background:#fff;
-  border:1px solid var(--card-border);
-  border-radius:16px;
-  padding:16px 16px 10px;
+  background: #fff; /* 요청: 흰색 또는 transparent 원하면 여기만 조정 */
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-xl);
+  padding: 16px 16px 10px;
   font-family: "Pretendard","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
-  margin-top:20px;
+  margin-top: 20px;
+  box-shadow: var(--shadow-card);
 }
 
 /* 헤더 영역: 제목 + 액션(수정일, 신고) */
@@ -32,8 +33,8 @@
 }
 
 .title {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 18px;       /* 기본 타이포 정리 (반응형에서 커짐) */
+  font-weight: 800;
   color: var(--ink-900);
   margin: 0;
 }
@@ -88,6 +89,16 @@
   font-size: 14px;
   margin: 8px 0 2px;
   word-break: break-word;
+}
+
+/* 2줄에서 자르기(접힌 상태) */
+.clamp2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;       /* 핵심: 두 줄로 제한 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  /* 폴백(대략적 계산) */
+  max-height: calc(1.7em * 2 + 2px);
 }
 
 /* 자동 링크 스타일 */
@@ -161,12 +172,12 @@
 /* 반응형 */
 @media (min-width: 768px) {
   .card { padding: 18px; }
-  .title { font-size: 17px; }
+  .title { font-size: 20px; }
   .desc { font-size: 15px; }
 }
 
 @media (min-width: 1100px) {
   .card { padding: 20px; }
-  .title { font-size: 18px; }
+  .title { font-size: 22px; }
   .desc { font-size: 15.5px; }
 }

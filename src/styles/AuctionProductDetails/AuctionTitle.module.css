@@ -11,9 +11,9 @@
 
 .left { min-width: 0; }
 
-/* 제목 — 기존보다 "조금" 크게 (24px) */
+/* 제목 — 기존보다 "조금" 크게 (28px) */
 .title {
-  font-size: 28px;               /* ↑ 기존 20px → 24px */
+  font-size: 28px;
   font-weight: 700;
   line-height: 1.35;
   color: var(--ink-900, #1F2226);
@@ -24,6 +24,37 @@
   display: -webkit-box;
   -webkit-line-clamp: 2;         /* 최대 2줄 */
   -webkit-box-orient: vertical;
+}
+
+/* 정확한 모델명 라인 */
+.modelRow{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  max-width: 100%;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ink-700, #383E48);
+}
+
+.modelIcon{
+  flex: 0 0 auto;
+  opacity: 0.9;
+}
+
+.modelLabel{
+  flex: 0 0 auto;
+  font-weight: 600;
+  color: var(--ink-700, #383E48);
+}
+
+.modelValue{
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-900, #1F2226);
 }
 
 .meta {
@@ -54,9 +85,14 @@
   border-radius: 8px;
 }
 .titleSkel { width: clamp(200px, 40vw, 560px); height: 28px; }
+.modelSkel { width: 240px; height: 16px; margin-top: 8px; border-radius: 6px; }
 .catSkel   { width: 120px; height: 22px; margin-top: 10px; border-radius: 999px; }
 .iconSkel  { width: 36px; height: 36px; border-radius: 999px; display: inline-block; }
-@keyframes shine { 0% {background-position: 200% 0;} 100% {background-position: -200% 0;} }
+
+@keyframes shine {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
 
 /* ----- 반응형 ----- */
 @media (max-width: 1024px) {
@@ -71,6 +107,10 @@
   .title {
     font-size: 20px;            /* 모바일 */
     -webkit-line-clamp: 3;      /* 모바일에선 3줄까지 허용 */
+  }
+  .modelRow{
+    font-size: 13px;
+    line-height: 18px;
   }
   .actions {
     order: 2;                   /* 좁을 때 액션 버튼을 아래로 */

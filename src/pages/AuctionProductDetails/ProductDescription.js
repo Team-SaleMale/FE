@@ -1,32 +1,32 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/AuctionProductDetails/ProductDescription.module.css";
 
 /**
- * 판매자 설명 (API 연동 대비)
+ * 판매자 설명 (2줄 초과 시 더보기 노출)
  * - 로딩/에러/빈값 처리
- * - 더보기/접기
+ * - 2줄 line-clamp + 실제 오버플로우 측정
  * - 신고 버튼 콜백 지원
  *
  * Props
- * - text: string | null          // 판매자 설명 텍스트
- * - updatedAt?: string | Date    // 최근 수정 시각(ISO string 가능)
+ * - text: string | null
+ * - updatedAt?: string | Date
  * - isLoading?: boolean
  * - error?: string | null
- * - maxChars?: number            // 접기 상태에서 보여줄 글자 수 (기본 220)
- * - onReport?: () => void        // 신고 버튼 클릭 콜백
+ * - onReport?: () => void
  */
 export default function ProductDescription({
   text,
   updatedAt,
   isLoading = false,
   error = null,
-  maxChars = 220,
   onReport,
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [showMore, setShowMore] = useState(false); // 2줄 초과 여부
+  const descRef = useRef(null);
 
-  // iso/Date -> YYYY.MM.DD 포맷 간단 처리
+  // iso/Date -> YYYY.MM.DD 포맷
   const formattedDate = useMemo(() => {
     if (!updatedAt) return null;
     const d = typeof updatedAt === "string" ? new Date(updatedAt) : updatedAt;
@@ -37,7 +37,7 @@ export default function ProductDescription({
     return `${yyyy}.${mm}.${dd}`;
   }, [updatedAt]);
 
-  // URL 자동 링크 처리(간단 버전)
+  // URL 자동 링크 처리
   const autoLinked = useMemo(() => {
     if (!text) return "";
     const safe = text
@@ -51,17 +51,42 @@ export default function ProductDescription({
     return withLinks;
   }, [text]);
 
-  // 더보기/접기용 텍스트
-  const { displayHtml, isTruncated } = useMemo(() => {
-    if (!autoLinked) return { displayHtml: "", isTruncated: false };
-    if (expanded || autoLinked.length <= maxChars) {
-      return { displayHtml: autoLinked, isTruncated: false };
-    }
-    return {
-      displayHtml: autoLinked.slice(0, maxChars) + "…",
-      isTruncated: true,
+  // 2줄 초과 여부 측정 (desc가 clamp된 상태에서만 체크)
+  useEffect(() => {
+    if (!descRef.current) return;
+
+    const el = descRef.current;
+
+    const measure = () => {
+      if (!el) return;
+      // 접힌 상태에서만 line-clamp 적용되므로 그 상태에서 overflow 판정
+      if (!expanded) {
+        // 강제로 reflow 후 측정
+        const overflowing = el.scrollHeight > el.clientHeight + 1; // 보정값 +1
+        setShowMore(overflowing);
+      } else {
+        // 펼친 상태에서는 더보기 숨김 기준(접기 버튼만 노출)
+        setShowMore(false);
+      }
     };
-  }, [autoLinked, expanded, maxChars]);
+
+    measure();
+
+    // 크기 변화 대응(반응형): ResizeObserver 지원
+    let ro;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(measure);
+      ro.observe(el);
+    } else {
+      // 폴백: 리사이즈 리스너
+      window.addEventListener("resize", measure);
+    }
+
+    return () => {
+      if (ro) ro.disconnect();
+      else window.removeEventListener("resize", measure);
+    };
+  }, [autoLinked, expanded]);
 
   return (
     <section className={styles.card} aria-labelledby="seller-desc-title">
@@ -102,10 +127,11 @@ export default function ProductDescription({
       ) : (
         <>
           <p
-            className={styles.desc}
-            dangerouslySetInnerHTML={{ __html: displayHtml }}
+            ref={descRef}
+            className={`${styles.desc} ${!expanded ? styles.clamp2 : ""}`}
+            dangerouslySetInnerHTML={{ __html: autoLinked }}
           />
-          {isTruncated && (
+          {!expanded && showMore && (
             <button
               type="button"
               className={styles.moreBtn}
@@ -114,9 +140,9 @@ export default function ProductDescription({
             >
               더보기
               <Icon icon="solar:alt-arrow-down-linear" />
-            </button>
+          </button>
           )}
-          {expanded && autoLinked.length > maxChars && (
+          {expanded && (
             <button
               type="button"
               className={styles.moreBtn}
@@ -124,7 +150,7 @@ export default function ProductDescription({
               aria-expanded={expanded}
             >
               접기
-              <Icon icon="solar:alt-arrow-up-line-duotone" />
+              <Icon icon="solar:alt-arrow-up-linear" />
             </button>
           )}
         </>
