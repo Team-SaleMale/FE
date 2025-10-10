@@ -61,6 +61,14 @@ export default function AuctionProductDetails() {
       id,
       title: "아이패드 프로 12.9 6세대 256GB",
       category: "디지털기기",
+
+      // ✅ AI 분석 결과(정확한 모델명 포함)
+      aiResult: {
+        modelName: "Apple iPad Pro 12.9 (6th Gen) Wi-Fi 256GB, Silver (A2437)",
+        marketPrice: 1350000,
+        suggestedPrice: 1100000,
+      },
+
       images: [
         { id: 1, url: ipad01 },
         { id: 2, url: ipad02 },
@@ -91,7 +99,7 @@ export default function AuctionProductDetails() {
       metrics: {
         views: 12543,
         watchers: 620,
-        bids: 17,
+        bids: 7,
         // 텍스트 버전 요구사항: "직거래, 택배거래, 기타" 한 줄 출력 + 기타는 hover 시 상세
         tradeMethod: "직거래/택배거래/기타",
         tradeOther:
@@ -193,7 +201,13 @@ export default function AuctionProductDetails() {
 
   return (
     <div className={styles.page}>
-      <AuctionTitle title={auction.title} category={auction.category} />
+      {/* ✅ 정확한 모델명 표기를 위한 exactModelName 전달 (aiResult.modelName 우선) */}
+      <AuctionTitle
+        title={auction.title}
+        exactModelName={auction.exactModelName || auction.aiResult?.modelName}
+        category={auction.category}
+      />
+
       <TopSectionNav sectionRefs={sectionRefs} />
 
       {/* ==== 본문 + BidPanel 2열 레이아웃 ==== */}

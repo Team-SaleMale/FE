@@ -1,3 +1,4 @@
+// src/pages/AuctionRegistration/PriceAndSchedule.js
 import React, { useEffect, useMemo, useState } from "react";
 import styles from "../../styles/AuctionRegistration/PriceAndSchedule.module.css";
 
@@ -19,23 +20,10 @@ export default function PriceAndSchedule({
   endDate = "",
   onChange,
 }) {
-  // 가격
+  /* ---------------- 가격 ---------------- */
   const [priceInput, setPriceInput] = useState(startPrice || "");
-
-  // 날짜
-  const [start, setStart] = useState(startDate ? dayjs(startDate) : null);
-  const [end, setEnd] = useState(endDate ? dayjs(endDate) : null);
-
-  // 시간 (기본값: 시작 10:00, 종료 22:00)
-  const [startTime, setStartTime] = useState(null);
-  const [endTime, setEndTime] = useState(null);
-
-  // 외부 prop 변화 동기화
   useEffect(() => setPriceInput(startPrice || ""), [startPrice]);
-  useEffect(() => setStart(startDate ? dayjs(startDate) : null), [startDate]);
-  useEffect(() => setEnd(endDate ? dayjs(endDate) : null), [endDate]);
 
-  // 가격 표시(콤마)
   const displayPrice = useMemo(() => {
     if (!priceInput) return "";
     const num = String(priceInput).replace(/\D/g, "");
@@ -48,54 +36,72 @@ export default function PriceAndSchedule({
     onChange?.("startPrice", onlyNum);
   };
 
+  /* ---------------- 시작/종료 일시 ---------------- */
+  // 시작: 오늘+현재시간 고정(수정 불가). props에 값이 있으면 그 값을 우선 사용.
+  const now = dayjs();
+  const initialStart = startDate ? dayjs(startDate) : now;
+
+  const [start, setStart] = useState(initialStart);               // 표시용
+  const [end, setEnd] = useState(endDate ? dayjs(endDate) : null);
+
+  // 시작/종료 시간(표시/선택)
+  const [startTime, setStartTime] = useState(initialStart);       // 오늘 현재 시각
+  const [endTime, setEndTime] = useState(null);                   // 기본 null → 선택 유도
+
+  // 마운트 시 부모 상태에 시작 일시(등록 시각) 기록
+  useEffect(() => {
+    const s = startDate ? dayjs(startDate) : dayjs();
+    setStart(s);
+    setStartTime(s);
+    onChange?.("startDate", s.second(0).millisecond(0).toISOString());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 최초 한 번
+
+  useEffect(() => {
+    if (endDate) setEnd(dayjs(endDate));
+  }, [endDate]);
+
   // 날짜+시간 병합 → ISO
-  const mergeToISO = (date, time, fallbackHour = 10) => {
+  const mergeToISO = (date, time, fallback) => {
     if (!date) return "";
     const base = dayjs(date);
-    const hh = time ? dayjs(time).hour() : fallbackHour;
-    const mm = time ? dayjs(time).minute() : 0;
-    return base.hour(hh).minute(mm).second(0).millisecond(0).toISOString();
+    const src = time || fallback || base;
+    return base
+      .hour(dayjs(src).hour())
+      .minute(dayjs(src).minute())
+      .second(0)
+      .millisecond(0)
+      .toISOString();
   };
 
-  // 날짜 선택
-  const handlePick = (which, value) => {
-    if (which === "start") {
-      setStart(value);
-      if (!startTime) setStartTime(dayjs().hour(10).minute(0)); // 기본 10:00
-      if (end && value && end.isBefore(value, "day")) setEnd(null);
-      onChange?.("startDate", value ? mergeToISO(value, startTime, 10) : "");
-    } else {
-      setEnd(value);
-      if (!endTime) setEndTime(dayjs().hour(22).minute(0));     // 기본 22:00
-      if (!start && value) {
-        setStart(value);
-        if (!startTime) setStartTime(dayjs().hour(10).minute(0));
-        onChange?.("startDate", mergeToISO(value, startTime, 10));
-      }
-      onChange?.("endDate", value ? mergeToISO(value, endTime, 22) : "");
-    }
+  // 종료 날짜 선택 (시작은 고정)
+  const handlePickEnd = (value) => {
+    setEnd(value);
+    onChange?.(
+      "endDate",
+      value ? mergeToISO(value, endTime, dayjs().hour(22).minute(0)) : ""
+    );
   };
 
-  // 시간 선택
-  const onPickTime = (which, t) => {
-    if (which === "start") {
-      setStartTime(t);
-      onChange?.("startDate", start ? mergeToISO(start, t, 10) : "");
-    } else {
-      setEndTime(t);
-      onChange?.("endDate", end ? mergeToISO(end, t, 22) : "");
-    }
+  // 종료 시간 선택
+  const onPickEndTime = (t) => {
+    setEndTime(t);
+    onChange?.(
+      "endDate",
+      end ? mergeToISO(end, t, dayjs().hour(22).minute(0)) : ""
+    );
   };
 
-  // 날짜 비활성 규칙
-  const disablePast = (date) => date.isBefore(dayjs().startOf("day"));
-  const disableEnd = (date) =>
-    disablePast(date) || (start ? date.isBefore(start, "day") : false);
+  // 비활성 규칙: 종료일은 오늘 이전 비활성
+  const disablePastEnd = (date) => date.isBefore(dayjs().startOf("day"));
 
   return (
     <div className={styles.wrap}>
-      <h2 className={styles.sectionTitle}>초기 가격 설정 <span className={styles.required}>*</span></h2>
+      <h2 className={styles.sectionTitle}>
+        초기 가격 설정 <span className={styles.required}>*</span>
+      </h2>
 
+      {/* 초기 가격 */}
       <div className={styles.priceRow}>
         <OutlinedInput
           className={styles.priceInput}
@@ -107,39 +113,72 @@ export default function PriceAndSchedule({
         />
       </div>
 
-      <h2 className={styles.sectionTitle}>경매 시작/끝 시간 정하기 <span className={styles.required}>*</span></h2>
+      <h2 className={styles.sectionTitle}>
+        경매 시작/끝 시간 정하기 <span className={styles.required}>*</span>
+      </h2>
 
-      {/* 상단 날짜 표시 */}
+      {/* 상단 날짜 표시(읽기전용) */}
       <div className={styles.dateInputs}>
         <TextField
           className={styles.dateField}
-          placeholder="경매 시작 날짜"
-          value={start ? start.format("YYYY.MM.DD") : ""}
+          label="시작 날짜(자동)"
+          value={start ? start.format("YYYY.MM.DD HH:mm") : ""}
           inputProps={{ readOnly: true }}
         />
         <TextField
           className={styles.dateField}
-          placeholder="경매 종료 날짜"
-          value={end ? end.format("YYYY.MM.DD") : ""}
+          label="종료 날짜"
+          value={
+            end
+              ? (endTime
+                  ? dayjs(mergeToISO(end, endTime)).format("YYYY.MM.DD HH:mm")
+                  : end.format("YYYY.MM.DD"))
+              : ""
+          }
           inputProps={{ readOnly: true }}
+          placeholder="종료일을 달력에서 선택"
         />
       </div>
 
-      {/* 달력 */}
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ko">
         <div className={styles.calendars}>
+          {/* 시작 달력: 오늘 날짜 고정(수정 불가) */}
           <div className={styles.calendarCol}>
             <div className={styles.monthLabel}>
               {start ? start.format("MMMM YYYY") : dayjs().format("MMMM YYYY")}
             </div>
             <DateCalendar
               value={start}
-              onChange={(v) => handlePick("start", v)}
-              shouldDisableDate={disablePast}
+              onChange={() => { /* 시작일은 수정 불가 */ }}
               sx={calendarSX}
             />
+            <div className={styles.timeWrap}>
+              <div className={styles.timeHeader}>시작 시간(자동)</div>
+              <div className={styles.timeRow}>
+                <TimePicker
+                  ampm={false}
+                  format="HH:mm"
+                  value={startTime}
+                  readOnly
+                  disabled
+                  minutesStep={5}
+                  slotProps={{
+                    textField: {
+                      label: "",
+                      placeholder: "현재 시각",
+                      InputLabelProps: { shrink: false },
+                    },
+                  }}
+                  sx={timeSX}
+                />
+              </div>
+              <div className={styles.timeHint}>
+                * 시작 일시는 등록 시각으로 자동 설정됩니다.
+              </div>
+            </div>
           </div>
 
+          {/* 종료 달력/시간: 사용자 선택 가능 */}
           <div className={styles.calendarCol}>
             <div className={styles.monthLabel}>
               {end
@@ -148,46 +187,42 @@ export default function PriceAndSchedule({
             </div>
             <DateCalendar
               value={end}
-              onChange={(v) => handlePick("end", v)}
-              shouldDisableDate={disableEnd}
+              onChange={handlePickEnd}
+              shouldDisableDate={disablePastEnd}
               sx={calendarSX}
             />
+            <div className={styles.timeWrap}>
+              <div className={styles.timeHeader}>종료 시간</div>
+              <div className={styles.timeRow}>
+                <TimePicker
+                  ampm={false}
+                  format="HH:mm"
+                  value={endTime}
+                  onChange={onPickEndTime}
+                  minutesStep={5}
+                  disabled={!end}
+                  slotProps={{
+                    textField: {
+                      label: "",
+                      placeholder: "예: 22:00",
+                      InputLabelProps: { shrink: false },
+                    },
+                  }}
+                  sx={timeSX}
+                />
+              </div>
+              <div className={styles.timeHint}>
+                * 종료일을 먼저 선택한 뒤 시간을 지정하세요. <br />지정하지 않으면 22:00로 저장됩니다.
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* 날짜가 선택된 경우에만 시간 선택 섹션 노출 */}
-        {(start || end) && (
-          <div className={styles.timeWrap}>
-            <div className={styles.timeHeader}>시간 선택</div>
-            <div className={styles.timeRow}>
-              <TimePicker
-                label="시작 시간"
-                value={startTime}
-                onChange={(t) => onPickTime("start", t)}
-                minutesStep={5}
-                disabled={!start}
-                sx={timeSX}
-              />
-              <TimePicker
-                label="종료 시간"
-                value={endTime}
-                onChange={(t) => onPickTime("end", t)}
-                minutesStep={5}
-                disabled={!end}
-                sx={timeSX}
-              />
-            </div>
-            <div className={styles.timeHint}>
-              * 시간을 지정하지 않으면 기본값(시작 10:00, 종료 22:00)이 저장됩니다.
-            </div>
-          </div>
-        )}
       </LocalizationProvider>
     </div>
   );
 }
 
-/** 캘린더 색상 커스텀 */
+/** 캘린더 색상 커스텀 (달력 톤만 유지) */
 const calendarSX = {
   "& .MuiPickersDay-root.Mui-selected": { backgroundColor: "#0057FF" },
   "& .MuiPickersDay-root.Mui-selected:hover": { backgroundColor: "#0057FF", opacity: 0.9 },
@@ -198,9 +233,9 @@ const calendarSX = {
   "& .MuiPickersArrowSwitcher-button": { color: "#454C58" },
 };
 
-/** TimePicker 톤 맞춤 */
+/** TimePicker 기본 톤 (포커스 색상 지정 없음: 파란 포커스 제거) */
 const timeSX = {
   "& .MuiOutlinedInput-root": { borderRadius: "12px" },
   "& .MuiFormLabel-root": { color: "#656F81" },
-  "& .Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#0057FF" },
+  // 포커스 보더 색상을 지정하지 않음 (CSS에서 검은 테두리 처리)
 };

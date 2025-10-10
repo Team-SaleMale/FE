@@ -1,3 +1,4 @@
+// src/pages/AuctionRegistration/AuctionRegistration.js
 import React, { useMemo, useReducer, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "../../styles/AuctionRegistration/AuctionRegistration.module.css";
@@ -22,17 +23,17 @@ const initialState = {
   title: "",
   description: "",
 
-  // PriceAndSchedule (ISO는 PriceAndSchedule에서 날짜+시간 병합하여 set)
+  // PriceAndSchedule
   startPrice: "",             // number string
-  startDate: "",              // ISO string
+  startDate: "",              // ISO string (UI 표시용; 실제 전송 값은 제출 시각으로 대체)
   endDate: "",                // ISO string
 
   // CategoryChips (단일 선택)
-  categories: [],
+  categories: [],             // [] 또는 ["digital" | "etc" | ...key]
 
-  // TradeMethod (다중 선택)
-  tradeMethod: "",            // 🔁 하위호환용(과거 단일 선택)
-  tradeMethods: [],           // ✅ 신규: ["택배","직거래","기타"]
+  // TradeMethod
+  tradeMethod: "",            // 하위호환(단일)
+  tradeMethods: [],           // 신규(다중): ["택배","직거래","기타"]
   tradeNote: "",
 
   // PolicyConsent
@@ -62,27 +63,11 @@ export default function AuctionRegistration() {
     dispatch({ type: "SET_FIELD", key, value });
   };
 
-  /** 검증 */
-  const validate = () => {
-    if (state.images.length < 1) return "이미지를 1장 이상 업로드해주세요.";
-    if (!state.modelName.trim()) return "상품 모델명을 입력해주세요.";
-    if (!state.title.trim()) return "제목을 입력해주세요.";
-    if (!state.startPrice) return "초기 가격을 입력해주세요.";
-    if (!state.startDate || !state.endDate) return "경매 시작/종료 시간을 설정해주세요.";
-    if (new Date(state.endDate) <= new Date(state.startDate)) return "종료 시간이 시작 시간 이후가 되도록 선택해주세요.";
-    if (state.categories.length !== 1) return "카테고리를 한 개 선택해주세요.";
-    if (!state.consents.policy) return "정책 동의를 체크해주세요.";
-    // 거래 방식은 선택 안 해도 통과(요구사항에 없음). 필요 시 아래 주석 해제
-    // const methods = normalizedTradeMethods(state);
-    // if (methods.length === 0) return "거래 방식을 한 개 이상 선택하거나 기타 내용을 입력해주세요.";
-    return "";
-  };
-
-  /** 미리보기 데이터 */
+  /** 프리뷰 계산: 현재가 = 시작가 × 120% */
   const previewImage = useMemo(() => state.images[0]?.url || "", [state.images]);
   const previewCurrent = useMemo(() => {
     const p = Number(state.startPrice || 0);
-    return p > 0 ? Math.round(p * 1.2) : 0; // 시작가 × 120%
+    return p > 0 ? Math.round(p * 1.2) : 0;
   }, [state.startPrice]);
 
   const previewData = {
@@ -101,9 +86,30 @@ export default function AuctionRegistration() {
     return s.tradeMethod ? [s.tradeMethod] : [];
   };
 
+  /** 검증 (제출 시각을 인자로 받아 비교) */
+  const validate = (submitStartISO) => {
+    if (state.images.length < 1) return "이미지를 1장 이상 업로드해주세요.";
+    if (!state.modelName.trim()) return "상품 모델명을 입력해주세요.";
+    if (!state.title.trim()) return "제목을 입력해주세요.";
+    if (!state.startPrice) return "초기 가격을 입력해주세요.";
+
+    if (!submitStartISO) return "시작 시간이 유효하지 않습니다.";
+    if (!state.endDate) return "경매 종료 시간을 설정해주세요.";
+
+    if (new Date(state.endDate) <= new Date(submitStartISO)) {
+      return "종료 시간이 시작 시간 이후가 되도록 선택해주세요.";
+    }
+    if (state.categories.length !== 1) return "카테고리를 한 개 선택해주세요.";
+    if (!state.consents.policy) return "정책 동의를 체크해주세요.";
+    return "";
+  };
+
   /** 제출 */
   const handleSubmit = async () => {
-    const msg = validate();
+    // ✅ 시작시간 = "지금(제출 시각)"으로 강제
+    const submitStartISO = new Date().toISOString();
+
+    const msg = validate(submitStartISO);
     if (msg) return setError(msg);
 
     setError("");
@@ -113,19 +119,19 @@ export default function AuctionRegistration() {
       form.append("modelName", state.modelName);
       form.append("title", state.title);
       form.append("description", state.description);
-      form.append("startPrice", state.startPrice); // 서버에서 숫자로 파싱
-      form.append("startDate", state.startDate);   // ISO (날짜+시간)
-      form.append("endDate", state.endDate);       // ISO (날짜+시간)
+      form.append("startPrice", state.startPrice);     // 서버 숫자 파싱
+      form.append("startDate", submitStartISO);        // ✅ 시작 = 제출 시각(고정)
+      form.append("endDate", state.endDate);           // ✅ 종료 = 사용자 선택
 
       // 거래 방식: 신규 배열 + 하위호환 필드 동시 전송
       const tradeMethods = normalizedTradeMethods(state);
-      form.append("tradeMethods", JSON.stringify(tradeMethods));     // ✅ 권장
-      form.append("tradeMethod", tradeMethods[0] || "");             // 🔁 구버전 호환
+      form.append("tradeMethods", JSON.stringify(tradeMethods));
+      form.append("tradeMethod", tradeMethods[0] || "");
       form.append("tradeNote", state.tradeNote);
 
-      // 카테고리(단일 선택, 기타면 빈 배열)
+      // ✅ 카테고리(단일): 이제 'etc'도 정상 값으로 그대로 전송
       const selected = state.categories[0] || "";
-      const normalizedCategory = !selected || selected === "etc" ? [] : [selected];
+      const normalizedCategory = selected ? [selected] : [];
       form.append("categories", JSON.stringify(normalizedCategory));
 
       form.append("consents", JSON.stringify(state.consents));
@@ -135,19 +141,20 @@ export default function AuctionRegistration() {
         form.append("images", file, file?.name || `image_${i}.jpg`)
       );
 
-      // TODO: API 연결 시 실제 POST 요청
+      // TODO: 실제 API POST
       console.log("[AuctionRegistration] submit payload(FormData)", {
         ...state,
+        startDate: submitStartISO,
         tradeMethods,
         categories: normalizedCategory,
         images: state.images.map((i) => ({ name: i.file?.name, size: i.file?.size })),
       });
 
-      // 성공 가정 → 완료/확인 페이지로 이동
+      // 성공 가정 → 완료 페이지 이동
       navigate("/auctions/success", {
         state: {
           preview: previewData,
-          startDate: state.startDate,
+          startDate: submitStartISO,
           endDate: state.endDate,
         },
       });
@@ -193,7 +200,7 @@ export default function AuctionRegistration() {
               value={state.categories}
               onChange={(v) => dispatch({ type: "SET_FIELD", key: "categories", value: v })}
               title="카테고리 선택"
-              helper="원하는 카테고리가 없는 경우 ‘기타’로 직접 입력하세요."
+              helper="원하는 카테고리가 없으면 ‘기타’를 선택하세요."
             />
           </section>
 
