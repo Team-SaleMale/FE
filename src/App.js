@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Main from "./pages/Main/Main";
 import AuctionList from "./pages/AuctionList/AuctionList";
 import AuctionRegistration from "./pages/AuctionRegistration/AuctionRegistration";
@@ -6,16 +6,15 @@ import AuctionComplete from "./pages/AuctionRegistration/AuctionComplete";
 import FeaturedProductDetail from "./pages/Main/FeaturedProductDetail";
 import AuctionProductDetails from "./pages/AuctionProductDetails/AuctionProductDetails";
 import VideoBrowser from "./pages/Main/VideoBrowser";
+import Video from "./pages/Main/Video";                // ✅ 재생 페이지 추가
+import MyPage from "./pages/MyPage/MyPage"; 
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
-import MyPage from "./pages/MyPage/MyPage";
-import Video from "./pages/Main/Video";                // ✅ 재생 페이지 추가
-
 import "./App.css";
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <>
       <Header />
       <Routes>
         <Route path="/" element={<Main />} />
@@ -29,6 +28,6 @@ export default function App() {
         <Route path="/mypage" element={<MyPage />} /> 
       </Routes>
       <Footer />
-    </BrowserRouter>
+    </>
   );
 }
