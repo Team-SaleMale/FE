@@ -1,0 +1,87 @@
+/* =========================
+   Palette & Typography
+   ========================= */
+:root{
+  --ink-900:#1F2226;
+  --ink-700:#383E48;
+  --muted:#6B7280;
+  --blue-600:#0046CC;
+  --line:#DDDFE3;
+  --bg:#FFFFFF;
+
+  /* sticky 기준선 */
+  --sticky-top: 0px; /* 툴바와 같은 라인에 맞추려면 0이 자연스러움 */
+}
+
+/* 페이지 컨테이너 */
+.page{
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 12px 40px;
+  font-family:"Pretendard","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  color: var(--ink-900);
+  background: var(--bg);
+
+  /* 🔒 가로 스크롤 차단(안 보이게가 아니라 '클립') */
+  overflow-x: clip;
+}
+
+/* ===== 레이아웃: 좌(필터) + 우(콘텐츠) ===== */
+.body{
+  display: grid;
+  grid-template-columns: 260px minmax(0,1fr); /* 우측 컬럼이 절대 넘치지 않도록 */
+  gap: 20px;
+  align-items: start;
+  list-style: none;
+  margin-top: 0;
+
+  /* 🔒 자식들이 내용으로 컬럼 폭을 밀어내지 못하게 */
+  min-width: 0;
+}
+.body > *{ min-width: 0; }        /* 좌/우 컬럼 모두 */
+.main{ min-width: 0; display: grid; gap: 16px; }
+
+/* 좌측: sticky 필터 */
+.aside{
+  position: sticky;
+  top: var(--sticky-top);
+  align-self: start;
+  height: fit-content;
+  z-index: 1;
+}
+
+/* 헬퍼들 */
+.list{ display: grid; gap: 16px; }
+.item{ list-style: none; }
+
+.grid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 16px;
+}
+.gridItem{ list-style: none; }
+
+/* 페이지네이션 */
+.paginationSpace{
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+}
+
+/* ===== 반응형 ===== */
+@media (max-width: 1200px){
+  .page{ max-width: 1100px; }
+}
+@media (max-width: 1024px){
+  .body{
+    grid-template-columns: 220px minmax(0,1fr);
+    gap: 16px;
+  }
+  .grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 768px){
+  .page{ padding: 12px 10px 28px; }
+  .body{ grid-template-columns: 1fr; }
+  .aside{ position: static !important; top: auto; height: auto; }
+  .grid{ grid-template-columns: 1fr; }
+}

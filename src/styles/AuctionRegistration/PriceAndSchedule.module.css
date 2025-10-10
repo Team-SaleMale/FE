@@ -27,9 +27,8 @@
   margin-left: 4px;
 }
 
-.priceRow {
-  margin-bottom: 22px;
-}
+/* ==== Price ==== */
+.priceRow { margin-bottom: 22px; }
 
 .priceInput {
   width: 100%;
@@ -37,6 +36,7 @@
   border-radius: var(--radius);
 }
 
+/* ==== Date inputs (readonly) ==== */
 .dateInputs {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -49,6 +49,7 @@
   border-radius: var(--radius);
 }
 
+/* ==== Calendars ==== */
 .calendars {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -71,6 +72,32 @@
   padding: 6px 8px 0;
 }
 
+/* ==== Time section ==== */
+.timeWrap {
+  margin-top: 14px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.timeHeader {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-strong);
+  margin-bottom: 20px;
+}
+
+.timeRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.timeHint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
 /* ====== Responsive ====== */
 
 /* 1200px ↓ : 여백/갭 살짝 축소 */
@@ -84,13 +111,13 @@
 @media (max-width: 1180px) {
   .dateInputs { grid-template-columns: 1fr; gap: 12px; }
   .calendars {
-    grid-template-columns: 1fr;  /* ✅ 두 달 → 한 줄 스택 */
+    grid-template-columns: 1fr;  /* 두 달 → 한 줄 스택 */
     gap: 16px;
     padding-top: 10px;
   }
 }
 
-/* 960px ↓ : 달력 1열 스택 + 인풋 1열 */
+/* 960px ↓ : 달력/시간 입력 1열 */
 @media (max-width: 960px) {
   .dateInputs { grid-template-columns: 1fr; gap: 12px; }
   .calendars {
@@ -99,15 +126,12 @@
     padding-top: 10px;
   }
   .calendarCol { border-radius: 14px; }
-  .monthLabel {
-    text-align: left;      /* 필요 시 center */
-    font-size: 13px;
-  }
+  .monthLabel { text-align: left; font-size: 13px; }
 
-  /* MUI Day 셀 높이 살짝 줄이기 */
-  :global(.MuiPickersDay-root) {
-    margin: 0 2px;
-  }
+  /* Day cell 여백 축소 */
+  :global(.MuiPickersDay-root) { margin: 0 2px; }
+
+  .timeRow { grid-template-columns: 1fr; }
 }
 
 /* 720px ↓ : 폰트/여백 더 축소 */
@@ -116,7 +140,7 @@
   .priceRow { margin-bottom: 16px; }
   .calendarCol { padding: 4px 4px 0; }
   .monthLabel { font-size: 12px; }
-  
+
   /* 달력 헤더/요일 라벨 축소 */
   :global(.MuiPickersCalendarHeader-label) { font-size: 13px; }
   :global(.MuiDayCalendar-weekDayLabel) { font-size: 11px; }
