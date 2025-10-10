@@ -1,0 +1,34 @@
+/* ===== External fonts load (한 번만 로드) ===== */
+
+/* Pretendard (CDN) */
+@import url("https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.css");
+
+/* Inter (Google Fonts) */
+@import url("https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap");
+
+
+@font-face {
+  font-family: "KakaoBigSans";
+  src: url("../assets/font/KakaoBigSans-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "KakaoBigSans";
+  src: url("../assets/font/KakaoBigSans-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "KakaoBigSans";
+  src: url("../assets/font/KakaoBigSans-ExtraBold.ttf") format("truetype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 전역 기본 font-family는 지정하지 않음.
+   (팀원이 각 CSS 파일에서 원하는 폰트를 직접 지정하도록..) */
+

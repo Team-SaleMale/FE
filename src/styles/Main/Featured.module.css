@@ -1,0 +1,127 @@
+:root{
+  /* 컬러/쉐도우 스펙 */
+  --ink-strong:#121316;
+  --white:#ffffff;
+
+  /* 강화된 drop shadow (ambient + key) */
+  --shadow-card: 0 8px 24px rgba(5,11,32,.06), 0 20px 44px rgba(5,11,32,.12);
+
+  --radius-xxl:22px; /* 살짝 더 둥글게 */
+  --gap:20px;
+}
+
+/* 섹션 래퍼 */
+.section{
+  width:100%;
+  max-width:1280px;          /* 1200 → 1280 확장 */
+  margin:120px auto 28px;     /* 여백 약간 확대 */
+  padding:0 28px;            /* 좌우 패딩 +4px */
+  box-sizing:border-box;
+  font-family: "Pretendard",  "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+}
+
+/* 타이틀 영역 */
+.head{ margin:0 0 40px 0; }
+.title{
+  margin-top:35px;
+  font-size:32px;
+  line-height:1.15;
+  font-weight:700;
+  color:var(--ink-strong);
+  letter-spacing:-.02em;
+}
+
+/* ===== 6컬럼 그리드 =====
+ * 윗줄: 각 3칸(span 3) → 2장
+ * 아랫줄: 각 2칸(span 2) → 3장
+ */
+.grid{
+  list-style:none;
+  margin:18px 0 0;
+  padding:0;
+  display:grid;
+  grid-template-columns:repeat(6, minmax(0, 1fr));
+  gap:var(--gap);
+}
+
+/* 카드 공통 */
+.card{
+  position:relative;
+  border-radius:var(--radius-xxl);
+  overflow:hidden;
+  background:#000;
+  box-shadow:var(--shadow-card);  /* 강화된 drop shadow */
+  cursor:pointer;
+  transition:transform .18s ease, box-shadow .18s ease;
+  isolation:isolate;
+}
+.card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 14px 28px rgba(5,11,32,.10), 0 26px 54px rgba(5,11,32,.18); /* hover 시 더 깊게 */
+}
+.card:focus{
+  outline:3px solid rgba(64,95,242,.35);
+  outline-offset:2px;
+}
+
+/* 카드 사이즈 */
+.lg{ grid-column:span 3; height:260px; }  /* 240 → 260 */
+.md{ grid-column:span 2; height:210px; }  /* 190 → 210 */
+
+/* 이미지(카드 꽉 차게) */
+.thumb{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  z-index:0;
+}
+
+/* 상단 그라디언트 (Linear ~85% 톤, 살짝 강화) */
+.overlay{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+  background:linear-gradient(
+    180deg,
+    rgba(0,0,0,.88) 0%,
+    rgba(0,0,0,.42) 34%,
+    rgba(0,0,0,0) 56%
+  );
+}
+
+/* 카테고리 라벨 */
+.label{
+  position:absolute;
+  left:24px;
+  top:20px;
+  z-index:2;
+  color:var(--white);
+  font-weight:700;
+  font-size:24px;
+  letter-spacing:-.02em;
+  text-shadow:0 2px 8px rgba(0,0,0,.35);
+}
+
+/* ================= 반응형 ================= */
+@media (max-width:1200px){
+  .section{ max-width:100%; }
+}
+
+@media (max-width:980px){
+  .grid{ grid-template-columns:repeat(2, minmax(0,1fr)); }
+  .lg{ grid-column:span 2; height:240px; }  /* 220 → 240 */
+  .md{ grid-column:span 1; height:200px; }  /* 180 → 200 */
+  .title{ font-size:32px; }
+}
+
+@media (max-width:560px){
+  .section{ padding:0 18px; }
+  .grid{ grid-template-columns:1fr; }
+  .lg,.md{ grid-column:span 1; height:220px; } /* 200 → 220 */
+  .title{ font-size:28px; }
+  .label{ font-size:22px; left:18px; top:16px; }
+}

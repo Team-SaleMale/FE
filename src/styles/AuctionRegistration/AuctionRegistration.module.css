@@ -1,0 +1,55 @@
+/* 레이아웃 그리드 정확히 고정 + 좌측 칼럼 수축 허용 */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px; /* 좌: 가변, 우: 360px 고정 */
+  gap: 24px;
+  align-items: start;
+}
+
+/* 좌측 컬럼이 우측에 밀리지 않도록 */
+.leftCol {
+  min-width: 0;        /* 📌 그리드 아이템 너비 계산 시 필수 */
+}
+
+/* 우측 미리보기는 겹치지 않게 sticky */
+.rightCol {
+  position: sticky;
+  top: 88px;           /* 헤더 높이에 맞춰 조절 */
+  height: max-content; /* 내용 높이만큼만 */
+  z-index: 1;
+}
+
+/* 섹션 카드 스타일(첫 스샷처럼 보더/라운드/패딩) */
+.section {
+  margin-top:50px;
+  margin-bottom:30px;
+  margin-left:10px;
+  background: #fff;
+  border: 1px solid #E8ECF1;
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 0 rgba(5,11,32,0.02);
+  overflow: visible;   /* 📌 내부 인풋 포커스 그림자 잘리면 visible */
+}
+
+/* 1200px 이하: 우측 폭을 조금 줄여 겹침 여유 확보 */
+@media (max-width: 1200px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr) 320px; /* 360 → 320 */
+    gap: 20px;
+  }
+}
+
+
+/* 1120px 이하: 한 줄(1컬럼)로 전환 + sticky 해제 */
+@media (max-width: 1120px) {
+  .grid {
+    grid-template-columns: 1fr; /* 우측 카드가 아래로 내려감 */
+  }
+  .rightCol {
+    position: static;  /* sticky 해제 */
+    top: auto;
+    height: auto;
+    margin-top: 16px;  /* 좌측 섹션 뒤에 간격 */
+  }
+}
