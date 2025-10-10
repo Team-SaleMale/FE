@@ -1,0 +1,172 @@
+:root{
+  --ink-strong:#121316;
+  --ink:#383E48;
+  --muted:#8B94A4;
+  --line:#E6EAF0;
+  --panel:#F7F9FC;
+  --radius:16px;
+  --radius-sm:12px;
+
+  --icon-size:32px;
+  --gap:8px;
+  --value-indent: calc(var(--icon-size) + var(--gap));
+
+  --shadow-card: 0 10px 30px rgba(5,11,32,.10);
+}
+
+/* Card */
+.card{
+  background:#fff;
+  border:1px solid rgba(5,11,32,.08);
+  border-radius:var(--radius);
+  padding:16px;
+  font-family: "Pretendard","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+}
+.title{
+  font-size:20px;
+  font-weight:700;
+  margin:0 0 20px;
+  color:var(--ink-strong);
+}
+
+/* Grid */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  margin:0;
+  padding:0;
+  list-style:none;
+}
+
+/* === 세로 스택 아이템 === */
+.item{
+  position:relative;
+  background:var(--panel);
+  border:1px solid #EEF1F6;
+  border-radius:var(--radius-sm);
+  padding:14px 12px;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:flex-start;
+  gap:10px;
+  min-height:110px;
+  overflow:visible;
+}
+
+/* 상단: 아이콘 + 라벨 */
+.left{ display:inline-flex; align-items:center; gap:var(--gap); }
+.iconWrap{
+  width:var(--icon-size); height:var(--icon-size);
+  display:grid; place-items:center;
+  background:#fff; border:1px solid var(--line);
+  border-radius:10px;
+}
+.icon{ font-size:18px; }
+.label{ color:var(--muted); font-size:13px; }
+
+/* 값(숫자/텍스트) — 라벨 시작선 맞춤 */
+.value{
+  font-weight:700;
+  color:var(--ink-strong);
+  font-variant-numeric:tabular-nums;
+  padding-left: var(--value-indent);
+  line-height:1.3;
+  width:100%;
+}
+
+/* 거래방식 한 줄 + ellipsis */
+.valueMethods{
+  display:block;
+  padding-left: var(--value-indent);
+  line-height:1.3;
+  font-weight:700;
+  color:var(--ink-strong);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.valueText{ line-height:1.2; }
+.inlineGroup{ display:inline; }
+.comma{ color:var(--ink-strong); margin:0 2px; }
+
+/* 기타 버튼(텍스트) */
+.etcButton{
+  appearance:none;
+  border:none;
+  background:transparent;
+  padding:0;
+  margin:0;
+  font:inherit;
+  color:inherit;
+  cursor:pointer;
+  text-decoration: underline dotted #cfd7e6;
+  text-underline-offset: 2px;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+}
+.etcButton:hover .etcCaret { transform: translateY(1px); }
+.etcCaret{ font-size:14px; transition: transform .15s ease; }
+
+/* 기타 상세 카드(아래로 펼침) */
+.etcCard{
+  width:100%;
+  margin-top:10px;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:14px;
+  box-shadow: var(--shadow-card);
+
+  /* slide-down */
+  max-height:0;
+  opacity:0;
+  overflow:hidden;
+  transition:max-height .22s ease, opacity .22s ease;
+  /* 내부 패딩은 열릴 때만 보여주기 위해 별도 래퍼 없이 padding-top/bottom으로 */
+  padding:0 12px;
+}
+.etcCard.show{
+  max-height:420px; /* 충분한 값 */
+  opacity:1;
+  padding:12px;
+}
+
+.etcCardHeader{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:8px;
+}
+.etcCardIcon{ font-size:16px; color:#5a6bff; }
+.etcCardTitle{ font-weight:700; font-size:12px; color:var(--ink-strong); }
+
+/* 리스트/텍스트 */
+.etcList{ margin:0; padding:0 0 0 16px; }
+.etcList li{ margin:4px 0; }
+.etcTextBody{ margin:0; font-weight:400; font-size:12px; line-height:1.5; }
+
+/* Skeleton */
+.skel{
+  display:inline-block;
+  width:64px; height:14px;
+  border-radius:8px;
+  background:linear-gradient(90deg,#eef1f6,#f7f9fc,#eef1f6);
+  background-size:200% 100%;
+  animation:skel 1.2s ease-in-out infinite;
+}
+@keyframes skel{ 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+/* Hover subtle */
+.item:hover{ border-color:#E1E6EF; box-shadow:0 1px 0 rgba(0,0,0,.02); }
+
+/* Responsive */
+@media (max-width: 900px){
+  .grid{ grid-template-columns:repeat(2,1fr); }
+  .item{ min-height:100px; }
+}
+@media (max-width: 520px){
+  :root{ --icon-size:28px; --value-indent: calc(28px + var(--gap)); }
+  .item{ padding:12px 10px; min-height:96px; }
+}

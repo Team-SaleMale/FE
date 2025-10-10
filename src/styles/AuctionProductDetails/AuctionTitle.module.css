@@ -1,0 +1,78 @@
+/* 컨테이너 */
+.wrap {
+  width: min(1200px, 94%);
+  margin: 20px auto 10px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  font-family: "Pretendard","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+}
+
+.left { min-width: 0; }
+
+/* 제목 — 기존보다 "조금" 크게 (24px) */
+.title {
+  font-size: 28px;               /* ↑ 기존 20px → 24px */
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--ink-900, #1F2226);
+  margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;         /* 최대 2줄 */
+  -webkit-box-orient: vertical;
+}
+
+.meta {
+  margin-top: 8px;
+  color: var(--muted, #8B94A4);
+  font-size: 13px;
+}
+
+.cat {
+  background: #F3F5FA;
+  padding: 4px 10px;
+  border-radius: 999px;
+  display: inline-block;
+  line-height: 1.2;
+}
+
+.catMuted {
+  opacity: 0.75;
+}
+
+.actions { flex: 0 0 auto; }
+
+/* ----- 스켈레톤 ----- */
+.skeleton {
+  background: linear-gradient(90deg, #eef1f6 25%, #f6f8fb 37%, #eef1f6 63%);
+  background-size: 400% 100%;
+  animation: shine 1.2s ease-in-out infinite;
+  border-radius: 8px;
+}
+.titleSkel { width: clamp(200px, 40vw, 560px); height: 28px; }
+.catSkel   { width: 120px; height: 22px; margin-top: 10px; border-radius: 999px; }
+.iconSkel  { width: 36px; height: 36px; border-radius: 999px; display: inline-block; }
+@keyframes shine { 0% {background-position: 200% 0;} 100% {background-position: -200% 0;} }
+
+/* ----- 반응형 ----- */
+@media (max-width: 1024px) {
+  .title { font-size: 22px; }   /* 태블릿에서 살짝 축소 */
+}
+
+@media (max-width: 720px) {
+  .wrap {
+    flex-wrap: wrap;
+    gap: 10px 12px;
+  }
+  .title {
+    font-size: 20px;            /* 모바일 */
+    -webkit-line-clamp: 3;      /* 모바일에선 3줄까지 허용 */
+  }
+  .actions {
+    order: 2;                   /* 좁을 때 액션 버튼을 아래로 */
+  }
+}
