@@ -5,12 +5,15 @@ import AuctionRegistration from "./pages/AuctionRegistration/AuctionRegistration
 import AuctionComplete from "./pages/AuctionRegistration/AuctionComplete";
 import FeaturedProductDetail from "./pages/Main/FeaturedProductDetail";
 import VideoBrowser from "./pages/Main/VideoBrowser";
+import Header from "./components/common/Header";
+import Footer from "./components/common/Footer";
 
 import Video from "./pages/Main/Video";                // ✅ 재생 페이지 추가
 
 export default function App() {
   return (
-    
+    <>
+      <Header />
       <Routes>
         <Route path="/" element={<Main />} />
         <Route path="/featured/:category" element={<FeaturedProductDetail />} />
@@ -22,6 +25,7 @@ export default function App() {
         
          
       </Routes>
-    
+      <Footer />
+    </>
   );
 }
