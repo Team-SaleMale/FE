@@ -1,5 +1,4 @@
 /* 그리드가 각 셀을 같은 폭으로 갖게 하고, 카드가 늘어지지 않도록 */
-
 .grid{
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
