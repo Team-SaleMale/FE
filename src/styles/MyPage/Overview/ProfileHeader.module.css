@@ -8,7 +8,7 @@
 .locationRow{ display:flex; }
 .chipsRow{ display:flex; }
 .location{ display:flex; align-items:center; gap:6px; color:#333; font-weight:600; font-size:13px; }
-.chips{ display:flex; align-items:center; gap:10px; }
+.chips{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .chip{ display:flex; align-items:center; gap:6px; padding:10px 13px; border-radius:19px; border:1px solid #b5bac2; background:#fff; font-size:13px; }
 .badgeIcon{
   width:26px; height:26px;
@@ -18,5 +18,10 @@
   transition:transform 0.2s;
 }
 .badgeIcon:hover{ transform:translateY(2px); }
+.emptyText{
+  font-size:13px;
+  color:#9CA3AF;
+  font-style:italic;
+}
 
 
