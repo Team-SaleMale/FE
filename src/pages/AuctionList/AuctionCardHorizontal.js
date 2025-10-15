@@ -2,10 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/AuctionList/AuctionCardHorizontal.module.css";
 
-/* 남은 시간 (n일 HH:MM:SS) - 항상 호출 */
 function useTimeLeft(endAtISO, disabled) {
   const [now, setNow] = useState(() => Date.now());
-
   useEffect(() => {
     if (disabled) return;
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -13,7 +11,6 @@ function useTimeLeft(endAtISO, disabled) {
   }, [disabled]);
 
   if (disabled || !endAtISO) return "종료";
-
   const ms = Math.max(0, new Date(endAtISO).getTime() - now);
   const sec = Math.floor(ms / 1000);
   const d = Math.floor(sec / 86400);
@@ -29,11 +26,9 @@ export default function AuctionCardHorizontal({ item }) {
     () => (item?.images?.length ? item.images : item?.image ? [item.image] : []),
     [item]
   );
-
   const [idx, setIdx] = useState(0);
   const go = (d) => images.length > 1 && setIdx((p) => (p + d + images.length) % images.length);
 
-  /* 상위에서 계산된 timeLeft가 있으면 사용 */
   const computedTimeLeft = useTimeLeft(item?.endAtISO, item?.isClosed);
   const timeLeft = item?.timeLeft ?? computedTimeLeft;
 
@@ -41,35 +36,48 @@ export default function AuctionCardHorizontal({ item }) {
     <article className={styles.card}>
       {/* 썸네일 */}
       <div className={styles.thumb}>
-        {images.length ? (
-          <img className={styles.thumbImg} src={images[idx]} alt={item?.title || "auction"} />
-        ) : (
-          <div className={styles.empty} />
-        )}
+        {/* 👉 이미지 기준 좌표계를 만드는 래퍼 */}
+        <div className={styles.thumbInner}>
+          {images.length ? (
+            <img className={styles.thumbImg} src={images[idx]} alt={item?.title || "auction"} />
+          ) : (
+            <div className={styles.empty} />
+          )}
 
-        {/* ✅ 오늘 마감 배지만 노출 (오늘 + 미종료) */}
-        {item?.isEndingTodayOpen && <span className={styles.badge}>오늘 마감 경매</span>}
+          {/* 오늘 마감 배지 */}
+          {item?.isEndingTodayOpen && (
+            <span className={styles.badge}>오늘 마감 경매</span>
+          )}
 
-        {images.length > 1 && (
-          <>
-            <button className={`${styles.nav} ${styles.prev}`} onClick={() => go(-1)} aria-label="prev">
-              <Icon icon="solar:alt-arrow-left-linear" />
-            </button>
-            <button className={`${styles.nav} ${styles.next}`} onClick={() => go(1)} aria-label="next">
-              <Icon icon="solar:alt-arrow-right-linear" />
-            </button>
-            <div className={styles.dots} role="tablist" aria-label="images">
-              {images.map((_, i) => (
-                <button
-                  key={i}
-                  className={`${styles.dot} ${i === idx ? styles.activeDot : ""}`}
-                  aria-selected={i === idx}
-                  onClick={() => setIdx(i)}
-                />
-              ))}
-            </div>
-          </>
-        )}
+          {images.length > 1 && (
+            <>
+              <button
+                className={`${styles.nav} ${styles.prev}`}
+                onClick={() => go(-1)}
+                aria-label="prev"
+              >
+                <Icon icon="solar:alt-arrow-left-linear" />
+              </button>
+              <button
+                className={`${styles.nav} ${styles.next}`}
+                onClick={() => go(1)}
+                aria-label="next"
+              >
+                <Icon icon="solar:alt-arrow-right-linear" />
+              </button>
+              <div className={styles.dots} role="tablist" aria-label="images">
+                {images.map((_, i) => (
+                  <button
+                    key={i}
+                    className={`${styles.dot} ${i === idx ? styles.activeDot : ""}`}
+                    aria-selected={i === idx}
+                    onClick={() => setIdx(i)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* 본문 */}

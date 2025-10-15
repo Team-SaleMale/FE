@@ -17,5 +17,7 @@
 
 /* 모바일: 1열 */
 @media (max-width: 640px){
-  .grid{ grid-template-columns: 1fr; }
+  .grid{ grid-template-columns: 1fr; gap:20px 0px; }
+  
+  
 }
