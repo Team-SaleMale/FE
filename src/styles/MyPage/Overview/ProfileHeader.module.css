@@ -1,0 +1,27 @@
+.root{ display:flex; flex-direction:column; gap:19px; }
+.rowTop{ display:flex; align-items:center; gap:13px; }
+.avatar{ width:119px; height:119px; border-radius:200px; background:#eee; }
+.userBlock{ display:flex; flex-direction:column; }
+.userName{ font-size:19px; font-weight:500; color:#000; }
+.rowBottom{ display:flex; align-items:center; justify-content:space-between; gap:13px; }
+.rowBottomVertical{ display:flex; flex-direction:column; gap:19px; }
+.locationRow{ display:flex; }
+.chipsRow{ display:flex; }
+.location{ display:flex; align-items:center; gap:6px; color:#333; font-weight:600; font-size:13px; }
+.chips{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.chip{ display:flex; align-items:center; gap:6px; padding:10px 13px; border-radius:19px; border:1px solid #b5bac2; background:#fff; font-size:13px; }
+.badgeIcon{
+  width:26px; height:26px;
+  display:flex; align-items:center; justify-content:center;
+  background:none; border:none; cursor:pointer;
+  padding:0; color:#333;
+  transition:transform 0.2s;
+}
+.badgeIcon:hover{ transform:translateY(2px); }
+.emptyText{
+  font-size:13px;
+  color:#9CA3AF;
+  font-style:italic;
+}
+
+

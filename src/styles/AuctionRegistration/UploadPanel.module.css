@@ -170,7 +170,7 @@
 .resultLabel { font-size: 13px; color: var(--ink-600); }
 .resultValue { font-size: 15px; font-weight: 700; color: var(--ink-900); }
 
-.aiSummary { margin-top: 8px; font-size: 13px; color: var(--ink-700); }
+.aiSummary { margin-top: 8px; font-size: 15px; color: var(--ink-700); }
 
 /* ===== Error ===== */
 .error { margin-top: 10px; color: var(--danger); font-size: 13px; }

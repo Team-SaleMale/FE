@@ -1,0 +1,7 @@
+.wrapper{ position:relative; }
+.root{ display:flex; gap:22px; position:relative; padding-bottom:6px; }
+.tab{ background:none; border:0; color:#808080; font-size:13px; padding:6px 0; cursor:pointer; position:relative; transition:color 0.2s; }
+.active{ color:#000; font-weight:500; }
+.underline{ position:absolute; bottom:0; height:2px; background:#226FD5; transition:all 0.3s ease; }
+
+

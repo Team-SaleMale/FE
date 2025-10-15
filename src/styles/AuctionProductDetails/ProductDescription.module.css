@@ -1,0 +1,183 @@
+:root {
+  /* 프로젝트 전역 변수 사용 가정 */
+  --white: #ffffff;
+  --ink-900: #1F2226;
+  --ink-600: #454C58;
+  --muted: #8B94A4;
+  --line: rgba(5, 11, 32, 0.08);
+  --card-border: rgba(5, 11, 32, 0.08); /* 사용 일관성 확보 */
+  --brand: #405FF2;
+  --brand-soft: #EEF2FF;
+  --radius-xl: 16px;
+  --shadow-card: 0 4px 20px rgba(5, 11, 32, 0.06);
+}
+
+/* 카드 베이스 */
+.card {
+  background: #fff; /* 요청: 흰색 또는 transparent 원하면 여기만 조정 */
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-xl);
+  padding: 16px 16px 10px;
+  font-family: "Pretendard","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  margin-top: 20px;
+  box-shadow: var(--shadow-card);
+}
+
+/* 헤더 영역: 제목 + 액션(수정일, 신고) */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.title {
+  font-size: 18px;       /* 기본 타이포 정리 (반응형에서 커짐) */
+  font-weight: 800;
+  color: var(--ink-900);
+  margin: 0;
+}
+
+/* 우측 액션(최근 수정일, 신고) */
+.actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.updatedAt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.reportBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(64, 95, 242, 0.18);
+  background: #fff;
+  color: var(--brand);
+  cursor: pointer;
+  transition: transform .08s ease, background .2s ease, border-color .2s ease;
+}
+.reportBtn:hover {
+  background: var(--brand-soft);
+  border-color: rgba(64, 95, 242, 0.32);
+}
+.reportBtn:active {
+  transform: translateY(1px);
+}
+
+.icon {
+  font-size: 16px;
+  line-height: 0;
+}
+
+/* 본문 */
+.desc {
+  white-space: pre-wrap;
+  line-height: 1.7;
+  color: var(--ink-600);
+  font-size: 14px;
+  margin: 8px 0 2px;
+  word-break: break-word;
+}
+
+/* 2줄에서 자르기(접힌 상태) */
+.clamp2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;       /* 핵심: 두 줄로 제한 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  /* 폴백(대략적 계산) */
+  max-height: calc(1.7em * 2 + 2px);
+}
+
+/* 자동 링크 스타일 */
+.desc a {
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* 더보기/접기 버튼 */
+.moreBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 6px 10px;
+  border: 1px solid rgba(64, 95, 242, 0.18);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--brand);
+  cursor: pointer;
+  font-size: 12px;
+  transition: background .2s ease, border-color .2s ease, transform .08s ease;
+}
+.moreBtn:hover {
+  background: var(--brand-soft);
+  border-color: rgba(64, 95, 242, 0.32);
+}
+.moreBtn:active {
+  transform: translateY(1px);
+}
+
+/* 상태 */
+.skeleton {
+  height: 96px;
+  border-radius: 12px;
+  background: linear-gradient(
+    90deg,
+    rgba(0,0,0,0.06) 25%,
+    rgba(0,0,0,0.08) 37%,
+    rgba(0,0,0,0.06) 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.2s ease infinite;
+}
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
+
+.error {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #C62828;
+  font-size: 14px;
+  line-height: 1.6;
+  background: #FFF1F1;
+  border: 1px solid #F8D7DA;
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.empty {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 4px 0 0;
+}
+
+/* 반응형 */
+@media (min-width: 768px) {
+  .card { padding: 18px; }
+  .title { font-size: 20px; }
+  .desc { font-size: 15px; }
+}
+
+@media (min-width: 1100px) {
+  .card { padding: 20px; }
+  .title { font-size: 22px; }
+  .desc { font-size: 15.5px; }
+}

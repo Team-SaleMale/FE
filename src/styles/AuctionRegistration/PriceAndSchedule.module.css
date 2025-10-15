@@ -8,47 +8,80 @@
   --brand-soft: #E8EFFC;
   --danger: #EE0000;
   --radius: 12px;
+
+  /* 효과 */
+  --shadow-sm: 0 1px 2px rgba(5, 11, 32, .04);
+  --shadow-hv: 0 2px 10px rgba(5, 11, 32, .06);
 }
 
+/* 기본 래퍼 */
 .wrap {
   display: block;
   font-family: "Pretendard","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
 }
 
+/* 섹션 타이틀 */
 .sectionTitle {
   font-size: 14px;
   font-weight: 700;
   color: var(--ink-strong);
   margin: 6px 0 10px;
+  letter-spacing: -0.2px;
 }
+.required { color: var(--danger); margin-left: 4px; }
 
-.required {
-  color: var(--danger);
-  margin-left: 4px;
-}
-
-.priceRow {
-  margin-bottom: 22px;
-}
+/* ===== Price ===== */
+.priceRow { margin-bottom: 22px; }
 
 .priceInput {
   width: 100%;
   background: #fff;
   border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .18s ease, border-color .18s ease;
 }
+.priceInput:hover { box-shadow: var(--shadow-hv); }
 
+/* ✅ 포커스: 검은 테두리만, 파란 효과 제거 */
+.priceInput :global(.MuiOutlinedInput-notchedOutline) { transition: border-color .18s ease; }
+.priceInput:focus-within :global(.MuiOutlinedInput-notchedOutline) { border-color: #000; }
+.priceInput :global(.MuiFormLabel-root.Mui-focused) { color: #000; } /* 라벨 있는 경우 대비 */
+
+.priceInput :global(.MuiOutlinedInput-input) {
+  padding: 13px 14px;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.1px;
+}
+.priceInput :global(.MuiInputAdornment-root) { color: var(--ink); font-weight: 700; }
+
+/* ===== 상단 날짜 표시(읽기전용) ===== */
 .dateInputs {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
   margin-bottom: 12px;
 }
-
 .dateField :global(.MuiOutlinedInput-root) {
   background: #fff;
   border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .18s ease, border-color .18s ease;
 }
+.dateField :global(.MuiOutlinedInput-root:hover) { box-shadow: var(--shadow-hv); }
+.dateField :global(.MuiOutlinedInput-input) {
+  padding: 12px 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-strong);
+}
+.dateField :global(.MuiInputLabel-root) { color: var(--muted); }
 
+/* ✅ 포커스: 검은 테두리 + 라벨도 검정, 파란색 제거 */
+.dateField :global(.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline) { border-color: #000; }
+.dateField :global(.MuiFormLabel-root.Mui-focused) { color: #000; }
+.dateField :global(input[readonly]) { cursor: default; }
+
+/* ===== Calendars (구조/톤 유지, 높이만 살짝 ↓) ===== */
 .calendars {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -56,14 +89,13 @@
   border-top: 1px solid var(--line);
   padding-top: 14px;
 }
-
 .calendarCol {
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 8px 8px 0;
+  min-height: 400px;           /* ⬇ 420 → 400 */
 }
-
 .monthLabel {
   font-size: 14px;
   font-weight: 600;
@@ -71,76 +103,111 @@
   padding: 6px 8px 0;
 }
 
-/* ====== Responsive ====== */
+/* ===== Time section ===== */
+/* 카드 크기 살짝 줄이기 + 좌우 여백 유지 */
+.timeWrap {
+  margin: 20px 16px 0;
+  padding: 20px 16px 16px;
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 12px 12px;
+  background: #fff;
+  min-height: 168px;           /* ⬇ 180 → 168 */
+}
+.timeHeader {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-strong);
+  margin-bottom: 16px;
+}
+.timeRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.timeRow :global(.MuiFormControl-root) { width: 100%; }
+.timeHint {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
 
-/* 1200px ↓ : 여백/갭 살짝 축소 */
+/* === TimePicker: 라벨 숨김 + placeholder만 === */
+.timeWrap :global(.MuiTextField-root) { width: 100%; }
+.timeWrap :global(.MuiInputLabel-root) { display: none; }     /* 라벨 완전 숨김 */
+.timeWrap :global(.MuiOutlinedInput-input) {
+  padding: 13px 14px;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.timeWrap :global(input::placeholder) { color: #9AA3AF; }
+
+/* TimePicker 톤 */
+.timeWrap :global(.MuiOutlinedInput-root) {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .18s ease, border-color .18s ease;
+}
+.timeWrap :global(.MuiOutlinedInput-root:hover) { box-shadow: var(--shadow-hv); }
+
+/* ✅ 포커스: 검은 테두리만 (파란 하이라이트 제거) */
+.timeWrap :global(.Mui-focused .MuiOutlinedInput-notchedOutline) { border-color: #000; }
+.timeWrap :global(.MuiFormLabel-root.Mui-focused) { color: #000; }
+
+/* disabled/readOnly 톤 */
+.timeWrap :global(.MuiOutlinedInput-root.Mui-disabled) { background: #F6F7F9; }
+.timeWrap :global(.MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-input) { -webkit-text-fill-color: #9AA3AF; }
+
+/* 시작 시간의 ‘빨간 테두리(Mui-error)’ 전면 무효화 */
+.timeWrap :global(.MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline),
+.timeWrap :global(.MuiOutlinedInput-root.Mui-error.Mui-focused .MuiOutlinedInput-notchedOutline),
+.timeWrap :global(.MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-notchedOutline) {
+  border-color: var(--line) !important;
+  box-shadow: none !important;
+}
+.timeWrap :global(.MuiFormLabel-root.Mui-error) { color: var(--muted) !important; }
+.timeWrap :global(.MuiOutlinedInput-root.Mui-error) { box-shadow: none !important; }
+
+/* ===== Responsive ===== */
+
 @media (max-width: 1200px) {
   .calendars { gap: 18px; }
   .calendarCol { padding: 6px 6px 0; }
   .monthLabel { padding: 4px 6px 0; }
 }
 
-/* 1180px ↓ : 달력 1열 스택 전환 */
 @media (max-width: 1180px) {
-  .dateInputs { grid-template-columns: 1fr; gap: 12px; }
-  .calendars {
-    grid-template-columns: 1fr;  /* ✅ 두 달 → 한 줄 스택 */
-    gap: 16px;
-    padding-top: 10px;
-  }
-}
-
-/* 960px ↓ : 달력 1열 스택 + 인풋 1열 */
-@media (max-width: 960px) {
   .dateInputs { grid-template-columns: 1fr; gap: 12px; }
   .calendars {
     grid-template-columns: 1fr;
     gap: 16px;
     padding-top: 10px;
   }
-  .calendarCol { border-radius: 14px; }
-  .monthLabel {
-    text-align: left;      /* 필요 시 center */
-    font-size: 13px;
-  }
-
-  /* MUI Day 셀 높이 살짝 줄이기 */
-  :global(.MuiPickersDay-root) {
-    margin: 0 2px;
-  }
 }
 
-/* 720px ↓ : 폰트/여백 더 축소 */
+@media (max-width: 960px) {
+  .dateInputs { grid-template-columns: 1fr; gap: 12px; }
+  .calendars { grid-template-columns: 1fr; gap: 16px; padding-top: 10px; }
+  .calendarCol { border-radius: 14px; }
+  .monthLabel { text-align: left; font-size: 13px; }
+  :global(.MuiPickersDay-root) { margin: 0 2px; }
+  .timeRow { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 720px) {
   .sectionTitle { font-size: 13px; margin: 4px 0 8px; }
   .priceRow { margin-bottom: 16px; }
   .calendarCol { padding: 4px 4px 0; }
   .monthLabel { font-size: 12px; }
-  
-  /* 달력 헤더/요일 라벨 축소 */
   :global(.MuiPickersCalendarHeader-label) { font-size: 13px; }
   :global(.MuiDayCalendar-weekDayLabel) { font-size: 11px; }
-
-  /* Day 크기 축소 */
-  :global(.MuiPickersDay-root) {
-    width: 32px;
-    height: 32px;
-    font-size: 12px;
-  }
+  :global(.MuiPickersDay-root) { width: 32px; height: 32px; font-size: 12px; }
 }
 
-/* 480px ↓ : 극소 화면 대응 */
 @media (max-width: 480px) {
   .wrap { padding: 0; }
   .calendarCol { border-radius: 12px; }
   .monthLabel { padding: 2px 4px 0; }
   .calendars { gap: 12px; }
-
-  /* Day 더 축소 + 터치 간격 보장 */
-  :global(.MuiPickersDay-root) {
-    width: 30px;
-    height: 30px;
-    line-height: 30px;
-    margin: 0 1px;
-  }
+  :global(.MuiPickersDay-root) { width: 30px; height: 30px; line-height: 30px; margin: 0 1px; }
 }

@@ -1,0 +1,49 @@
+/* src/styles/AuctionList/Horizontal.module.css */
+
+/* 기본: 한 줄에 한 카드(가로형 카드가 넓어서 다단 배치 비권장) */
+ul{all:unset;}
+.list {
+  display: grid;
+  grid-template-columns: 1fr;  /* 항상 1열 */
+  gap: 16px;                   /* 기본 간격 */
+  align-content: start;
+}
+
+/* 리스트 항목 기본 리셋 */
+.item {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* 카드가 리스트 전체 폭을 자연스럽게 채우도록(선택) */
+.item > article {
+  width: 100%;
+}
+
+/* ====== Responsive ====== */
+
+/* 큰 화면에서 약간 여유 있는 간격 */
+@media (min-width: 1440px) {
+  .list { gap: 18px; }
+}
+
+/* 태블릿 가로 ~ 작은 데스크탑: 간격 살짝 축소 */
+@media (max-width: 1200px) {
+  .list { gap: 14px; }
+}
+
+/* 태블릿 세로 */
+@media (max-width: 1024px) {
+  .list { gap: 12px;padding:0; }
+}
+
+/* 모바일 */
+@media (max-width: 768px) {
+  .list { gap: 10px; }
+}
+
+/* 작은 모바일 */
+@media (max-width: 480px) {
+  .list { gap: 8px; }
+}

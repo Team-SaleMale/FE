@@ -81,7 +81,7 @@ export default function AuctionComplete() {
             <button
               type="button"
               className={styles.primaryBtn}
-              onClick={() => navigate("/auctions/detail")}
+              onClick={() => navigate("/auctions/300")}
             >
               등록 화면 확인하기
             </button>

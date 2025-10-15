@@ -1,0 +1,99 @@
+/* ===== 2행 레이아웃: 1행 제목 / 2행 탭(좌)+토글(우) ===== */
+.wrap{
+  max-width: 1200px;
+  margin: 0 auto 16px;
+  padding: 0 12px;
+
+  display: grid;
+  grid-template-columns: 1fr auto;   /* 좌(유동) / 우(토글) */
+  grid-template-rows: auto auto;     /* 1행: 제목 / 2행: 컨트롤 */
+  column-gap: 12px;
+  row-gap: 10px;
+}
+
+/* 1행 제목 */
+.title{
+  grid-column: 1 / -1;               /* 두 컬럼 가로지르기 */
+  margin: 0;
+  font-weight: 800;
+  font-size: 28px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+/* 2행-좌: 탭 */
+.tabs{
+  grid-column: 1 / 2;
+  align-self: end;                    /* 토글과 하단선 일치 */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 탭 높이 = 토글 버튼 높이(36px)과 동일 → baseline 맞춤 */
+.tab{
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1.5px solid #0b0f1a;
+  background: #fff;
+  color: #0b0f1a;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 36px;                  /* 수직 중앙 */
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.tab:hover{ background:#f7f8fa; }
+.active{ background:#0b0f1a; color:#fff; border-color:#0b0f1a; }
+
+/* 2행-우: 토글 */
+.right{
+  grid-column: 2 / 3;
+  align-self: end;                    /* 탭과 하단선 일치 */
+  display: flex;
+  align-items: center;
+}
+
+.viewToggle{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #fff;
+}
+
+/* 버튼 높이 36px = 탭과 동일 */
+.viewBtn{
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.viewBtn:hover{ background:#f7f8fa; }
+.on{
+  background:#eef3ff;
+  border-color:#cfe0ff;
+  box-shadow:0 0 0 2px rgba(47,107,255,.12) inset;
+}
+
+/* 반응형: 좁은 화면에서는 1열로 쌓기 */
+@media (max-width: 768px){
+  .wrap{
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;  /* 제목 / 탭 / 토글 */
+    row-gap: 8px;
+  }
+  .tabs{ grid-column: 1; }
+  .right{ grid-column: 1; justify-self: flex-end; }
+  .title{ font-size: 22px; }
+}
