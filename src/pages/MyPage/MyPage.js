@@ -17,7 +17,7 @@ import LocationDrawer from "./LocationDrawer";
 import WithdrawalDrawer from "./WithdrawalDrawer";
 
 export default function MyPage() {
-  const [activeTab, setActiveTab] = useState("낙찰완료");
+  const [activeTab, setActiveTab] = useState("낙찰");
   const [sortValue, setSortValue] = useState("latest");
   const [isSellingDrawerOpen, setSellingDrawerOpen] = useState(false);
   const [isPurchaseDrawerOpen, setPurchaseDrawerOpen] = useState(false);
@@ -122,8 +122,8 @@ export default function MyPage() {
         timeLeft: "02:10:05",
         startPrice: 1800000,
         currentPrice: 2130000,
-        isEndingTodayOpen: activeTab !== "낙찰완료" && activeTab !== "유찰",
-        isClosed: activeTab === "낙찰완료",
+        isEndingTodayOpen: activeTab !== "낙찰" && activeTab !== "유찰",
+        isClosed: activeTab === "낙찰",
         isFailedBid: activeTab === "유찰",
       })),
     [activeTab]
@@ -228,7 +228,7 @@ export default function MyPage() {
             />
 
             <TabsNav
-              tabs={["전체", "판매한", "입찰중", "낙찰완료", "유찰"]}
+              tabs={["전체", "판매", "입찰", "낙찰", "유찰"]}
               active={activeTab}
               onChange={setActiveTab}
             />

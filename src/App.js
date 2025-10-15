@@ -8,6 +8,7 @@ import AuctionProductDetails from "./pages/AuctionProductDetails/AuctionProductD
 import VideoBrowser from "./pages/Main/VideoBrowser";
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
+import MyPage from "./pages/MyPage/MyPage";
 
 import Video from "./pages/Main/Video";                // ✅ 재생 페이지 추가
 
@@ -24,8 +25,7 @@ export default function App() {
         <Route path="/video/:videoId" element={<Video />} />  {/* ✅ 재생 라우트 */}
         <Route path="/auctions/success" element={<AuctionComplete />} />
         <Route path="/auctions/300" element={<AuctionProductDetails />} />
-        
-         
+        <Route path="/mypage" element={<MyPage />} />
       </Routes>
       <Footer />
     </>
