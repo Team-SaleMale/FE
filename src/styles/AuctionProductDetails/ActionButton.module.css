@@ -1,0 +1,38 @@
+.wrap {
+  display: inline-flex;
+  align-items: center;
+  
+}
+
+.btn {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(5, 11, 32, 0.10);
+  background: #fff;
+  color: #1F2226;
+  cursor: pointer;
+  transition: transform .04s ease, background-color .15s ease, border-color .15s ease;
+  outline: none;
+}
+
+.btn:hover {
+  background: #F3F5FA;
+  border-color: rgba(5, 11, 32, 0.16);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:focus-visible {
+  box-shadow: 0 0 0 3px rgba(64, 95, 242, 0.25);
+}
+
+.liked {
+  color: #EE4D4D;               /* 찜 상태일 때 아이콘 색 강조 */
+  border-color: rgba(238, 77, 77, 0.25);
+  background: #FFF6F6;
+}

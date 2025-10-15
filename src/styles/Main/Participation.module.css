@@ -1,0 +1,108 @@
+:root {
+  --white: #ffffff;
+  --ink: #050B20;
+  --brand: #405FF2;
+  --grey50: rgba(90, 85, 85, 0.5);
+  --bg-soft: #F9F9F9;
+  --radius-xl: 16px;
+  --shadow-card: 0 4px 20px rgba(5, 11, 32, 0.06);
+}
+
+/* 1) 가운데 정렬 + 좌우 여백 확보 */
+.wrap {
+  width: 100%;
+  padding: 32px 0 12px;
+  margin-top: 150px;
+  font-family: "KakaoBigSans", "Pretendard",  "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+ 
+}
+
+/* 1,3,4) 트랙 자체를 중앙 배치 + 카드 폭 제한(동일 크기) */
+.grid {
+  width: min(1200px, 100% - 96px);     /* 좌우 여백 넉넉히 */
+  margin-inline: auto;                 /* 가운데 정렬 */
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 560px)); /* 카드 최대폭 560 */
+  justify-content: center;             /* 오른쪽 쏠림 방지 */
+  align-items: stretch;
+  gap: 28px;
+}
+
+/* 3,4) 카드 크기 축소 + 두 카드 동일 폭/높이로 */
+.card {
+  background: var(--white);
+  border: 1px solid rgba(5, 11, 32, 0.08);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  width: 100%;
+  max-width: 560px;           /* grid와 일치 */
+  display: flex;              /* 내부 높이 균일화 */
+}
+.cardInner {
+  flex: 1;
+  padding: 28px 32px;         /* 패딩 살짝 축소 */
+  min-height: 220px;          /* 최소 높이 동일 */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* 타이포 그대로 */
+.title {
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 24px;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  margin: 0 0 14px;
+}
+.desc {
+  color: var(--grey50);
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+
+/* 2) 버튼을 내용폭만큼만 보이게 + 크기 축소 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: max-content !important;  /* 전역 width:100% 무력화 */
+  max-width: 100%;
+  padding: 10px 18px;             /* 크기 축소 */
+  border-radius: 9999px;
+ font-family: "KakaoBigSans", "Pretendard",  "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 15px;
+  border: 1px solid transparent;
+  box-shadow: none;
+  cursor: pointer;
+}
+.btnPrimary { background: var(--brand); color: var(--white); }
+.btnPrimary:hover { transform: translateY(-1px); }
+.btnPrimary:active { transform: translateY(0); }
+
+.btnDark { background: var(--ink); color: var(--white); }
+.btnDark:hover { transform: translateY(-1px); }
+.btnDark:active { transform: translateY(0); }
+
+/* 아이콘도 살짝 축소 */
+.btnIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+}
+
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: minmax(0, 560px);    /* 1열 */
+    width: min(720px, 100% - 40px);             /* 모바일 좌우 여백 유지 */
+  }
+  .title { font-size: 24px; }
+  .cardInner { padding: 24px; }
+}

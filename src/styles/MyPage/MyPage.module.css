@@ -1,0 +1,23 @@
+.page{ background:#fff; }
+.container{ display:grid; grid-template-columns: 190px 1fr; gap:26px; max-width:960px; margin:0 auto; padding:26px 13px; }
+
+/* Sidebar */
+.sidebar{ display:flex; flex-direction:column; gap:28px; }
+.sidebarGroup{ display:flex; flex-direction:column; gap:10px; }
+.sidebarTitle{ font-size:16px; font-weight:700; color:#000; }
+.sidebarItem{ background:none; border:0; text-align:left; color:#808080; font-size:12px; cursor:pointer; padding:0; }
+.sidebarDivider{ height:1px; background:#dcdcdc; width:192px; }
+
+/* Main */
+.main{ display:flex; flex-direction:column; gap:19px; }
+.sectionBox{ background:#fff; }
+.sectionDivider{ width:1px; height:83px; background:#e6e6e6; display:none; }
+
+/* Products */
+.products{ display:flex; flex-direction:column; gap:13px; }
+.productsHeader{ display:flex; align-items:center; justify-content:space-between; }
+.productsTitle{ font-size:19px; font-weight:600; color:#444; margin:0; }
+.gridWrap{ }
+.tabsUnderline{ height:2px; width:38px; background:#226fd5; }
+
+

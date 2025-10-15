@@ -1,0 +1,199 @@
+/* 섹션 래핑 */
+.wrap {
+  width: 100%;
+  background:
+    radial-gradient(1200px 400px at 50% -200px, rgba(64, 96, 242, 0.08), transparent 60%),
+    #ffffff;
+  border-top: 1px solid rgba(5, 11, 32, 0.06);
+  border-bottom: 1px solid rgba(5, 11, 32, 0.06);
+  padding: 56px 0;
+}
+
+.inner {
+  width: min(1100px, 92%);
+  margin: 0 auto;
+}
+
+/* 헤더 */
+.header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 12px;
+  line-height: 1;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: #e8effc;
+  color: #1f3af5;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  margin-bottom: 12px;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: 28px;
+  font-weight: 800;
+  color: #121316;
+}
+
+.title strong {
+  color: #1f3af5;
+  font-weight: 900;
+}
+
+.subtitle {
+  margin: 0 auto;
+  color: #454c58;
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 720px;
+}
+
+/* 기능 카드 그리드 */
+.grid {
+  margin: 28px 0 18px;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid rgba(5, 11, 32, 0.08);
+  border-radius: 16px;
+  padding: 18px;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(12, 18, 36, 0.08);
+  border-color: rgba(64, 96, 242, 0.28);
+}
+
+.iconWrap {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #f3f5fa;
+  margin-bottom: 12px;
+}
+
+.cardTitle {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #121316;
+}
+
+.cardDesc {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #383e48;
+}
+
+/* 통계 */
+.stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: #f8f9fb;
+  border: 1px solid rgba(5, 11, 32, 0.06);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin: 18px 0 22px;
+}
+
+.statItem {
+  text-align: center;
+  min-width: 120px;
+}
+
+.statValue {
+  display: block;
+  font-weight: 900;
+  font-size: 20px;
+  color: #121316;
+  line-height: 1.2;
+}
+
+.statLabel {
+  display: block;
+  font-size: 12px;
+  color: #666f7f;
+  margin-top: 4px;
+}
+
+.divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(5, 11, 32, 0.12);
+}
+
+/* CTA */
+.ctaRow {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.primaryBtn,
+.secondaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.primaryBtn {
+  background: #1f3af5;
+  color: #ffffff;
+  border: 1px solid #1f3af5;
+}
+
+.primaryBtn:hover {
+  background: #1630d8;
+  border-color: #1630d8;
+  box-shadow: 0 6px 18px rgba(31, 58, 245, 0.25);
+}
+
+.secondaryBtn {
+  background: #ffffff;
+  color: #121316;
+  border: 1px solid rgba(5, 11, 32, 0.14);
+}
+
+.secondaryBtn:hover {
+  border-color: rgba(5, 11, 32, 0.28);
+  background: #f6f7f9;
+}
+
+/* 반응형 */
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .stats {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .divider {
+    display: none;
+  }
+}

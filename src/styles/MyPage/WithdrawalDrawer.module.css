@@ -1,0 +1,263 @@
+/* 오버레이 */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+}
+
+/* 드로어 */
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 480px;
+  max-width: 100%;
+  background: var(--color-bg, #fff);
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* 헤더 */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border, #e5e5e5);
+}
+
+.close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--color-text, #333);
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-text, #333);
+}
+
+.headerPlaceholder {
+  width: 24px;
+}
+
+/* 내용 */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+/* 경고 박스 */
+.warningBox {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: #fff3e0;
+  border: 1px solid #ffb74d;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.warningIcon {
+  font-size: 24px;
+  color: #f57c00;
+  flex-shrink: 0;
+}
+
+.warningText {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+}
+
+.warningText strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 15px;
+  color: #e65100;
+}
+
+.warningText ul {
+  margin: 0;
+  padding-left: 20px;
+  list-style: disc;
+}
+
+.warningText li {
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+
+/* 섹션 */
+.section {
+  margin-bottom: 24px;
+}
+
+.sectionTitle {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--color-text, #333);
+}
+
+/* 사유 목록 */
+.reasonList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reasonItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--color-border, #e5e5e5);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reasonItem:hover {
+  border-color: var(--color-primary, #007bff);
+  background: #f8f9fa;
+}
+
+.reasonItem input[type="radio"]:checked + span {
+  font-weight: 600;
+  color: var(--color-primary, #007bff);
+}
+
+.radio {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.reasonItem span {
+  flex: 1;
+  font-size: 14px;
+  color: var(--color-text, #333);
+}
+
+/* 텍스트 영역 */
+.textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--color-border, #e5e5e5);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  margin-top: 12px;
+  box-sizing: border-box;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--color-primary, #007bff);
+}
+
+/* 동의 섹션 */
+.agreementSection {
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-top: 24px;
+}
+
+.agreementLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--color-text, #333);
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/* 푸터 */
+.footer {
+  display: flex;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid var(--color-border, #e5e5e5);
+}
+
+.cancelButton {
+  flex: 1;
+  padding: 14px;
+  background: #f8f9fa;
+  border: 1px solid var(--color-border, #e5e5e5);
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text, #333);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancelButton:hover {
+  background: #e9ecef;
+}
+
+.withdrawButton {
+  flex: 1;
+  padding: 14px;
+  background: #dc3545;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.withdrawButton:hover:not(:disabled) {
+  background: #c82333;
+}
+
+.withdrawButton:disabled {
+  background: #e9ecef;
+  color: #adb5bd;
+  cursor: not-allowed;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .drawer {
+    width: 100%;
+  }
+}

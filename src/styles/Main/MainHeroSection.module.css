@@ -1,0 +1,386 @@
+/* =========================
+   MainHeroSection.module.css
+   ========================= */
+
+/* ===== Root ===== */
+.mainherosection {
+  position: relative;
+  width: 100%;
+  border-radius: 0 0 32px 32px;
+  padding: 72px 0 150px;     /* 상단 타이틀, 하단 검색카드 공간 */
+  overflow: visible;         /* 탭/카드 겹침 표시 */
+}
+
+.background {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 410px;             /* 필요시 410~520px 사이에서 미세 조정 */
+  width:100%;
+  border-radius: 0 0 32px 32px;
+  background: #eef1fb;
+  z-index: 0;
+}
+
+/* ===== Title ===== */
+.titleBlock {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  max-width: 1100px;
+  margin: 0 auto 20px;
+}
+.title {
+  margin: 0 0 12px;
+  font-size: 72px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: #0a1020;
+}
+.subtitle {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.6;
+  color: #0a1020;
+}
+
+/* ===== Category Bar (hug) ===== */
+.categoryBar {
+  position: relative;
+  z-index: 30;               /* 카드 위 */
+  width: max-content;        /* 내용만큼 */
+  margin: 0 auto -36px;      /* 카드 상단패딩 일부 덮기 */
+  padding: 10px 14px;
+  border-radius: 40px;
+  background: rgba(0, 0, 0, 0.325);
+  backdrop-filter: blur(22px);
+  display: flex;
+  gap: 10px;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 15px;
+  border: 0;
+  cursor: pointer;
+  font-family: "KakaoBigSans", "Pretendard", system-ui, sans-serif; 
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease, color .12s ease;
+  flex: 0 0 auto;            /* 가로 스크롤 시 내용만큼 */
+}
+.tab:hover { transform: translateY(-1px); }
+.tabActive { background: #fff; color: #1f2226; box-shadow: 0 6px 14px rgba(0,0,0,.08); }
+.tabInactive { background: transparent; color: #fff; opacity: .95; }
+.tabIcon { width: 20px; height: 20px; }
+.tabLabel { line-height: 1; }
+
+/* ===== Search Card ===== */
+.searchWrap {
+  position: relative;
+  z-index: 10;               /* 배경(0) < 카드(10) < 탭(30) */
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.searchCard {
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 35px 120px rgba(20,33,61,.20);
+  padding: 44px 24px 26px;   /* 상단에 탭 자리 */
+  min-height: 100px;         /* 적정 높이 */
+  display: grid;
+  gap: 18px;
+  align-items: end;
+
+  /* 주소 | | 시작 | | 마감 | | 가격 | 버튼  ← 1px 구분선이 3개 */
+  grid-template-columns:
+    minmax(240px, 1.1fr)  /* 주소: 280 → 240 */
+    1px
+    minmax(140px, 0.8fr)  /* 시작: 160 → 140 */
+    1px
+    minmax(140px, 0.8fr)  /* 마감: 160 → 140 */
+    1px
+    minmax(240px, 1.2fr)  /* 가격: 300 → 240 (두 인풋은 flex로 1:1 분배) */
+    minmax(140px, auto);  /* 버튼: 170 → 140 */
+  gap: 16px;              /* 18 → 16 (여유 조금 더 확보) */
+}
+
+.divider, .dividerTall {
+  width: 1px;
+  background: #dddfe3;
+  height: 56px;
+  align-self: center;
+}
+.dividerTall { height: 60px; }
+
+.field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.label {
+  font-family: "Pretendard",  "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+   font-weight: 600; 
+   color: #343941; 
+
+  white-space: nowrap;   /* ⬅︎ 줄바꿈 금지 */
+}
+
+/* 주소 텍스트 */
+.addressText {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  border-radius: 12px;
+  background: #fbfcff;
+  color: #596274;
+  font-size: 14px;
+  border: 1px solid transparent;
+  max-width: 100%;
+}
+
+/* 날짜 트리거 */
+.triggerWrap { position: relative; }
+.dateTrigger {
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid #e6e8ee;
+  background: #fff;
+  padding: 0 14px;
+  font-size: 14px;
+  color: #5e687b;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  transition: border-color .12s ease, box-shadow .12s ease, transform .12s ease;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.dateTrigger:hover { border-color: #cad3ff; }
+.dateTrigger:focus-visible {
+  outline: none;
+  border-color: #b9c3ff;
+  box-shadow: 0 0 0 3px rgba(30,85,255,.12);
+}
+
+/* 숨김 텍스트필드(팝퍼 앵커용) */
+.hiddenInput {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  border: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  left: 0; top: 100%;
+}
+
+/* ---- 가격 범위 ---- */
+.priceInputs{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;            /* 칼럼 내부 수축 허용 */
+}
+
+.priceInputWrap{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: 1 1 0;             /* 두 입력을 1:1 분배 */
+  min-width: 0;
+}
+
+.currency{
+  position: absolute;
+  left: 12px;
+  font-size: 14px;
+  color: #647084;
+  pointer-events: none;
+}
+
+.priceInput{
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid #e6e8ee;
+  background: #fff;
+  padding: 0 12px 0 28px;  /* ₩ 공간 */
+  font-size: 14px;
+  color: #5e687b;
+  width: 100%;             /* 고정폭 금지 → 칼럼 폭에 맞춰 유동 */
+}
+
+.priceInput:focus{
+  outline: none;
+  border-color: #cad3ff;
+  box-shadow: 0 0 0 3px rgba(30,85,255,.12);
+}
+
+.tilde{ color:#9aa3b2; }
+
+/* CTA – 내용만큼(hug) + 우측 정렬 */
+.searchBtn {
+  height: 48px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 12px;
+  background: #1e55ff;
+  color: #fff;
+  font-family: "Pretendard",  "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  box-shadow: 0 18px 36px rgba(30,85,255,.35);
+  cursor: pointer;
+
+  width: max-content;     /* 내용만큼(hug) */
+  justify-self: end;      /* 그리드 우측 정렬 */
+
+  position: relative;     /* z-index 적용 위해 */
+  z-index: 3;             /* 가격 입력 위로 */
+}
+.searchBtn:hover { transform: translateY(-1px); }
+.searchIcon { width: 20px; height: 20px; }
+
+/* ===== Responsive ===== */
+
+/* 1280px 이하: 버튼을 다음 줄로 내려 겹침 방지(필요시) */
+@media (max-width: 1280px){
+  .searchBtn{
+    grid-column: 1 / -1;   /* 다음 줄 전체 */
+    justify-self: end;
+    margin-top: 6px;
+    width: max-content;
+  }
+}
+
+/* 1100px 이하: 한 줄 유지하되 좀 더 압축 */
+@media (max-width: 1100px) {
+  .title { font-size: 56px; }
+
+  /* 구분선은 공간 절약을 위해 숨김 */
+  .divider, .dividerTall { display: none; }
+
+  .searchCard{
+    /* 주소 | 시작 | 마감 | 가격 | 버튼 (총 5컬럼) */
+    grid-template-columns:
+      minmax(220px, 1fr)    /* 주소  : 220 ~ */
+      minmax(150px, 0.8fr)  /* 시작  : 150 ~ */
+      minmax(150px, 0.8fr)  /* 마감  : 150 ~ */
+      minmax(220px, 1.2fr)  /* 가격  : 220 ~ (두 인풋이 내부 flex로 1:1) */
+      minmax(130px, auto);  /* 버튼  : 130 ~ (내용 hug) */
+    gap: 14px;
+    align-items: center;
+  }
+
+  /* 혹시라도 강제 배치가 있었다면 기본 흐름으로 */
+  .endField { grid-column: auto; }
+  .priceField { grid-column: auto; }
+
+  /* 가격 인풋은 컬럼 폭에 맞춰 유연하게 */
+  .priceInput { width: 100%; }
+}
+
+
+/* 카테고리 탭 반응형 (wrap) */
+@media (max-width: 900px) {
+  .categoryBar {
+    gap: 8px;
+    padding: 8px 10px;
+    margin: 0 auto -28px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .tab { padding: 8px 14px; font-size: 14px; }
+}
+
+/* 900px 이하: 검색카드 2열, 버튼은 2번째 열 오른쪽 끝 */
+@media (max-width: 900px){
+  .divider, .dividerTall { display: none; }
+
+  .searchCard{
+    grid-template-columns: 1fr 1fr; /* 2열 */
+    column-gap: 14px;
+    row-gap: 12px;
+    align-items: start;
+  }
+
+  .searchBtn{
+    grid-column: 2 / 3;   /* 오른쪽 열 */
+    justify-self: end;
+    width: max-content;
+  }
+
+  .priceInput{ width: 100%; }
+}
+
+/* 모바일 스크롤 가능한 카테고리 바 + 잘림 방지 */
+@media (max-width: 640px) {
+  .categoryBar {
+    width: 100%;
+    max-width: 1120px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    justify-content: flex-start;
+    padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right));
+    box-sizing: border-box;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 12px;
+    gap: 8px;
+    position: relative;
+  }
+  .categoryBar::-webkit-scrollbar { display: none; }
+  .tab { scroll-snap-align: start; }
+
+  .categoryBar::before,
+  .categoryBar::after {
+    content: "";
+    position: sticky;
+    top: 0;
+    width: 16px;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .categoryBar::before {
+    left: 0;
+    background: linear-gradient(to right, rgba(0,0,0,0.18), rgba(0,0,0,0));
+    border-top-left-radius: 40px;
+    border-bottom-left-radius: 40px;
+    margin-left: -12px;
+  }
+  .categoryBar::after {
+    right: 0;
+    background: linear-gradient(to left, rgba(0,0,0,0.18), rgba(0,0,0,0));
+    border-top-right-radius: 40px;
+    border-bottom-right-radius: 40px;
+    margin-right: -12px;
+  }
+}
+
+/* 640px 이하: 검색카드 1열 스택, 버튼은 한 줄 전체 */
+@media (max-width: 640px){
+  .searchCard{
+    grid-template-columns: 1fr;
+    row-gap: 12px;
+    padding-top: 40px;
+    min-height: 120px;
+  }
+
+  .searchBtn{
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    width: 100%;
+    text-align: center;
+  }
+
+  .priceInputs{ gap: 8px; }
+  .priceInput{ width: 100%; }
+
+  .subtitle { font-size: 20px; }
+}

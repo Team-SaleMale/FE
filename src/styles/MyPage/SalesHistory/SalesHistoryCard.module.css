@@ -1,0 +1,34 @@
+.card{ display:flex; gap:12px; padding:12px; border:1px solid #EEF1F6; border-radius:16px; background:#fff; }
+.thumbWrap{ position:relative; }
+.thumb{ width:150px; height:150px; object-fit:cover; border-radius:12px; background:#f3f5fa; border:1px solid #EEF1F6; display:block; }
+.thumbEmpty{ width:150px; height:150px; border-radius:12px; background:#f3f5fa; border:1px solid #EEF1F6; }
+.badgeSold{ position:absolute; top:6px; left:6px; background:#003499; color:#fff; border-radius:999px; padding:4px 8px; font-size:11px; font-weight:700; }
+.body{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:8px; }
+.title{ margin:0; font-size:16px; font-weight:700; color:#121316; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.metaRow{ display:flex; align-items:center; gap:8px; font-size:13px; color:#383E48; }
+.label{ color:#6B7280; }
+.price{ color:#0046CC; font-weight:700; }
+.footer{ margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.linkBtn{ background:none; border:0; color:#3361b8; font-size:13px; cursor:pointer; padding:0; }
+.detailBtn{
+  display:flex; align-items:center; justify-content:center;
+  width:32px; height:32px;
+  background:#f0f7ff; color:#226FD5;
+  border:1px solid #e0ecf8; border-radius:50%;
+  cursor:pointer;
+  transition: all 0.2s;
+}
+.detailBtn:hover{
+  background-color:#226FD5;
+  color:#fff;
+  transform: scale(1.1);
+}
+.detailBtn svg{ width:18px; height:18px; }
+
+
+
+
+
+
+
+

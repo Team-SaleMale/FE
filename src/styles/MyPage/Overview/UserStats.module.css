@@ -1,0 +1,13 @@
+.root{ display:flex; flex-direction:column; gap:19px; }
+.metricBlock{ display:flex; flex-direction:column; gap:6px; }
+.metricHeader{ font-size:19px; font-weight:600; color:#444; }
+.metricScore{ color:#33b033; font-weight:600; font-size:14px; }
+.metricBar{ height:6px; background:#f0f0f0; border-radius:3px; overflow:hidden; }
+.metricFill{ height:100%; background:#33b033; }
+.rowCards{ display:grid; grid-template-columns: 1fr 1fr; gap:19px; }
+.card{ display:flex; flex-direction:column; gap:6px; }
+.cardTitle{ font-size:13px; font-weight:600; color:#333; }
+.cardLine{ color:#666; font-size:11px; }
+.linkBtn{ background:none; border:0; color:#3361b8; font-size:10px; text-align:left; padding:0; cursor:pointer; }
+
+
