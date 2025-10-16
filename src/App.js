@@ -14,6 +14,7 @@ import Footer from "./components/common/Footer";
 import Login from "./pages/Auth/Login";
 import Signup from "./pages/Auth/Signup";
 import "./App.css";                                   // ✅ develop 브랜치 반영
+import PriceCheck from "./pages/PriceCheck/PriceCheck"; // ✅ 시세 확인 페이지 추가
 
 export default function App() {
   const location = useLocation();
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="/mypage" element={<MyPage />} />
         <Route path="/login" element={<Login />}/>
         <Route path="/signup" element={<Signup />}/>
+        <Route path="/price-check" element={<PriceCheck />} /> {/* ✅ 시세 확인 라우트 */}
       </Routes>
       {!hideAuthLayout && <Footer />}
     </>
