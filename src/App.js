@@ -1,4 +1,5 @@
 import { Routes, Route, useLocation } from "react-router-dom";
+import ScrollToTop from "./components/ScrollToTop";
 import Main from "./pages/Main/Main";
 import AuctionList from "./pages/AuctionList/AuctionList";
 import AuctionRegistration from "./pages/AuctionRegistration/AuctionRegistration";
@@ -21,6 +22,8 @@ export default function App() {
 
   return (
     <>
+     {/* 라우트가 바뀔 때마다 맨 위로 */}
+      <ScrollToTop behavior="auto" />
       {!hideAuthLayout && <Header />}
       <Routes>
         <Route path="/" element={<Main />} />
