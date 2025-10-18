@@ -15,6 +15,11 @@ import Login from "./pages/Auth/Login";
 import Signup from "./pages/Auth/Signup";
 import "./App.css";                                   // ✅ develop 브랜치 반영
 import PriceCheck from "./pages/PriceCheck/PriceCheck"; // ✅ 시세 확인 페이지 추가
+import InquiryList from "./pages/Inquiry/InquiryList";
+import InquiryWrite from "./pages/Inquiry/InquiryWrite";
+import InquiryDetail from "./pages/Inquiry/InquiryDetail";
+
+console.log({ InquiryList, InquiryWrite, InquiryDetail });
 
 export default function App() {
   const location = useLocation();
@@ -39,6 +44,9 @@ export default function App() {
         <Route path="/login" element={<Login />}/>
         <Route path="/signup" element={<Signup />}/>
         <Route path="/price-check" element={<PriceCheck />} /> {/* ✅ 시세 확인 라우트 */}
+        <Route path="/inquiries" element={<InquiryList />} />
+        <Route path="/inquiries/new" element={<InquiryWrite />} />
+        <Route path="/inquiries/:id" element={<InquiryDetail />} />
       </Routes>
       {!hideAuthLayout && <Footer />}
     </>
