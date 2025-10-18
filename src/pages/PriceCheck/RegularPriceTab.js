@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import PriceCheckHeader from "../../components/pricecheck/PriceCheckHeader";
 import "../../styles/PriceCheck/RegularPriceTab.css";
 
 export default function RegularPriceTab({ activeTab, setActiveTab }) {
@@ -16,16 +17,21 @@ export default function RegularPriceTab({ activeTab, setActiveTab }) {
     setLoading(true);
     try {
       const start = (pageNum - 1) * PER_PAGE + 1;
-      const res = await axios.get("https://openapi.naver.com/v1/search/shop.json", {
+      const res = await axios.get("/.netlify/functions/naver-shop", {
         params: { query, display: PER_PAGE, start, sort: "sim" },
-        headers: {
-          "X-Naver-Client-Id": import.meta.env.VITE_NAVER_CLIENT_ID,
-          "X-Naver-Client-Secret": import.meta.env.VITE_NAVER_CLIENT_SECRET,
-        },
       });
-      setItems(res.data.items || []);
+      if (res.status !== 200 || !Array.isArray(res.data.items)) {
+        console.warn("NAVER API ERROR:", res.status, res.data);
+        alert(`네이버 API 오류: ${res.status} ${res.data?.errorMessage || ""}`);
+        setItems([]);
+        setTotal(0);
+        return;
+      }
+      setItems(res.data.items);
       setTotal(res.data.total || 0);
       setPage(pageNum);
+    } catch (e) {
+      console.error("네이버 API 프록시 오류:", e);
     } finally {
       setLoading(false);
     }
@@ -40,17 +46,15 @@ export default function RegularPriceTab({ activeTab, setActiveTab }) {
 
   return (
     <div className="rp-wrap">
-      <div className="heading-row">
-        <h2 className="title">시세 둘러보기</h2>
-        <form className="search" onSubmit={onSubmit}>
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="상품명을 입력해 주세요"
-          />
-          <button type="submit" aria-label="search">Q</button>
-        </form>
-      </div>
+      {/* ✅ 공용 헤더로 교체 */}
+      <form onSubmit={onSubmit}>
+        <PriceCheckHeader
+          title="시세 둘러보기"
+          value={query}
+          onChange={setQuery}
+          placeholder="상품명을 입력해 주세요"
+        />
+      </form>
 
       <div className="tabbar">
         <button className="tab active">

@@ -1,0 +1,49 @@
+/* 레이아웃: 제목 + 검색창(가운데 정렬, 넓은 폭) */
+.pc-header{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  align-items:center;
+  gap:16px;
+  margin:8px 0 20px;
+}
+
+.pc-title{
+  font-size:36px;
+  font-weight:800;
+  margin:0;
+  line-height:1.2;
+}
+
+/* 검색창: 가운데 정렬 + 최대폭 900px */
+.pc-search{
+  justify-self:center;
+  width:100%;
+  max-width:900px;
+  height:56px;
+  display:flex;
+  align-items:center;
+  border:1px solid #e5e7eb;
+  border-radius:28px;
+  padding:0 8px;
+  background:#fff;
+}
+
+.pc-search input{
+  flex:1;
+  height:100%;
+  border:none;
+  outline:none;
+  padding:0 16px;
+  font-size:16px;
+}
+
+.pc-search-btn{
+  width:48px;
+  height:48px;
+  border:none;
+  border-radius:9999px;
+  cursor:pointer;
+  background:#111;
+  color:#fff;
+  font-weight:700;
+}
