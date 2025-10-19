@@ -39,8 +39,8 @@ export function ensureSeed() {
     {
       id: "1",
       type: "이용 안내",
-      title: "선생님 찾는 방법",
-      content: "처음 이용하는데 선생님/학생 찾는 방법을 모르겠어요.",
+      title: "경매 상품 등록 방법",
+      content: "처음 이용하는데 경매 등록 방법을 모르겠어요",
       date: today,
       status: "접수 완료"
     },
