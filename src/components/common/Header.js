@@ -54,7 +54,7 @@ export default function Header() {
 
           <nav className="vb-center">
             <Link to="/auctions" className="vb-link">경매하기</Link>
-            <Link to="/videos" className="vb-link">시세 둘러보기</Link>
+            <Link to="/price-check" className="vb-link">시세 둘러보기</Link>
             <Link to="/auctions/new" className="vb-link">상품 등록</Link>
           </nav>
 
@@ -126,7 +126,7 @@ export default function Header() {
 
                     <div className="vb-popover__body vb-user-popover__body">
                       <Link to="/mypage" className="vb-menu__item">마이페이지</Link>
-                      <Link to="/inquiries" className="vb-menu__item">문의하기</Link>
+                      <Link to="/support" className="vb-menu__item">문의하기</Link>
                     </div>
                   </div>
                 )}
