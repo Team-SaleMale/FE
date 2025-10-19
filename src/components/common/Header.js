@@ -126,7 +126,7 @@ export default function Header() {
 
                     <div className="vb-popover__body vb-user-popover__body">
                       <Link to="/mypage" className="vb-menu__item">마이페이지</Link>
-                      <Link to="/support" className="vb-menu__item">문의하기</Link>
+                      <Link to="/inquiries" className="vb-menu__item">문의하기</Link>
                     </div>
                   </div>
                 )}

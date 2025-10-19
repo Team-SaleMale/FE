@@ -1,0 +1,13 @@
+[functions]
+  directory = "netlify/functions"
+
+[dev]
+  command = "npm start"
+  targetPort = 3000   # CRA가 3001로 바뀌면 여기도 3001로 수정해야 함
+  port = 8888         # 프록시가 노출되는 포트
+
+# CRA/Vite 같은 SPA에서 새로고침해도 라우팅 되게
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
