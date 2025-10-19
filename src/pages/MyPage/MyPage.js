@@ -15,6 +15,7 @@ import ReviewDrawer from "./ReviewDrawer";
 import CategoryDrawer from "./CategoryDrawer";
 import LocationDrawer from "./LocationDrawer";
 import WithdrawalDrawer from "./WithdrawalDrawer";
+import { useNavigate } from "react-router-dom";
 
 export default function MyPage() {
   const [activeTab, setActiveTab] = useState("낙찰");
@@ -30,6 +31,7 @@ export default function MyPage() {
   const [selectedChatItem, setSelectedChatItem] = useState(null);
   const [selectedCategories, setSelectedCategories] = useState(["books", "pets", "appliances", "digital"]);
   const [userLocation, setUserLocation] = useState("서울 강서구 가양제3동");
+  const navigate = useNavigate();
 
   const openSellingDrawer = () => setSellingDrawerOpen(true);
   const closeSellingDrawer = () => setSellingDrawerOpen(false);
@@ -197,7 +199,7 @@ export default function MyPage() {
             <div className={styles.sidebarTitle}>내 정보</div>
             <button className={styles.sidebarItem} onClick={openCategoryDrawer}>카테고리 설정</button>
             <button className={styles.sidebarItem} onClick={openLocationDrawer}>동네 수정하기</button>
-            <button className={styles.sidebarItem}>문의하기</button>
+            <button className={styles.sidebarItem} onClick={() => navigate("/inquiries")}>문의하기</button>
             <button className={styles.sidebarItem} onClick={openWithdrawalDrawer}>탈퇴하기</button>
           </div>
         </aside>
