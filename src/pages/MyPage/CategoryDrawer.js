@@ -14,20 +14,24 @@ export default function CategoryDrawer({ open, onClose, selectedCategories, onTo
     };
   }, [open]);
 
-  // 전체 카테고리 목록
+  // 전체 카테고리 목록 (경매 등록과 동일)
   const allCategories = [
-    { id: "books", name: "도서", icon: "solar:notebook-broken" },
-    { id: "pets", name: "반려동물", icon: "solar:cat-linear" },
-    { id: "appliances", name: "생활가전", icon: "mdi:washing-machine" },
-    { id: "digital", name: "디지털 기기", icon: "mdi:television" },
-    { id: "fashion", name: "패션/의류", icon: "solar:t-shirt-linear" },
-    { id: "beauty", name: "뷰티/미용", icon: "solar:mirror-left-linear" },
-    { id: "sports", name: "스포츠/레저", icon: "solar:basketball-linear" },
-    { id: "toys", name: "장난감/취미", icon: "solar:gameboy-linear" },
-    { id: "furniture", name: "가구/인테리어", icon: "solar:sofa-3-linear" },
-    { id: "food", name: "식품", icon: "solar:chef-hat-linear" },
-    { id: "plants", name: "식물", icon: "solar:leaf-linear" },
-    { id: "kids", name: "유아동", icon: "solar:baby-carriage-linear" },
+    { id: "women-acc", name: "여성잡화", icon: "solar:bag-smile-outline" },
+    { id: "food-processed", name: "가공식품", icon: "solar:chef-hat-linear" },
+    { id: "sports", name: "스포츠/레저", icon: "solar:balls-linear" },
+    { id: "plant", name: "식물", icon: "solar:waterdrop-linear" },
+    { id: "game-hobby", name: "게임/취미/음반", icon: "solar:reel-2-broken" },
+    { id: "ticket", name: "티켓", icon: "solar:ticket-sale-linear" },
+    { id: "furniture", name: "가구/인테리어", icon: "solar:armchair-2-linear" },
+    { id: "beauty", name: "뷰티/미용", icon: "solar:magic-stick-3-linear" },
+    { id: "clothes", name: "의류", icon: "solar:hanger-broken" },
+    { id: "health-food", name: "건강기능식품", icon: "solar:dumbbell-large-minimalistic-linear" },
+    { id: "book", name: "도서", icon: "solar:notebook-broken" },
+    { id: "kids", name: "유아동", icon: "solar:smile-circle-linear" },
+    { id: "digital", name: "디지털 기기", icon: "solar:laptop-minimalistic-linear" },
+    { id: "living-kitchen", name: "생활/주방", icon: "solar:whisk-linear" },
+    { id: "home-appliance", name: "생활가전", icon: "solar:washing-machine-minimalistic-linear" },
+    { id: "etc", name: "기타", icon: "solar:add-square-broken" },
   ];
 
   if (!open) return null;

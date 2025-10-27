@@ -15,7 +15,8 @@ import ReviewDrawer from "./ReviewDrawer";
 import CategoryDrawer from "./CategoryDrawer";
 import LocationDrawer from "./LocationDrawer";
 import WithdrawalDrawer from "./WithdrawalDrawer";
-import { useNavigate } from "react-router-dom";
+import WishlistDrawer from "./WishlistDrawer";
+import WishlistList from "./Wishlist/WishlistList";
 
 export default function MyPage() {
   const [activeTab, setActiveTab] = useState("낙찰");
@@ -28,10 +29,40 @@ export default function MyPage() {
   const [isCategoryDrawerOpen, setCategoryDrawerOpen] = useState(false);
   const [isLocationDrawerOpen, setLocationDrawerOpen] = useState(false);
   const [isWithdrawalDrawerOpen, setWithdrawalDrawerOpen] = useState(false);
+  const [isWishlistDrawerOpen, setWishlistDrawerOpen] = useState(false);
+  const [wishlistSortValue, setWishlistSortValue] = useState("deadline");
   const [selectedChatItem, setSelectedChatItem] = useState(null);
-  const [selectedCategories, setSelectedCategories] = useState(["books", "pets", "appliances", "digital"]);
+  const [selectedCategories, setSelectedCategories] = useState(["book", "digital", "home-appliance", "beauty"]);
   const [userLocation, setUserLocation] = useState("서울 강서구 가양제3동");
-  const navigate = useNavigate();
+  const [wishlistItems, setWishlistItems] = useState([
+    {
+      id: "wishlist-1",
+      image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=1200&auto=format&fit=crop",
+      title: "삼성 갤럭시 Z Fold 6 (512GB)",
+      startPrice: 1800000,
+      currentPrice: 2130000,
+      bidders: 630,
+      timeLeft: "02:15:30",
+    },
+    {
+      id: "wishlist-2",
+      image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1200&auto=format&fit=crop",
+      title: "애플 워치 시리즈 9",
+      startPrice: 450000,
+      currentPrice: 580000,
+      bidders: 142,
+      timeLeft: "1일 5시간",
+    },
+    {
+      id: "wishlist-3",
+      image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1200&auto=format&fit=crop",
+      title: "소니 WH-1000XM5 헤드폰",
+      startPrice: 280000,
+      currentPrice: 320000,
+      bidders: 89,
+      timeLeft: "3일 12시간",
+    },
+  ]);
 
   const openSellingDrawer = () => setSellingDrawerOpen(true);
   const closeSellingDrawer = () => setSellingDrawerOpen(false);
@@ -103,6 +134,15 @@ export default function MyPage() {
   // 탈퇴 드로어 열기/닫기
   const openWithdrawalDrawer = () => setWithdrawalDrawerOpen(true);
   const closeWithdrawalDrawer = () => setWithdrawalDrawerOpen(false);
+
+  // 찜한 목록 드로어 열기/닫기
+  const openWishlistDrawer = () => setWishlistDrawerOpen(true);
+  const closeWishlistDrawer = () => setWishlistDrawerOpen(false);
+
+  // 찜 제거
+  const handleRemoveWishlist = (item) => {
+    setWishlistItems((prev) => prev.filter((it) => it.id !== item.id));
+  };
 
   // 모두 닫기
   const closeAll = () => {
@@ -183,12 +223,26 @@ export default function MyPage() {
           open={isWithdrawalDrawerOpen}
           onClose={closeWithdrawalDrawer}
         />
+        <WishlistDrawer
+          open={isWishlistDrawerOpen}
+          onClose={closeWishlistDrawer}
+          title="찜한 목록"
+          sortValue={wishlistSortValue}
+          onSortChange={setWishlistSortValue}
+        >
+          <WishlistList
+            items={wishlistItems}
+            onItemClick={(item) => console.log("Item clicked:", item)}
+            onRemoveWishlist={handleRemoveWishlist}
+          />
+        </WishlistDrawer>
         {/* 사이드바 */}
         <aside className={styles.sidebar}>
           <div className={styles.sidebarGroup}>
             <div className={styles.sidebarTitle}>거래 정보</div>
             <button className={styles.sidebarItem} onClick={openSellingDrawer}>판매내역</button>
             <button className={styles.sidebarItem} onClick={openPurchaseDrawer}>구매내역</button>
+            <button className={styles.sidebarItem} onClick={openWishlistDrawer}>찜한 목록</button>
             <button className={styles.sidebarItem} onClick={openReviewDrawer}>전체 후기 보기</button>
             <button className={styles.sidebarItem} onClick={openChatList}>채팅 목록 보기</button>
           </div>

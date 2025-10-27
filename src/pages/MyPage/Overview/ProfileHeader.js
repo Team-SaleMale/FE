@@ -20,20 +20,24 @@ export default function ProfileHeader({ selectedCategories = [], userLocation = 
       reader.readAsDataURL(file);
     }
   };
-  // 카테고리 매핑
+  // 카테고리 매핑 (경매 등록과 동일)
   const categoryMap = {
-    books: { name: "도서", icon: "solar:notebook-broken" },
-    pets: { name: "반려동물", icon: "solar:cat-linear" },
-    appliances: { name: "생활가전", icon: "mdi:washing-machine" },
-    digital: { name: "디지털 기기", icon: "mdi:television" },
-    fashion: { name: "패션/의류", icon: "solar:t-shirt-linear" },
-    beauty: { name: "뷰티/미용", icon: "solar:mirror-left-linear" },
-    sports: { name: "스포츠/레저", icon: "solar:basketball-linear" },
-    toys: { name: "장난감/취미", icon: "solar:gameboy-linear" },
-    furniture: { name: "가구/인테리어", icon: "solar:sofa-3-linear" },
-    food: { name: "식품", icon: "solar:chef-hat-linear" },
-    plants: { name: "식물", icon: "solar:leaf-linear" },
-    kids: { name: "유아동", icon: "solar:baby-carriage-linear" },
+    "women-acc": { name: "여성잡화", icon: "solar:bag-smile-outline" },
+    "food-processed": { name: "가공식품", icon: "solar:chef-hat-linear" },
+    "sports": { name: "스포츠/레저", icon: "solar:balls-linear" },
+    "plant": { name: "식물", icon: "solar:waterdrop-linear" },
+    "game-hobby": { name: "게임/취미/음반", icon: "solar:reel-2-broken" },
+    "ticket": { name: "티켓", icon: "solar:ticket-sale-linear" },
+    "furniture": { name: "가구/인테리어", icon: "solar:armchair-2-linear" },
+    "beauty": { name: "뷰티/미용", icon: "solar:magic-stick-3-linear" },
+    "clothes": { name: "의류", icon: "solar:hanger-broken" },
+    "health-food": { name: "건강기능식품", icon: "solar:dumbbell-large-minimalistic-linear" },
+    "book": { name: "도서", icon: "solar:notebook-broken" },
+    "kids": { name: "유아동", icon: "solar:smile-circle-linear" },
+    "digital": { name: "디지털 기기", icon: "solar:laptop-minimalistic-linear" },
+    "living-kitchen": { name: "생활/주방", icon: "solar:whisk-linear" },
+    "home-appliance": { name: "생활가전", icon: "solar:washing-machine-minimalistic-linear" },
+    "etc": { name: "기타", icon: "solar:add-square-broken" },
   };
   return (
     <header className={styles.root}>
