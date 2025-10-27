@@ -1,6 +1,7 @@
-// NOTE(ChatGPT): 아래 형식처럼 "default export 함수 컴포넌트"여야 App.js의 import와 맞습니다.
 import React, { useState } from "react";
 import "../../styles/Auth/Login.css";
+import naverLogo from "../../assets/img/logo/naver_logo.png"; // 추가됨
+import kakaoLogo from "../../assets/img/logo/kakao_logo.png"; // 추가됨
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -34,12 +35,22 @@ function Login() {
             value={pw}
             onChange={(e) => setPw(e.target.value)}
           />
-          <div className="divider" />
-          <div className="auth-sub small">또는 다음 계정으로 계속하기</div>
-          <div className="social-wrap">
-            <button type="button" className="social-btn google">G</button>
-            <button type="button" className="social-btn apple"></button>
+
+          {/* 구분선 */}
+          <div className="divider">
+            <span>또는 다음 계정으로 계속하기</span>
           </div>
+
+          {/* 소셜 카드형 버튼 */}
+          <div className="social-card-row">
+            <button type="button" className="social-card" aria-label="네이버 로그인">
+              <img src={naverLogo} alt="Naver" className="social-card-logo" />
+            </button>
+            <button type="button" className="social-card" aria-label="카카오 로그인">
+              <img src={kakaoLogo} alt="Kakao" className="social-card-logo" />
+            </button>
+          </div>
+
           <button type="submit" className="auth-submit">로그인</button>
         </form>
 
@@ -51,4 +62,4 @@ function Login() {
   );
 }
 
-export default Login; // NOTE(ChatGPT): default export (중요)
+export default Login; 

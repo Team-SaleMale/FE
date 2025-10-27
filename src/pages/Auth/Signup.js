@@ -1,6 +1,7 @@
-// NOTE(ChatGPT): App.js의 `import Signup from "./pages/Auth/Signup";`와 맞추기 위해 default export로 유지
 import React, { useState } from "react";
 import "../../styles/Auth/Signup.css";
+import naverLogo from "../../assets/img/logo/naver_logo.png"; // 추가됨
+import kakaoLogo from "../../assets/img/logo/kakao_logo.png"; // 추가됨
 
 function Signup() {
   const [email, setEmail] = useState("");
@@ -45,17 +46,27 @@ function Signup() {
             value={pw2}
             onChange={(e) => setPw2(e.target.value)}
           />
+
+        {/* 구분선 */}
+        <div className="divider">
+          <span>또는 다음 계정으로 가입하기</span>
+        </div>
+
+        {/* 소셜 카드형 버튼 */}
+        <div className="social-card-row">
+          <button type="button" className="social-card" aria-label="네이버로 가입">
+            <img src={naverLogo} alt="Naver" className="social-card-logo" />
+          </button>
+          <button type="button" className="social-card" aria-label="카카오로 가입">
+            <img src={kakaoLogo} alt="Kakao" className="social-card-logo" />
+          </button>
+        </div>
+
           <button type="submit" className="auth-submit">회원가입</button>
         </form>
-
-        <div className="auth-sub small">또는 다음 계정으로 가입하기</div>
-        <div className="social-wrap">
-          <button type="button" className="social-btn google">G</button>
-          <button type="button" className="social-btn apple"></button>
-        </div>
       </div>
     </div>
   );
 }
 
-export default Signup; // NOTE(ChatGPT): default export (중요)
+export default Signup;
