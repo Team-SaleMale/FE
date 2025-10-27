@@ -20,7 +20,7 @@
   padding: 16px 12px 40px;
   font-family:"Pretendard","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
   color: var(--ink-900);
-  background: var(--bg);
+
 
   /* 🔒 가로 스크롤 차단(안 보이게가 아니라 '클립') */
   overflow-x: clip;

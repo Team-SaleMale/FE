@@ -253,7 +253,7 @@ export default function MyPage() {
             <div className={styles.sidebarTitle}>내 정보</div>
             <button className={styles.sidebarItem} onClick={openCategoryDrawer}>카테고리 설정</button>
             <button className={styles.sidebarItem} onClick={openLocationDrawer}>동네 수정하기</button>
-            <button className={styles.sidebarItem}>문의하기</button>
+            <button className={styles.sidebarItem} onClick={() => navigate("/inquiries")}>문의하기</button>
             <button className={styles.sidebarItem} onClick={openWithdrawalDrawer}>탈퇴하기</button>
           </div>
         </aside>

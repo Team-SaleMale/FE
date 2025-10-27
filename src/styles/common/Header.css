@@ -85,3 +85,62 @@
 .vb-header a { text-decoration:none; }
 html { overflow-y:scroll; }
 :root { scrollbar-gutter:stable; }
+
+/* ---------------- 사용자 모달 전용 스타일 ---------------- */
+.vb-user-popover {
+  position: absolute;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+  width: 280px;          /* 알림보다 작게 */
+  height: auto;          /* 고정 높이 제거 */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: vb-pop-fade 0.15s ease;
+  z-index: 100;
+}
+
+.vb-user-popover .vb-popover__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fafafa;
+  border-bottom: 1px solid #f1f5f9;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: normal;
+}
+
+.vb-user-popover .vb-menu__logout {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.vb-user-popover__body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 10px;
+}
+
+.vb-user-popover__body .vb-menu__item {
+  display: block;
+  text-align: center;
+  padding: 8px 0;
+  border-radius: 8px;
+  background: #f9fafb;
+  color: #111827;
+  font-size: 14px;
+  font-weight: normal;
+  transition: background 0.2s;
+}
+
+.vb-user-popover__body .vb-menu__item:hover {
+  background: #f3f4f6;
+}

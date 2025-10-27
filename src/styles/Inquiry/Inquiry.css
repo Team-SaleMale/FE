@@ -1,0 +1,191 @@
+/* ===== 컨테이너 & 타이틀 ===== */
+.vb-inquiry__wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 40px 16px 120px; /* 하단 여백 넉넉히 */
+  box-sizing: border-box;
+}
+
+.vb-inquiry__title {
+  font-size: 28px;
+  font-weight: 800;
+  text-align: center;      /* 제목 가운데 정렬 */
+  margin-bottom: 24px;
+}
+
+/* ===== 툴바(필터) ===== */
+.vb-inquiry__toolbar {
+  display: flex;
+  justify-content: flex-end;  /* 오른쪽 배치 */
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.vb-inquiry__filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vb-inquiry__select {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: #fff;
+  font-size: 14px;
+}
+
+/* ===== 테이블 ===== */
+.vb-inquiry__table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;          /* 균등폭 */
+  border-top: 1px solid #e5e7eb;
+}
+
+.vb-inquiry__table th,
+.vb-inquiry__table td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 14px 12px;
+  text-align: left;
+  font-size: 15px;
+  color: #111827;
+}
+
+.vb-inquiry__table th {
+  background: #f9fafb;         /* 헤더 회색 */
+  color: #374151;
+  font-weight: 700;
+}
+
+.vb-inquiry__table td:nth-child(1),
+.vb-inquiry__table th:nth-child(1) { width: 80px; text-align: center; }
+.vb-inquiry__table td:nth-child(2),
+.vb-inquiry__table th:nth-child(2) { width: 140px; }
+.vb-inquiry__table td:nth-child(4),
+.vb-inquiry__table th:nth-child(4) { width: 160px; }
+.vb-inquiry__table td:nth-child(5),
+.vb-inquiry__table th:nth-child(5) { width: 140px; }
+
+.vb-inquiry__empty {
+  text-align: center;
+  color: #9ca3af;
+  padding: 48px 0;
+}
+
+/* 상태 점 */
+.vb-inquiry__status { font-weight: 700; color: #1f2937; }
+.vb-dot { display:inline-block; width:7px; height:7px; margin-right:8px; border-radius:999px; background:#ef4444; }
+
+/* ===== 우하단 고정 버튼 ===== */
+.vb-inquiry__fab {
+  position: fixed;
+  right: 40px;
+  bottom: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px;
+  background: #1f2b6c;     /* 네이비 */
+  color: #fff;
+  border-radius: 12px;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(0,0,0,.15);
+  text-decoration: none;
+}
+.vb-inquiry__fab:hover { filter: brightness(1.05); }
+
+/* ===== 작성/상세 공통 ===== */
+.vb-inquiry__card,
+.vb-inquiry__bubble {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  background: #fff;
+}
+
+.vb-inquiry__row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  align-items: start;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.vb-inquiry__label { font-weight: 700; color:#374151; padding-top:10px; }
+.vb-inquiry__help { color:#6b7280; font-size:13px; margin:6px 0 0; }
+
+.vb-inquiry__input,
+.vb-inquiry__textarea,
+.vb-inquiry__select--full {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 12px 12px;
+  font-size: 15px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.vb-inquiry__textarea { min-height: 220px; resize: vertical; }
+
+.vb-inquiry__agree {
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 18px;
+  margin: 14px 0;
+  color: #374151;
+}
+.vb-inquiry__agree small { color:#6b7280; display:block; margin-top:6px; }
+
+.vb-inquiry__actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* 공통 버튼 스타일 */
+.vb-inquiry__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;      /* ✅ 글자 세로/가로 중앙 정렬 */
+  min-width: 160px;             /* ✅ 문의하기 버튼과 동일한 폭 */
+  height: 52px;                 /* ✅ 동일한 높이 */
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #000;                  /* ✅ 글씨 검정색 */
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+/* 문의하기 버튼 (파란색) */
+.vb-inquiry__btn--primary {
+  background: #1f2b6c;
+  color: #fff;
+  border-color: transparent;
+}
+
+/* 호버 효과 (선택) */
+.vb-inquiry__btn:hover {
+  filter: brightness(0.97);
+}
+.vb-inquiry__btn--primary:hover {
+  filter: brightness(1.1);
+}
+
+.vb-inquiry__answer {
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 18px;
+  margin-top: 16px;
+  background: #fdfdfd;
+}
