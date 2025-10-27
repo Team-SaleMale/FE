@@ -17,8 +17,10 @@ import LocationDrawer from "./LocationDrawer";
 import WithdrawalDrawer from "./WithdrawalDrawer";
 import WishlistDrawer from "./WishlistDrawer";
 import WishlistList from "./Wishlist/WishlistList";
+import { useNavigate } from "react-router-dom";
 
 export default function MyPage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("낙찰");
   const [sortValue, setSortValue] = useState("latest");
   const [isSellingDrawerOpen, setSellingDrawerOpen] = useState(false);
