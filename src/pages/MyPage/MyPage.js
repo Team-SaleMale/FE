@@ -5,6 +5,7 @@ import TabsNav from "./Overview/TabsNav";
 import FiltersBar from "./Overview/FiltersBar";
 import MyPageVertical from "./MyPageVertical";
 import { useMemo, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import SellingDrawer from "./SellingDrawer";
 import SalesHistoryList from "./SalesHistory/SalesHistoryList";
 import PurchaseDrawer from "./PurchaseDrawer";
@@ -20,6 +21,7 @@ import WishlistList from "./Wishlist/WishlistList";
 import { mypageApi } from "../../api/endpoints/mypage";
 
 export default function MyPage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("낙찰");
   const [sortValue, setSortValue] = useState("latest");
   const [isSellingDrawerOpen, setSellingDrawerOpen] = useState(false);
