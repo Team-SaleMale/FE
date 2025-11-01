@@ -201,7 +201,7 @@ const mkApiAbs = ({
 /* ===== 기존 원본: API 스키마로 재작성 ===== */
 const TODAY_ENDING_API = [
   mkApiAbs({
-    title: "아이패드 프로 12.9 256GB – 오늘마감 A0ddddddddddddddddddddddddddd",
+    title: "아이패드 프로 12.9 256GB – 오늘마감 A0",
     category_key: "digital",
     image_urls: IMG.ipad,
     start_at: kstIsoAt(Math.max(0, NOW_KST_HOUR - 5), 0, 0),
