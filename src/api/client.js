@@ -11,10 +11,7 @@ const apiClient = axios.create({
 // 요청 인터셉터: 인증 토큰 자동 추가
 apiClient.interceptors.request.use(
   (config) => {
-    // TODO: 임시 토큰 - 실제 로그인 구현 후 삭제 필요!!!
-    const TEMP_TOKEN = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI5IiwidG9rZW5fdHlwZSI6ImFjY2VzcyIsImp0aSI6IjczMTJlNDVkLWRjOTQtNDI3Zi04YWI3LWRlZmQxYjY4OTQ1NyIsImlhdCI6MTc2MTk3NzM0NywiZXhwIjoxNzYyMDYzNzQ3fQ.8oE3L0zeT-FljvvAr75QCvR9KZA6_PwijBjlzuIEoFcLzFt5RkkGTiyDboePbGtE5jf_u2lUqRs2Uo7xwZkpQw';
-
-    const token = localStorage.getItem('accessToken') || TEMP_TOKEN;
+    const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
