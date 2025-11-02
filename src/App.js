@@ -7,14 +7,14 @@ import AuctionComplete from "./pages/AuctionRegistration/AuctionComplete";
 import FeaturedProductDetail from "./pages/Main/FeaturedProductDetail";
 import AuctionProductDetails from "./pages/AuctionProductDetails/AuctionProductDetails";
 import VideoBrowser from "./pages/Main/VideoBrowser";
-import Video from "./pages/Main/Video";                // ✅ 재생 페이지 추가
+import Video from "./pages/Main/Video";
 import MyPage from "./pages/MyPage/MyPage";
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
 import Login from "./pages/Auth/Login";
 import Signup from "./pages/Auth/Signup";
-import "./App.css";                                   // ✅ develop 브랜치 반영
-import PriceCheck from "./pages/PriceCheck/PriceCheck"; // ✅ 시세 확인 페이지 추가
+import "./App.css";
+import PriceCheck from "./pages/PriceCheck/PriceCheck";
 import InquiryList from "./pages/Inquiry/InquiryList";
 import InquiryWrite from "./pages/Inquiry/InquiryWrite";
 import InquiryDetail from "./pages/Inquiry/InquiryDetail";
@@ -23,31 +23,43 @@ console.log({ InquiryList, InquiryWrite, InquiryDetail });
 
 export default function App() {
   const location = useLocation();
-  const hideLayout = location.pathname === "/login"; // 로그인 페이지일 때
-  const hideAuthLayout = hideLayout || location.pathname === "/signup"; // NOTE(ChatGPT): 회원가입도 숨김
+  const hideLayout = location.pathname === "/login";
+  const hideAuthLayout = hideLayout || location.pathname === "/signup";
 
   return (
     <>
-     {/* 라우트가 바뀔 때마다 맨 위로 */}
       <ScrollToTop behavior="auto" />
       {!hideAuthLayout && <Header />}
+
       <Routes>
         <Route path="/" element={<Main />} />
         <Route path="/featured/:category" element={<FeaturedProductDetail />} />
+
+        {/* 경매 */}
         <Route path="/auctions" element={<AuctionList />} />
         <Route path="/auctions/new" element={<AuctionRegistration />} />
-        <Route path="/videos" element={<VideoBrowser />} />   {/* ✅ 절대경로 */}
-        <Route path="/video/:videoId" element={<Video />} />  {/* ✅ 재생 라우트 */}
         <Route path="/auctions/success" element={<AuctionComplete />} />
-        <Route path="/auctions/300" element={<AuctionProductDetails />} />
+        {/* ✅ 상세 동적 라우트 */}
+        <Route path="/auctions/:id" element={<AuctionProductDetails />} />
+
+        {/* 동영상 */}
+        <Route path="/videos" element={<VideoBrowser />} />
+        <Route path="/video/:videoId" element={<Video />} />
+
+        {/* 마이페이지 / 인증 */}
         <Route path="/mypage" element={<MyPage />} />
-        <Route path="/login" element={<Login />}/>
-        <Route path="/signup" element={<Signup />}/>
-        <Route path="/price-check" element={<PriceCheck />} /> {/* ✅ 시세 확인 라우트 */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+
+        {/* 시세 확인 */}
+        <Route path="/price-check" element={<PriceCheck />} />
+
+        {/* 문의 */}
         <Route path="/inquiries" element={<InquiryList />} />
         <Route path="/inquiries/new" element={<InquiryWrite />} />
         <Route path="/inquiries/:id" element={<InquiryDetail />} />
       </Routes>
+
       {!hideAuthLayout && <Footer />}
     </>
   );

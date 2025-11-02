@@ -2,64 +2,76 @@
 import React, { useMemo, useRef, useState } from "react";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/AuctionRegistration/UploadPanel.module.css";
+import { uploadAuctionImages } from "../../api/auctions/service"; // ✅ 추가
 
-/**
- * UploadPanel (API 미연결 버전)
- * - 최소 1장 업로드
- * - 상품명(필수)
- * - "AI 분석하기" → (onAnalyze가 있으면 호출, 없으면 mock 계산) → 결과/요약 노출
- * - 부모 저장: onChange(이미지 배열), onMetaChange('modelName' | 'aiModel' | 'aiResult' | 'aiText', value)
- */
 export default function UploadPanel({
   images = [],
   onChange,
   onMetaChange,
-  onAnalyze, // 실제 API 연결 시 상위에서 주입
+  onAnalyze,
   maxCount = 10,
 }) {
   const fileInputRef = useRef(null);
 
-  // 로컬 상태
   const [modelName, setModelName] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState(null); // { marketPrice, suggestedPrice, identifiedModel }
-  const [analysisText, setAnalysisText] = useState(""); // 상세 설명 문장
+  const [analysis, setAnalysis] = useState(null);
+  const [analysisText, setAnalysisText] = useState("");
   const [error, setError] = useState("");
 
-  /** 파일 선택 열기 */
   const openChooser = () => fileInputRef.current?.click();
 
-  /** 파일 업로드 */
-  const handleFiles = (e) => {
+  // ✅ 파일 업로드: 선택 → S3 업로드 → uploadedUrl 채워서 부모로 전달
+  const handleFiles = async (e) => {
     const files = Array.from(e.target.files || []);
+    e.target.value = ""; // 같은 파일 재선택 가능하도록 초기화
     if (!files.length) return;
 
-    const list = [...images];
-    for (const f of files) {
-      if (list.length >= maxCount) break;
-      list.push({ file: f, url: URL.createObjectURL(f) });
+    // 1) 개수 제한
+    const canAdd = Math.max(0, maxCount - images.length);
+    const picked = files.slice(0, canAdd);
+    if (!picked.length) return;
+
+    try {
+      setError("");
+
+      // 2) 업로드 API 호출 (temp S3 URL 획득)
+      const res = await uploadAuctionImages(picked);
+      const urls = res?.result?.imageUrls || [];
+
+      if (!urls.length) {
+        throw new Error("이미지 업로드에 실패했습니다. 다시 시도해 주세요.");
+      }
+
+      // 3) 썸네일용 로컬 URL과 서버의 uploadedUrl 매핑
+      const appended = picked.map((f, i) => ({
+        file: f,
+        url: URL.createObjectURL(f),   // 미리보기용
+        uploadedUrl: urls[i],          // ✅ 서버에서 받은 temp S3 URL
+      }));
+
+      onChange?.([...images, ...appended]);
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "이미지 업로드 중 오류가 발생했습니다.";
+      setError(msg);
     }
-    onChange?.(list);
-    setError("");
-    e.target.value = ""; // 같은 파일 다시 선택 가능하도록 초기화
   };
 
-  /** 업로드 삭제 */
   const removeAt = (idx) => {
     const list = images.filter((_, i) => i !== idx);
     onChange?.(list);
   };
 
-  /** 검증 (최소 1장) */
   const hasMinImages = images.length >= 1;
   const hasModel = modelName.trim().length > 0;
   const canAnalyze = hasMinImages && hasModel && !analyzing;
 
-  /** 모델명 변경 시 상위에 저장 */
   const onChangeModel = (v) => {
     setModelName(v);
     onMetaChange?.("modelName", v);
-    // 모델이 바뀌면 이전 분석 결과 무효화
     if (analysis) {
       setAnalysis(null);
       setAnalysisText("");
@@ -69,70 +81,46 @@ export default function UploadPanel({
     }
   };
 
-  /** 업로드 카운터 라벨 (1장 기준) */
   const counterLabel = useMemo(
     () => `${images.length} / ${Math.max(1, maxCount)} 장`,
     [images.length, maxCount]
   );
 
-  /** 유틸: 간단한 타이틀 케이스 */
   const titleCase = (s) =>
-    s
-      .trim()
-      .replace(/\s+/g, " ")
-      .split(" ")
-      .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ""))
-      .join(" ");
+    s.trim().replace(/\s+/g, " ").split(" ")
+      .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : "")).join(" ");
 
-  /** (임시) 분석 로직 – API 없을 때 사용
-   * identifiedModel: 사용자가 입력한 모델명을 정규화 + 더미 접미사 부여
-   */
   const mockAnalyze = ({ modelName, images }) => {
     const base = 500_000 + modelName.trim().length * 20_000;
     const boost = Math.min(images.length, 10) * 30_000;
     const marketPrice = Math.round((base + boost) / 1000) * 1000;
     const suggestedPrice = Math.round((marketPrice * 0.95) / 1000) * 1000;
-
-    // 더미: 입력값을 정규화해서 "AI 인식 모델명"으로 표기
     const normalized = titleCase(modelName.replace(/\s+/g, " "));
-    const identifiedModel = `${normalized} (Wi-Fi, 256GB)`; // 필요시 임의 스펙 문구 조정
-
+    const identifiedModel = `${normalized} (Wi-Fi, 256GB)`;
     return { marketPrice, suggestedPrice, identifiedModel };
   };
 
-  /** 분석 실행 */
   const handleAnalyze = async () => {
     if (!canAnalyze) return;
     setAnalyzing(true);
     setError("");
-
     try {
       let result;
       if (typeof onAnalyze === "function") {
-        // 실제 API가 생기면 { identifiedModel }을 함께 반환하도록 맞추면 됨.
         result = await onAnalyze({ modelName: modelName.trim(), images });
       } else {
-        // API 미연결 → mock
         await new Promise((r) => setTimeout(r, 500));
         result = mockAnalyze({ modelName, images });
       }
-
       setAnalysis(result);
-
-      // ✅ 상세 설명 문장 (사용자 입력 vs AI 인식 모델명 모두 표기)
       const userModel = modelName.trim();
       const aiModel = result.identifiedModel;
       const text =
         `올리신 모델명은 “${userModel}” 입니다. ` +
-        `AI가 이미지/텍스트를 바탕으로 인식한 모델은 “${aiModel}” 로 판단했어요. ` +
-        `현재 유사 매물 기준 예상 시세는 약 ₩${result.marketPrice.toLocaleString()}이며, ` +
-        `ValueBid의 최근 거래 내역을 바탕으로 추천 시작가는 ₩${result.suggestedPrice.toLocaleString()} 입니다. ` +
-        `실제 거래가는 제품 상태(외관, 배터리/내구성), 구성품(박스/영수증/액세서리), 남은 보증기간, 지역 수요에 따라 ` +
-        `±10~20% 범위에서 변동될 수 있습니다. 사진을 더 추가하고 상세 설명을 작성하면 더 정확한 분석과 높은 낙찰률을 기대할 수 있어요.`;
-
+        `AI가 인식한 모델은 “${aiModel}” 입니다. ` +
+        `예상 시세 ₩${result.marketPrice.toLocaleString()}, ` +
+        `추천 시작가 ₩${result.suggestedPrice.toLocaleString()}.`;
       setAnalysisText(text);
-
-      // 상위 저장 (등록 API 호출 때 함께 사용)
       onMetaChange?.("aiModel", aiModel);
       onMetaChange?.("aiResult", { marketPrice: result.marketPrice, suggestedPrice: result.suggestedPrice });
       onMetaChange?.("aiText", text);
@@ -150,21 +138,13 @@ export default function UploadPanel({
 
   return (
     <div className={styles.wrap}>
-      {/* 제목/설명 */}
       <h3 className={styles.title}>상품 등록 & AI 시세 분석</h3>
       <p className={styles.sub}>상품 이미지 업로드 ( 1장 이상 업로드 )</p>
 
-      {/* 업로드 박스 */}
       <div className={styles.row}>
-        <button
-          type="button"
-          className={styles.uploadBox}
-          onClick={openChooser}
-          aria-label="이미지 업로드"
-        >
+        <button type="button" className={styles.uploadBox} onClick={openChooser} aria-label="이미지 업로드">
           <Icon icon="solar:camera-linear" className={styles.iconUpload} />
         </button>
-
         <input
           ref={fileInputRef}
           type="file"
@@ -175,38 +155,22 @@ export default function UploadPanel({
         />
       </div>
 
-      {/* 썸네일 리스트 (가로 스크롤) */}
       {images.length > 0 && (
         <ul className={styles.thumbList} role="list">
           {images.map((img, i) => (
             <li key={i} className={styles.thumb}>
               <img src={img.url} alt={`업로드 이미지 ${i + 1}`} />
-              <button
-                type="button"
-                className={styles.remove}
-                onClick={() => removeAt(i)}
-                aria-label="이미지 삭제"
-              >
-                ×
-              </button>
+              <button type="button" className={styles.remove} onClick={() => removeAt(i)} aria-label="이미지 삭제">×</button>
             </li>
           ))}
         </ul>
       )}
 
-      {/* 카운터/힌트 */}
       <div className={styles.counterRow}>
-        <span
-          className={`${styles.counter} ${hasMinImages ? styles.ok : styles.warn}`}
-        >
-          {counterLabel}
-        </span>
-        {!hasMinImages && (
-          <span className={styles.hint}>최소 1장을 업로드해주세요.</span>
-        )}
+        <span className={`${styles.counter} ${hasMinImages ? styles.ok : styles.warn}`}>{counterLabel}</span>
+        {!hasMinImages && <span className={styles.hint}>최소 1장을 업로드해주세요.</span>}
       </div>
 
-      {/* 모델명 + 분석 버튼 */}
       <label className={styles.modelLabel}>
         상품명 입력 <span className={styles.required}>*</span>
       </label>
@@ -217,7 +181,6 @@ export default function UploadPanel({
           value={modelName}
           onChange={(e) => onChangeModel(e.target.value)}
         />
-
         <button
           type="button"
           className={styles.aiBtn}
@@ -230,35 +193,24 @@ export default function UploadPanel({
         </button>
       </div>
 
-      {/* 결과 박스 (AI 인식 모델명 + 가격 2줄) */}
       {analysis && (
         <div className={styles.aiResultBox}>
-          {/* ✅ AI가 인식한 정확한 모델명 */}
           <div className={styles.resultRow}>
             <span className={styles.resultLabel}>AI 인식 모델</span>
             <strong className={styles.resultValue}>{analysis.identifiedModel}</strong>
           </div>
-
-          {/* 시세/추천가 */}
           <div className={styles.resultRow}>
             <span className={styles.resultLabel}>예상 시세</span>
-            <strong className={styles.resultValue}>
-              ₩{analysis.marketPrice.toLocaleString()}
-            </strong>
+            <strong className={styles.resultValue}>₩{analysis.marketPrice.toLocaleString()}</strong>
           </div>
           <div className={styles.resultRow}>
             <span className={styles.resultLabel}>추천 시작가</span>
-            <strong className={styles.resultValue}>
-              ₩{analysis.suggestedPrice.toLocaleString()}
-            </strong>
+            <strong className={styles.resultValue}>₩{analysis.suggestedPrice.toLocaleString()}</strong>
           </div>
         </div>
       )}
 
-      {/* 상세 설명 문장 */}
       {analysisText && <p className={styles.aiSummary}>{analysisText}</p>}
-
-      {/* 오류 메시지 */}
       {error && <div className={styles.error}>{error}</div>}
     </div>
   );

@@ -1,6 +1,6 @@
 // src/pages/AuctionList/AuctionList.js
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom"; // ✅ navigate 추가
+import { useLocation, useNavigate } from "react-router-dom";
 import styles from "../../styles/AuctionList/AuctionList.module.css";
 
 import Toolbar from "./Toolbar";
@@ -116,6 +116,9 @@ const kstMsFromYMD = (ymd, endOfDay = false) => {
   const hhmmss = endOfDay ? "23:59:59" : "00:00:00";
   return new Date(`${ymd}T${hhmmss}+09:00`).getTime();
 };
+
+// ✅ 제목 검색 정규화
+const normalize = (s) => (s ?? "").toString().toLowerCase().replace(/\s+/g, "");
 
 /* =========================
    API 형식 더미 데이터 생성
@@ -371,9 +374,9 @@ const RAW_API_ITEMS = [
    Component
    ========================= */
 export default function AuctionList() {
-  const location = useLocation();               // ✅ location 보존
+  const location = useLocation();
   const { search } = location;
-  const navigate = useNavigate();               // ✅ navigate 사용
+  const navigate = useNavigate();
 
   const [layout, setLayout] = useState("horizontal");
   const [page, setPage] = useState(1);
@@ -384,8 +387,9 @@ export default function AuctionList() {
   // 필터
   const [category, setCategory] = useState("all");
   const [price, setPrice] = useState({ min: 0, max: 0 });
-  const [sort, setSort] = useState(""); // 'views' | 'priceLow' | 'priceHigh' | 'bids' | ''
-  const [dateFilter, setDateFilter] = useState({ start: "", end: "" }); // YYYY-MM-DD
+  const [sort, setSort] = useState("");
+  const [dateFilter, setDateFilter] = useState({ start: "", end: "" });
+  const [query, setQuery] = useState("");
 
   // URL → 초기 필터
   useEffect(() => {
@@ -395,6 +399,7 @@ export default function AuctionList() {
     const tabQ  = qs.get("tab") || "ongoing";
     const start = qs.get("start") || "";
     const end   = qs.get("end") || "";
+    const q     = qs.get("q") || "";
 
     const hasMin = qs.has("min");
     const hasMax = qs.has("max");
@@ -404,6 +409,7 @@ export default function AuctionList() {
     setCategory(cat);
     setTab(["ongoing","done","hot","rec"].includes(tabQ) ? tabQ : "ongoing");
     setDateFilter({ start, end });
+    setQuery(q);
     setPrice({
       min: hasMin && Number.isFinite(minNum) ? minNum : 0,
       max: hasMax && Number.isFinite(maxNum) ? maxNum : 0,
@@ -452,6 +458,12 @@ export default function AuctionList() {
   const filtered = useMemo(() => {
     let arr = VM;
 
+    // 0) 제목 검색
+    if (query.trim()) {
+      const qn = normalize(query);
+      arr = arr.filter((x) => normalize(x.title).includes(qn));
+    }
+
     // 1) 카테고리
     if (category !== "all") arr = arr.filter((x) => x.category === category);
 
@@ -459,8 +471,7 @@ export default function AuctionList() {
     let startMs = kstMsFromYMD(dateFilter.start, false);
     let endMs   = kstMsFromYMD(dateFilter.end,   true);
     if (startMs != null && endMs != null) {
-      if (startMs > endMs) [startMs, endMs] = [endMs, startMs]; // 잘못된 입력 스왑
-      // 종료일이 [start, end] 안에 있는 것만
+      if (startMs > endMs) [startMs, endMs] = [endMs, startMs];
       arr = arr.filter((x) => {
         const ed = new Date(x.endAtISO).getTime();
         return ed >= startMs && ed <= endMs;
@@ -504,7 +515,7 @@ export default function AuctionList() {
       if (sorter) arr = [...arr].sort(sorter);
     }
     return arr;
-  }, [VM, category, dateFilter.start, dateFilter.end, price, tab, sort]);
+  }, [VM, query, category, dateFilter.start, dateFilter.end, price, tab, sort]);
 
   // 페이지네이션
   const PER_PAGE = layout === "horizontal" ? 6 : 9;
@@ -516,7 +527,7 @@ export default function AuctionList() {
 
   // 필터 변경 시 1페이지로
   useEffect(() => { setPage(1); }, [
-    layout, category, tab, dateFilter.start, dateFilter.end, price.min, price.max, sort
+    layout, query, category, tab, dateFilter.start, dateFilter.end, price.min, price.max, sort
   ]);
   useEffect(() => { if (page > totalPages) setPage(totalPages); }, [totalPages, page]);
 
@@ -525,26 +536,30 @@ export default function AuctionList() {
       <div className={styles.body}>
         {/* 좌측: sticky 필터 */}
         <aside className={styles.aside}>
-          <FilterSidebar
-            categories={[{ key: "all", label: "전체" }, ...CATEGORIES]}
-            activeCategory={category}
-            price={price}
-            sort={sort}
-            onChangeCategory={setCategory}
-            onChangePrice={setPrice}
-            onChangeSort={setSort}
-            onClear={() => {
-              // ✅ 상태 리셋
-              setCategory("all");
-              setPrice({ min: 0, max: 0 });
-              setSort("");
-              setDateFilter({ start: "", end: "" });
-              setTab("ongoing");
-              setPage(1);
-              // ✅ URL 쿼리 제거 → 현재 경로만 남김
-              navigate({ pathname: location.pathname }, { replace: true });
-            }}
-          />
+          {/* ✅ 내부 스크롤 컨테이너 */}
+          <div className={styles.asideScroller}>
+            <FilterSidebar
+              categories={[{ key: "all", label: "전체" }, ...CATEGORIES]}
+              activeCategory={category}
+              price={price}
+              sort={sort}
+              query={query}
+              onChangeQuery={setQuery}
+              onChangeCategory={setCategory}
+              onChangePrice={setPrice}
+              onChangeSort={setSort}
+              onClear={() => {
+                setCategory("all");
+                setPrice({ min: 0, max: 0 });
+                setSort("");
+                setDateFilter({ start: "", end: "" });
+                setTab("ongoing");
+                setQuery("");
+                setPage(1);
+                navigate({ pathname: location.pathname }, { replace: true });
+              }}
+            />
+          </div>
         </aside>
 
         {/* 우측: 툴바 + 리스트 */}
@@ -555,7 +570,6 @@ export default function AuctionList() {
             layout={layout}
             onToggleLayout={setLayout}
           />
-
           <main className={styles.main}>
             {layout === "horizontal" ? (
               <Horizontal items={currentItems} />
