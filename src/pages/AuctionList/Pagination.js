@@ -23,13 +23,24 @@ function buildPages(cur, total) {
 export default function Pagination({ page, totalPages, onChange }) {
   const pages = buildPages(page, totalPages);
 
+  const scrollToTop = () => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const go = (next) => {
+    onChange(next);
+    scrollToTop();
+  };
+
   return (
     <nav className={styles.nav} aria-label="pagination">
       <button
         className={styles.arrow}
         disabled={page === 1}
         aria-label="Previous page"
-        onClick={() => onChange(Math.max(1, page - 1))}
+        onClick={() => go(Math.max(1, page - 1))}
       >
         ‹
       </button>
@@ -41,7 +52,7 @@ export default function Pagination({ page, totalPages, onChange }) {
               <button
                 className={`${styles.pageBtn} ${p === page ? styles.active : ""}`}
                 aria-current={p === page ? "page" : undefined}
-                onClick={() => onChange(p)}
+                onClick={() => go(p)}
               >
                 {p}
               </button>
@@ -58,7 +69,7 @@ export default function Pagination({ page, totalPages, onChange }) {
         className={styles.arrow}
         disabled={page === totalPages}
         aria-label="Next page"
-        onClick={() => onChange(Math.min(totalPages, page + 1))}
+        onClick={() => go(Math.min(totalPages, page + 1))}
       >
         ›
       </button>
