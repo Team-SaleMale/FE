@@ -1,3 +1,4 @@
+// src/pages/Main/Main.jsx
 import { useNavigate } from "react-router-dom";
 import MainHeroSection from "./MainHeroSection";
 import WhyValueBid from "./WhyValueBid";
@@ -12,28 +13,32 @@ import CompanyIntro from "./CompanyIntro";
 import styles from "../../styles/Main/Main.module.css";
 
 export default function Main() {
-  const navigate = useNavigate(); // ← 추가
+  const navigate = useNavigate();
 
   return (
     <main className={styles.mainPage}>
-      {/* 히어로: full-bleed(페이지 전체폭) */}
       <MainHeroSection />
-
-      {/* 히어로 아래부터는 각 섹션이 자체적으로 너비/여백 관리 */}
       <WhyValueBid />
 
       <Participation
-        onJoinClick={() => navigate("/auctions")}   // 가로형 기본
+        onJoinClick={() => navigate("/auctions")}
         onRegisterClick={() => navigate("/auctions/new")}
       />
 
+      {/* 실시간 인기 경매 (API 연동) */}
       <Trending />
-      <Ending/>
-      <Featured/>
-      <CategoryPopular/>
-      <AuctionVideos/>
-      <Completed/>
-      <CompanyIntro/>
+
+      {/* 오늘 마감 경매 (API 연동) */}
+      <Ending />
+
+      {/* 카테고리별 인기 상품 (API 연동) */}
+      <CategoryPopular />
+
+      {/* 이하 섹션 */}
+      <Featured />
+      <AuctionVideos />
+      <Completed />
+      <CompanyIntro />
     </main>
   );
 }

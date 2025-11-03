@@ -39,14 +39,14 @@
 .endingSec {
   margin-top: 56px;
   background: #F1F2F3;
-  font-family: "Pretendard",  "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+  font-family: "Pretendard", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
 }
 
 /* ===== Container ===== */
 .container {
   max-width: var(--end-maxw-4);
   margin: 0 auto;
-  padding:80px 0 50px 0;
+  padding: 80px 0 50px 0;
   width: 100%;
   box-sizing: border-box;
 }
@@ -113,6 +113,10 @@
   box-shadow: var(--shadow-card-hover);
   border-color: rgba(31, 34, 38, 0.14);
 }
+.cardInner:focus-visible {
+  outline: 2px solid rgba(5, 36, 97, .35);
+  outline-offset: 2px;
+}
 
 /* ===== Image (fill card fully) ===== */
 .thumbWrap {
@@ -127,6 +131,13 @@
   object-fit: cover;               /* ✅ 카드 영역 꽉 채움 */
   display: block;
   transform: translateZ(0);
+}
+/* 빈 썸네일 플레이스홀더 */
+.thumbPlaceholder {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: var(--c-gray-100);
+  border-radius: 0; /* 카드 radius와 자연스럽게 이어지도록 */
 }
 
 /* ===== Body ===== */
@@ -198,7 +209,7 @@
 .priceWrap {
   display: flex;
   align-items: baseline;
-  gap: 5px;               /* ✅ 라벨-가격 간격 0 */
+  gap: 5px;               /* ✅ 라벨-가격 간격 */
   letter-spacing: 0;
 }
 .priceWrap .dim { margin-right: 0; padding-right: 0; }
@@ -210,6 +221,14 @@
   color: var(--end-price);
   font-variant-numeric: tabular-nums;
   text-shadow: 0 1px 0 rgba(255,255,255,.4);
+}
+
+/* ===== 상태 메시지 ===== */
+.state {
+  padding: 24px 0;
+  color: #6B7280;
+  text-align: center;
+  font-size: 14px;
 }
 
 /* ===== Responsive ===== */
@@ -229,4 +248,12 @@
   .container { max-width: 420px; }
   .grid { grid-template-columns: 1fr; }
   .title { font-size: 22px !important; }
+}
+
+/* 접근성/모션 선호도 */
+@media (prefers-reduced-motion: reduce) {
+  .cardInner,
+  .navBtn {
+    transition: none;
+  }
 }

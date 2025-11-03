@@ -1,24 +1,23 @@
-// src/pages/AuctionList/FilterSidebar.js
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/AuctionList/FilterSidebar.module.css";
 import mapPng from "../../assets/img/AuctionList/map.png";
 
-/** 정렬 옵션(마감 임박순 제거) */
+/** 정렬 옵션 */
 const SORTS = [
+  { key: "",          label: "최신순" },          // 서버 기본 CREATED_DESC
   { key: "bids",      label: "입찰 많은 순" },
   { key: "priceLow",  label: "가격 낮은 순" },
   { key: "priceHigh", label: "가격 높은 순" },
   { key: "views",     label: "조회수 많은 순" },
 ];
 
-/** 카테고리 표시 순서 (등록 화면과 동일) — pet 빠진 문제 수정 */
+/** 카테고리 표시 순서 */
 const ORDER_KEYS = [
   "women-acc","food-processed","sports","plant","game-hobby",
   "ticket","furniture","beauty","clothes","health-food",
   "book","kids","digital","living-kitchen","home-appliance",
-  "pet", /* ✅ 추가 */
-  "etc"
+  "pet","etc"
 ];
 
 const onlyDigits = (s) => (s || "").replace(/[^\d]/g, "");
@@ -26,29 +25,26 @@ const fmt = (s) => (s ? Number(s).toLocaleString("ko-KR") : "");
 
 export default function FilterSidebar({
   categories = [],
-  activeCategory,
+  activeCategories = [],      // ★ 배열
   price = { min: 0, max: 0 },
   sort = "",
   query = "",
-  onChangeCategory,
+  onChangeCategories,
   onChangePrice,
   onChangeSort,
   onChangeQuery,
   onClear,
 }) {
-  // 표시용 문자열
   const [minStr, setMinStr] = useState("");
   const [maxStr, setMaxStr] = useState("");
   const [sortKey, setSortKey] = useState("");
   const [qStr, setQStr] = useState("");
 
-  // 섹션 토글 상태
   const [openSearch, setOpenSearch] = useState(true);
   const [openPrice, setOpenPrice] = useState(true);
   const [openSort, setOpenSort] = useState(true);
   const [openCats, setOpenCats] = useState(true);
 
-  // 부모 state ↔ 표시 문자열 동기화
   useEffect(() => {
     const toStr = (v) => (v && Number(v) > 0 ? Number(v).toLocaleString("ko-KR") : "");
     setMinStr(toStr(price.min));
@@ -62,14 +58,12 @@ export default function FilterSidebar({
   const catChips = useMemo(() => {
     const list = categories.filter((c) => c.key !== "all");
     const map = new Map(list.map((c) => [c.key, c]));
-    // ORDER_KEYS 순으로 먼저
     const ordered = ORDER_KEYS.map((k) => map.get(k)).filter(Boolean);
-    // ✅ ORDER_KEYS에 없는 키(향후 추가 대비)는 끝에 덧붙임
     list.forEach((c) => { if (!ORDER_KEYS.includes(c.key)) ordered.push(c); });
     return ordered;
   }, [categories]);
 
-  // 가격 변경
+  // 가격
   const handleMinChange = (e) => setMinStr(fmt(onlyDigits(e.target.value)));
   const handleMaxChange = (e) => setMaxStr(fmt(onlyDigits(e.target.value)));
   const emitPrice = () => {
@@ -82,7 +76,7 @@ export default function FilterSidebar({
     if (e.key === "Enter") { e.currentTarget.blur(); emitPrice(); }
   };
 
-  // 정렬: 단일 선택(토글)
+  // 정렬 (토글, 빈 문자열은 최신순)
   const handleSort = (key) => {
     setSortKey((prev) => {
       const next = prev === key ? "" : key;
@@ -91,17 +85,22 @@ export default function FilterSidebar({
     });
   };
 
-  // 검색 입력
+  // 검색
   const handleQueryChange = (e) => {
     const v = e.target.value;
     setQStr(v);
     onChangeQuery?.(v);
   };
 
-  // 카테고리
-  const handleCategory = (key) => onChangeCategory?.(key);
+  // 카테고리(다중 토글)
+  const toggleCategory = (key) => {
+    onChangeCategories?.((prev) => {
+      const set = new Set(prev || []);
+      if (set.has(key)) set.delete(key); else set.add(key);
+      return Array.from(set);
+    });
+  };
 
-  // 전체 초기화
   const handleClear = () => {
     setMinStr("");
     setMaxStr("");
@@ -110,19 +109,17 @@ export default function FilterSidebar({
     onChangeQuery?.("");
     onChangePrice?.({ min: 0, max: 0 });
     onChangeSort?.("");
-    onChangeCategory?.("all");
+    onChangeCategories?.([]);
     onClear?.();
   };
 
   return (
     <div className={styles.wrap}>
-      {/* 지도 */}
       <div className={styles.mapCard}>
         <img className={styles.mapImg} src={mapPng} alt="map" />
         <div className={styles.locPill}>경기도 고양시 덕양구</div>
       </div>
 
-      {/* 패널 */}
       <section className={styles.panel}>
         <header className={styles.panelHead}>
           <h4 className={styles.panelTitle}>Filter by:</h4>
@@ -140,10 +137,7 @@ export default function FilterSidebar({
             onClick={() => setOpenSearch((v) => !v)}
           >
             <span>검색</span>
-            <Icon
-              icon="solar:alt-arrow-down-linear"
-              className={`${styles.chev} ${openSearch ? styles.chevOpen : ""}`}
-            />
+            <Icon icon="solar:alt-arrow-down-linear" className={`${styles.chev} ${openSearch ? styles.chevOpen : ""}`} />
           </button>
 
           {openSearch && (
@@ -180,10 +174,7 @@ export default function FilterSidebar({
             onClick={() => setOpenPrice((v) => !v)}
           >
             <span>가격 범위</span>
-            <Icon
-              icon="solar:alt-arrow-down-linear"
-              className={`${styles.chev} ${openPrice ? styles.chevOpen : ""}`}
-            />
+            <Icon icon="solar:alt-arrow-down-linear" className={`${styles.chev} ${openPrice ? styles.chevOpen : ""}`} />
           </button>
 
           {openPrice && (
@@ -224,7 +215,7 @@ export default function FilterSidebar({
           )}
         </div>
 
-        {/* 정렬 옵션 */}
+        {/* 정렬 */}
         <div className={styles.group}>
           <button
             type="button"
@@ -233,10 +224,7 @@ export default function FilterSidebar({
             onClick={() => setOpenSort((v) => !v)}
           >
             <span>정렬 옵션</span>
-            <Icon
-              icon="solar:alt-arrow-down-linear"
-              className={`${styles.chev} ${openSort ? styles.chevOpen : ""}`}
-            />
+            <Icon icon="solar:alt-arrow-down-linear" className={`${styles.chev} ${openSort ? styles.chevOpen : ""}`} />
           </button>
 
           {openSort && (
@@ -255,7 +243,7 @@ export default function FilterSidebar({
           )}
         </div>
 
-        {/* 카테고리 */}
+        {/* 카테고리 (다중) */}
         <div className={styles.group}>
           <button
             type="button"
@@ -264,24 +252,19 @@ export default function FilterSidebar({
             onClick={() => setOpenCats((v) => !v)}
           >
             <span>카테고리</span>
-            <Icon
-              icon="solar:alt-arrow-down-linear"
-              className={`${styles.chev} ${openCats ? styles.chevOpen : ""}`}
-            />
+            <Icon icon="solar:alt-arrow-down-linear" className={`${styles.chev} ${openCats ? styles.chevOpen : ""}`} />
           </button>
 
           {openCats && (
-            <div className={styles.chipWrap} role="radiogroup" aria-label="카테고리">
+            <div className={styles.chipWrap} role="group" aria-label="카테고리(다중)">
               {catChips.map(({ key, label, icon }) => {
-                const active = activeCategory === key;
+                const active = (activeCategories || []).includes(key);
                 return (
                   <button
                     key={key}
                     type="button"
                     className={`${styles.chip} ${active ? styles.isActive : ""}`}
-                    onClick={() => handleCategory(key)}
-                    role="radio"
-                    aria-checked={active}
+                    onClick={() => toggleCategory(key)}
                     title={label}
                   >
                     <span className={styles.chipIcon}><Icon icon={icon} /></span>

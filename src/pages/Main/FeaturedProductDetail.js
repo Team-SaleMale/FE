@@ -98,6 +98,15 @@ const PRODUCTS = {
   },
 };
 
+// ✅ Featured 라우트 파라미터 → 리스트 UI 키로 정규화(서비스에서도 alias 처리하지만 이중 안전)
+const FEATURED_TO_UI = {
+  digital: "digital",
+  fashion: "clothes",         // = 의류
+  appliances: "home-appliance",
+  collectibles: "game-hobby",
+  furniture: "furniture",
+};
+
 export default function FeaturedProductDetail() {
   const { category } = useParams();
   const navigate = useNavigate();
@@ -133,7 +142,7 @@ export default function FeaturedProductDetail() {
         <div className={styles.heroGradient} />
         <div className={styles.heroInner}>
           <h1 className={styles.title}>{product.title}</h1>
-          <p className={styles.tagline}>{product.tagline}</p>
+        <p className={styles.tagline}>{product.tagline}</p>
         </div>
         <div className={styles.heroBorder} />
       </div>
@@ -241,9 +250,10 @@ export default function FeaturedProductDetail() {
                 <button
                   className={styles.secondary}
                   onClick={() => {
-                    // 팀 라우팅 규칙에 맞춰 경로를 변경하세요.
-                    // 예) /auction?category=${category} 또는 /products/${category}
-                    navigate(`/list/${category}`);
+                    // ✅ 리스트 화면으로 이동 + 해당 카테고리 필터 적용
+                    const uiKey = FEATURED_TO_UI[(category || "").toLowerCase()] || (category || "");
+                    // 리스트 쪽 buildListParams가 'category'를 UI/별칭/ENUM 모두 처리
+                    navigate(`/auctions?category=${encodeURIComponent(uiKey)}`);
                   }}
                 >
                   {category} 카테고리 상품 더 보기

@@ -1,37 +1,26 @@
-// src/pages/AuctionList/Pagination.jsx
 import styles from "../../styles/AuctionList/Pagination.module.css";
 
 function buildPages(cur, total) {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-
   const pages = [];
   const push = (v) => pages.push(v);
-
-  push(1); // 항상 1
-
+  push(1);
   const left = Math.max(2, cur - 1);
   const right = Math.min(total - 1, cur + 1);
-
   if (left > 2) push("...");
   for (let p = left; p <= right; p++) push(p);
   if (right < total - 1) push("...");
-
-  push(total); // 항상 끝
+  push(total);
   return pages;
 }
 
 export default function Pagination({ page, totalPages, onChange }) {
   const pages = buildPages(page, totalPages);
-
-  const scrollToTop = () => {
+  const go = (next) => {
+    onChange(next);
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  };
-
-  const go = (next) => {
-    onChange(next);
-    scrollToTop();
   };
 
   return (
@@ -58,9 +47,7 @@ export default function Pagination({ page, totalPages, onChange }) {
               </button>
             </li>
           ) : (
-            <li key={i} className={styles.ellipsis} aria-hidden="true">
-              …
-            </li>
+            <li key={i} className={styles.ellipsis} aria-hidden="true">…</li>
           )
         )}
       </ul>
