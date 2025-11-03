@@ -2,22 +2,9 @@ import apiClient from '../client';
 
 /**
  * 마이페이지 관련 API
- * Base URL: https://valuebid.site
  */
 
-export const mypageApi = {
-  /**
-   * 내 프로필 조회
-   * GET /users
-   *
-   * 현재 로그인한 사용자의 프로필 정보를 반환합니다. JWT 토큰이 필요합니다.
-   *
-   * @returns {Promise} 프로필 정보 { isSuccess, code, message, result: { id, nickname, email, mannerScore, rangeSetting, profileImage, alarmChecked, phoneNumber, phoneVerified } }
-   */
-  getProfile: () => {
-    return apiClient.get('/users');
-  },
-
+export const mypageService = {
   /**
    * 내 경매 목록 조회
    * GET /mypage/auctions
@@ -51,4 +38,4 @@ export const mypageApi = {
   },
 };
 
-export default mypageApi;
+export default mypageService;

@@ -18,7 +18,8 @@ import LocationDrawer from "./LocationDrawer";
 import WithdrawalDrawer from "./WithdrawalDrawer";
 import WishlistDrawer from "./WishlistDrawer";
 import WishlistList from "./Wishlist/WishlistList";
-import { mypageApi } from "../../api/endpoints/mypage";
+import { userService } from "../../api/users/service";
+import { mypageService } from "../../api/mypage/service";
 
 export default function MyPage() {
   const navigate = useNavigate();
@@ -48,7 +49,7 @@ export default function MyPage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await mypageApi.getProfile();
+        const response = await userService.getProfile();
         if (response.data.isSuccess) {
           setUserProfile(response.data.result);
         }
@@ -89,7 +90,7 @@ export default function MyPage() {
       setError(null);
 
       try {
-        const response = await mypageApi.getMyAuctions({
+        const response = await mypageService.getMyAuctions({
           type: getAuctionType(activeTab),
           sort: getSortType(sortValue),
           page: 0,
@@ -117,7 +118,7 @@ export default function MyPage() {
   useEffect(() => {
     const fetchLikedAuctions = async () => {
       try {
-        const response = await mypageApi.getLikedAuctions({
+        const response = await mypageService.getLikedAuctions({
           page: 0,
           size: 20
         });
