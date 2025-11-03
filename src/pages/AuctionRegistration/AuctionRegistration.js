@@ -67,14 +67,20 @@ export default function AuctionRegistration() {
   const [error, setError] = useState("");
 
   /** 프리뷰 계산: 현재가 = 시작가 × 120% */
-  const previewImage = useMemo(() => state.images[0]?.url || "", [state.images]);
+  const previewImages = useMemo(
+    () => (state.images || []).map((it) => it?.url).filter(Boolean),
+    [state.images]
+  );
+  const previewImage = useMemo(() => previewImages[0] || "", [previewImages]);
+
   const previewCurrent = useMemo(() => {
     const p = Number(state.startPrice || 0);
     return p > 0 ? Math.round(p * 1.2) : 0;
   }, [state.startPrice]);
 
   const previewData = {
-    imageUrl: previewImage,
+    imageUrl: previewImage,             // 단일 이미지 호환
+    images: previewImages,              // 다중 이미지(슬라이드) 전달
     title: state.title || "제목을 입력하면 여기에 표시됩니다",
     views: 1500,
     bidders: 1260,
@@ -217,7 +223,8 @@ export default function AuctionRegistration() {
 
         {/* 우측: 미리보기 */}
         <aside className={styles.rightCol}>
-          <PreviewCard {...previewData} />
+          {/* 이미지가 바뀌면 슬라이더 인덱스 초기화를 위해 key 부여 */}
+          <PreviewCard key={previewImages.join("|")} {...previewData} />
         </aside>
       </div>
 

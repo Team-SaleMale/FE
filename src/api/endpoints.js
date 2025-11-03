@@ -1,3 +1,4 @@
+// src/api/endpoint.js
 const endpoints = {
   AUTH: {
     REGISTER: "/auth/register",
@@ -26,8 +27,8 @@ const endpoints = {
   },
 
   AUCTIONS: {
+    LIST: "/auctions",                       // ← 기본 목록
     REGISTER: "/auctions/registration",
-    // ✅ Swagger와 동일한 경로로 교정
     DETAIL:   (itemId) => `/auctions/${itemId}`,
     LIKE:     (itemId) => `/auctions/${itemId}/liked`,
     UNLIKE:   (itemId) => `/auctions/${itemId}/liked`,

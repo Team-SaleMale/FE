@@ -1,3 +1,4 @@
+// src/api/client.js
 import axios from "axios";
 import { Cookies } from "react-cookie";
 import config from "../config";
@@ -5,9 +6,26 @@ import config from "../config";
 const cookies = new Cookies();
 const ACCESS_TOKEN_KEY = "accessToken";
 
+/** ?a=1&a=2 형태로 직렬화 (배열 쿼리 서버 호환) */
+function serializeParams(params = {}) {
+  const usp = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v === undefined || v === null) return;
+    if (Array.isArray(v)) {
+      v.forEach((vv) => {
+        if (vv !== undefined && vv !== null) usp.append(k, String(vv));
+      });
+    } else {
+      usp.append(k, String(v));
+    }
+  });
+  return usp.toString();
+}
+
 const api = axios.create({
   baseURL: config.API_URL,
   withCredentials: true,
+  paramsSerializer: { serialize: serializeParams },
 });
 
 api.interceptors.request.use((cfg) => {
@@ -70,10 +88,7 @@ export const patch = async (url, data, options = {}) => {
 };
 
 export const postMultipart = async (url, formData, options = {}) => {
-  const res = await api.post(url, formData, {
-    headers: {},
-    ...options,
-  });
+  const res = await api.post(url, formData, { headers: {}, ...options });
   validateContentType(res);
   return res.data;
 };

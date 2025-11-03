@@ -1,3 +1,4 @@
+// src/pages/AuctionList/AuctionCardHorizontal.jsx
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/AuctionList/AuctionCardHorizontal.module.css";
@@ -22,10 +23,11 @@ function useTimeLeft(endAtISO, disabled) {
 }
 
 export default function AuctionCardHorizontal({ item }) {
-  const images = useMemo(
-    () => (item?.images?.length ? item.images : item?.image ? [item.image] : []),
-    [item]
-  );
+  const images = useMemo(() => {
+    const arr = Array.isArray(item?.images) ? item.images : [];
+    return arr.filter(Boolean);
+  }, [item]);
+
   const [idx, setIdx] = useState(0);
   const go = (d) => images.length > 1 && setIdx((p) => (p + d + images.length) % images.length);
 
@@ -34,9 +36,7 @@ export default function AuctionCardHorizontal({ item }) {
 
   return (
     <article className={styles.card}>
-      {/* 썸네일 */}
       <div className={styles.thumb}>
-        {/* 👉 이미지 기준 좌표계를 만드는 래퍼 */}
         <div className={styles.thumbInner}>
           {images.length ? (
             <img className={styles.thumbImg} src={images[idx]} alt={item?.title || "auction"} />
@@ -44,25 +44,14 @@ export default function AuctionCardHorizontal({ item }) {
             <div className={styles.empty} />
           )}
 
-          {/* 오늘 마감 배지 */}
-          {item?.isEndingTodayOpen && (
-            <span className={styles.badge}>오늘 마감 경매</span>
-          )}
+          {item?.isEndingTodayOpen && <span className={styles.badge}>오늘 마감 경매</span>}
 
           {images.length > 1 && (
             <>
-              <button
-                className={`${styles.nav} ${styles.prev}`}
-                onClick={() => go(-1)}
-                aria-label="prev"
-              >
+              <button className={`${styles.nav} ${styles.prev}`} onClick={(e) => { e.stopPropagation(); go(-1); }} aria-label="prev">
                 <Icon icon="solar:alt-arrow-left-linear" />
               </button>
-              <button
-                className={`${styles.nav} ${styles.next}`}
-                onClick={() => go(1)}
-                aria-label="next"
-              >
+              <button className={`${styles.nav} ${styles.next}`} onClick={(e) => { e.stopPropagation(); go(1); }} aria-label="next">
                 <Icon icon="solar:alt-arrow-right-linear" />
               </button>
               <div className={styles.dots} role="tablist" aria-label="images">
@@ -71,7 +60,7 @@ export default function AuctionCardHorizontal({ item }) {
                     key={i}
                     className={`${styles.dot} ${i === idx ? styles.activeDot : ""}`}
                     aria-selected={i === idx}
-                    onClick={() => setIdx(i)}
+                    onClick={(e) => { e.stopPropagation(); setIdx(i); }}
                   />
                 ))}
               </div>
@@ -80,7 +69,6 @@ export default function AuctionCardHorizontal({ item }) {
         </div>
       </div>
 
-      {/* 본문 */}
       <div className={styles.body}>
         <div className={styles.header}>
           <h3 className={styles.title} title={item?.title}>{item?.title}</h3>

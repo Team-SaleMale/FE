@@ -1,11 +1,11 @@
+// src/pages/AuctionList/AuctionCardVertical.jsx
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/AuctionList/AuctionCardVertical.module.css";
 
-/* 남은 시간: n일 HH:MM:SS - 항상 호출 */
+/* 남은 시간 */
 function useTimeLeft(endAtISO, disabled) {
   const [now, setNow] = useState(() => Date.now());
-
   useEffect(() => {
     if (disabled) return;
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -13,7 +13,6 @@ function useTimeLeft(endAtISO, disabled) {
   }, [disabled]);
 
   if (disabled || !endAtISO) return "종료";
-
   const ms = Math.max(0, new Date(endAtISO).getTime() - now);
   const sec = Math.floor(ms / 1000);
   const d = Math.floor(sec / 86400);
@@ -25,10 +24,10 @@ function useTimeLeft(endAtISO, disabled) {
 }
 
 export default function AuctionCardVertical({ item }) {
-  const images = useMemo(
-    () => (item?.images?.length ? item.images : item?.image ? [item.image] : []),
-    [item]
-  );
+  const images = useMemo(() => {
+    const arr = Array.isArray(item?.images) ? item.images : [];
+    return arr.filter(Boolean);
+  }, [item]);
 
   const [idx, setIdx] = useState(0);
   const go = (d) => images.length > 1 && setIdx((p) => (p + d + images.length) % images.length);
@@ -38,7 +37,6 @@ export default function AuctionCardVertical({ item }) {
 
   return (
     <article className={styles.card} tabIndex={-1}>
-      {/* 썸네일 */}
       <div className={styles.thumb}>
         {images.length ? (
           <img className={styles.thumbImg} src={images[idx]} alt={item?.title || "auction image"} />
@@ -46,16 +44,14 @@ export default function AuctionCardVertical({ item }) {
           <div className={styles.empty} />
         )}
 
-        {/* ✅ 오늘 마감 배지만 노출 */}
         {item?.isEndingTodayOpen && <span className={styles.badge}>오늘 마감 경매</span>}
 
-        {/* 슬라이더 컨트롤 */}
         {images.length > 1 && (
           <>
-            <button className={`${styles.nav} ${styles.prev}`} onClick={() => go(-1)} aria-label="prev">
+            <button className={`${styles.nav} ${styles.prev}`} onClick={(e) => { e.stopPropagation(); go(-1); }} aria-label="prev">
               <Icon icon="solar:alt-arrow-left-linear" />
             </button>
-            <button className={`${styles.nav} ${styles.next}`} onClick={() => go(1)} aria-label="next">
+            <button className={`${styles.nav} ${styles.next}`} onClick={(e) => { e.stopPropagation(); go(1); }} aria-label="next">
               <Icon icon="solar:alt-arrow-right-linear" />
             </button>
             <div className={styles.dots}>
@@ -64,7 +60,7 @@ export default function AuctionCardVertical({ item }) {
                   key={i}
                   className={`${styles.dot} ${i === idx ? styles.activeDot : ""}`}
                   aria-selected={i === idx}
-                  onClick={() => setIdx(i)}
+                  onClick={(e) => { e.stopPropagation(); setIdx(i); }}
                 />
               ))}
             </div>
@@ -72,7 +68,6 @@ export default function AuctionCardVertical({ item }) {
         )}
       </div>
 
-      {/* 본문 */}
       <div className={styles.body}>
         <h3 className={styles.title} title={item?.title}>{item?.title}</h3>
         <div className={styles.views}>{item?.views?.toLocaleString()} views</div>
