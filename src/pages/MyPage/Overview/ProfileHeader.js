@@ -1,10 +1,17 @@
 import styles from "../../../styles/MyPage/Overview/ProfileHeader.module.css";
 import { Icon } from "@iconify/react";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 
-export default function ProfileHeader({ selectedCategories = [], userLocation = "서울 강서구 가양제3동" }) {
-  const [profileImage, setProfileImage] = useState("https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=400&auto=format&fit=crop");
+export default function ProfileHeader({ selectedCategories = [], userLocation = "서울 강서구 가양제3동", userProfile = null }) {
+  const [profileImage, setProfileImage] = useState(userProfile?.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=400&auto=format&fit=crop");
   const fileInputRef = useRef(null);
+
+  // userProfile이 변경되면 profileImage 업데이트
+  useEffect(() => {
+    if (userProfile?.profileImage) {
+      setProfileImage(userProfile.profileImage);
+    }
+  }, [userProfile]);
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
@@ -61,7 +68,7 @@ export default function ProfileHeader({ selectedCategories = [], userLocation = 
           title="프로필 사진 변경"
         />
         <div className={styles.userBlock}>
-          <div className={styles.userName}>울릉한소우주강황</div>
+          <div className={styles.userName}>{userProfile?.nickname || "사용자"}</div>
         </div>
       </div>
 
