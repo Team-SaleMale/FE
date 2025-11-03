@@ -1,98 +1,266 @@
 /* NOTE(ChatGPT): 회원가입 화면 스타일 (로그인과 동일 톤) */
-:root{
-  --bg:#f5f7fb;
-  --card:#fff;
-  --text:#111827;
-  --muted:#6b7280;
-  --line:#e5e7eb;
-  --primary:#4f69ff;
-  --primary-hover:#3e55e6;
+:root {
+  --bg: #f5f7fb;
+  --card: #fff;
+  --text: #111827;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --primary: #4f69ff;
+  --primary-hover: #3e55e6;
+  --control-h: 52px;
 }
 
-.auth{
-  min-height:100vh;
-  display:grid;
-  place-items:center;
-  background:var(--bg);
-  padding:24px;
-  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
-  color:var(--text);
+.auth {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  padding: 24px;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+    Helvetica, Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  color: var(--text);
 }
 
-.auth-card{
-  width:100%;
-  max-width:520px;
-  background:var(--card);
-  border-radius:16px;
-  box-shadow:0 10px 30px rgba(0,0,0,.06);
-  padding:40px 36px 32px;
+.auth-card {
+  width: 100%;
+  max-width: 480px;
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  padding: 40px 36px 36px;
+  box-sizing: border-box;
 }
 
-.auth-title{
-  font-size:28px;
-  font-weight:800;
-  letter-spacing:-.3px;
-  margin:0 0 8px;
+.auth-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  margin: 0 0 8px;
 }
 
-.auth-sub{
-  margin:0 0 16px;
-  color:var(--muted);
-  font-size:14px;
-}
-.auth-sub.small{ margin:12px 0 8px; }
-
-.auth-form{ display:grid; gap:12px; }
-
-.auth-input{
-  height:52px;
-  border:1px solid var(--line);
-  border-radius:12px;
-  padding:0 16px;
-  font-size:16px;
-  background:#fff;
-  outline:none;
-  transition:border-color .15s, box-shadow .15s;
-}
-.auth-input::placeholder{ color:#9ca3af; }
-.auth-input:focus{
-  border-color:#9fb0ff;
-  box-shadow:0 0 0 4px rgba(79,105,255,.12);
+.auth-sub {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 15px;
 }
 
-.auth-submit{
-  height:54px;
-  margin-top:6px;
-  border:0;
-  border-radius:12px;
-  background:var(--primary);
-  color:#fff;
-  font-size:16px;
-  font-weight:700;
-  cursor:pointer;
-  transition:background .15s, transform .02s, box-shadow .15s;
-  box-shadow:0 6px 14px rgba(79,105,255,.28);
-}
-.auth-submit:hover{ background:var(--primary-hover); }
-.auth-submit:active{ transform:translateY(1px); }
-
-.social-wrap{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-  margin-top:10px;
+.auth-form {
+  display: grid;
+  gap: 12px;
 }
 
-.social-btn{
-  height:56px;
-  border-radius:12px;
-  border:1px solid var(--line);
-  background:#f8fafc;
-  display:grid;
-  place-items:center;
-  font-size:22px;
-  cursor:pointer;
-  transition:background .15s, transform .02s;
+.auth-input {
+  height: var(--control-h);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 0 16px;
+  font-size: 15px;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.social-btn:hover{ background:#f3f4f6; }
-.social-btn:active{ transform:translateY(1px); }
+.auth-input:focus {
+  border-color: #9fb0ff;
+  box-shadow: 0 0 0 4px rgba(79, 105, 255, 0.12);
+}
+
+/* ============================
+   단계 표시 (stepper)
+============================ */
+.stepper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+.step-dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: #555;
+}
+.step-dot.active {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.step-connector {
+  width: 45px;
+  height: 2px;
+  background: #ddd;
+}
+.step-connector.active {
+  background: var(--primary);
+}
+
+/* ============================
+   버튼 영역
+============================ */
+.row-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+
+.row-code {
+  display: grid;
+  grid-template-columns: 1fr 150px;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+
+.btn-outline {
+  height: var(--control-h);
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.02s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-outline:hover {
+  background: var(--primary-hover);
+}
+.btn-outline:active {
+  transform: translateY(1px);
+}
+.btn-outline:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-submit {
+  height: 52px;
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(79, 105, 255, 0.28);
+  transition: background 0.2s, transform 0.02s;
+}
+.auth-submit:hover {
+  background: var(--primary-hover);
+}
+.auth-submit:active {
+  transform: translateY(1px);
+}
+.auth-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ============================
+   힌트 / 구분선 / 소셜 버튼
+============================ */
+.hint {
+  margin-top: 8px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.hint .ok {
+  color: #107c10;
+  font-size: 0.9rem;
+}
+.hint .warn {
+  color: #b00020;
+  font-size: 0.9rem;
+}
+
+.divider {
+  margin: 22px 0 10px;
+  text-align: center;
+  color: #aaa;
+  font-size: 0.9rem;
+  position: relative;
+}
+.divider span {
+  background: #fff;
+  padding: 0 10px;
+  position: relative;
+  z-index: 1;
+}
+.divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e2e2e2;
+  transform: translateY(-50%);
+}
+
+.social-card-row {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 12px;
+}
+.social-card {
+  width: 100%;
+  max-width: 150px;
+  background: #f7f7f7;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  padding: 10px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.social-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+.social-card-logo {
+  height: 30px;
+  object-fit: contain;
+}
+
+/* ============================
+   다음 버튼 아래 여백
+============================ */
+.row-next {
+  margin-top: 28px;
+}
+.row-next .auth-submit {
+  width: 100%;
+}
+/* ============================
+   이전/다음 버튼 높이 완전 일치 fix
+============================ */
+.row-2 button {
+  height: var(--control-h);
+  line-height: var(--control-h);
+  border-radius: 10px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+/* NOTE(ChatGPT): 파란색 버튼은 이미 색상 통일돼 있으므로 hover 효과만 유지 */
+.row-2 .btn-outline {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+}
+.row-2 .btn-outline:hover {
+  background: var(--primary-hover);
+}

@@ -1,6 +1,5 @@
 import styles from "../../styles/AuctionList/Toolbar.module.css";
 
-/** 정렬(보기) 토글 아이콘 - 로컬 SVG */
 import HorSel from "../../assets/img/AuctionList/SortIcon/Horizontal_List_Selected.svg";
 import HorUn  from "../../assets/img/AuctionList/SortIcon/Horizontal_List_UnSelected.svg";
 import VerSel from "../../assets/img/AuctionList/SortIcon/Vertical_List_Selected.svg";
@@ -16,10 +15,8 @@ const TABS = [
 export default function Toolbar({ activeTab, onChangeTab, layout, onToggleLayout }) {
   return (
     <div className={styles.wrap}>
-      {/* 1행: 제목 */}
       <h2 className={styles.title}>내 주변의 중고 거래 경매</h2>
 
-      {/* 2행-좌: 탭 */}
       <ul className={styles.tabs} role="tablist" aria-label="auction filters">
         {TABS.map(t => {
           const isActive = activeTab === t.key;
@@ -38,7 +35,6 @@ export default function Toolbar({ activeTab, onChangeTab, layout, onToggleLayout
         })}
       </ul>
 
-      {/* 2행-우: 보기(가로/세로) 토글 */}
       <div className={styles.right} role="group" aria-label="view layout">
         <div className={styles.viewToggle}>
           <button
@@ -47,13 +43,7 @@ export default function Toolbar({ activeTab, onChangeTab, layout, onToggleLayout
             aria-pressed={layout === "horizontal"}
             title="가로형 정렬"
           >
-            <img
-              src={layout === "horizontal" ? HorSel : HorUn}
-              alt="가로형 정렬"
-              width={24}
-              height={24}
-              draggable={false}
-            />
+            <img src={layout === "horizontal" ? HorSel : HorUn} alt="가로형 정렬" width={24} height={24} draggable={false} />
           </button>
 
           <button
@@ -62,13 +52,7 @@ export default function Toolbar({ activeTab, onChangeTab, layout, onToggleLayout
             aria-pressed={layout === "vertical"}
             title="세로형 정렬"
           >
-            <img
-              src={layout === "vertical" ? VerSel : VerUn}
-              alt="세로형 정렬"
-              width={24}
-              height={24}
-              draggable={false}
-            />
+            <img src={layout === "vertical" ? VerSel : VerUn} alt="세로형 정렬" width={24} height={24} draggable={false} />
           </button>
         </div>
       </div>

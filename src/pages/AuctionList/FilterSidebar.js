@@ -1,22 +1,23 @@
-// src/pages/AuctionList/FilterSidebar.js
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/AuctionList/FilterSidebar.module.css";
 import mapPng from "../../assets/img/AuctionList/map.png";
 
-/** 정렬 옵션(마감 임박순 제거) */
+/** 정렬 옵션 */
 const SORTS = [
+  { key: "",          label: "최신순" },          // 서버 기본 CREATED_DESC
   { key: "bids",      label: "입찰 많은 순" },
   { key: "priceLow",  label: "가격 낮은 순" },
   { key: "priceHigh", label: "가격 높은 순" },
   { key: "views",     label: "조회수 많은 순" },
 ];
 
-/** 카테고리 표시 순서 (등록 화면과 동일) */
+/** 카테고리 표시 순서 */
 const ORDER_KEYS = [
   "women-acc","food-processed","sports","plant","game-hobby",
   "ticket","furniture","beauty","clothes","health-food",
-  "book","kids","digital","living-kitchen","home-appliance","etc"
+  "book","kids","digital","living-kitchen","home-appliance",
+  "pet","etc"
 ];
 
 const onlyDigits = (s) => (s || "").replace(/[^\d]/g, "");
@@ -24,62 +25,58 @@ const fmt = (s) => (s ? Number(s).toLocaleString("ko-KR") : "");
 
 export default function FilterSidebar({
   categories = [],
-  activeCategory,
-  price = { min: 0, max: 0 },   // ✅ 부모 값과 동기화
+  activeCategories = [],      // ★ 배열
+  price = { min: 0, max: 0 },
   sort = "",
-  onChangeCategory,
-  onChangePrice,                // ({min, max})
-  onChangeSort,                 // (sortKey)
+  query = "",
+  onChangeCategories,
+  onChangePrice,
+  onChangeSort,
+  onChangeQuery,
   onClear,
 }) {
-  // 표시용 문자열(콤마 포함)
   const [minStr, setMinStr] = useState("");
   const [maxStr, setMaxStr] = useState("");
   const [sortKey, setSortKey] = useState("");
+  const [qStr, setQStr] = useState("");
 
+  const [openSearch, setOpenSearch] = useState(true);
   const [openPrice, setOpenPrice] = useState(true);
   const [openSort, setOpenSort] = useState(true);
   const [openCats, setOpenCats] = useState(true);
 
-  // 부모 price → 표시문자열 동기화
   useEffect(() => {
     const toStr = (v) => (v && Number(v) > 0 ? Number(v).toLocaleString("ko-KR") : "");
     setMinStr(toStr(price.min));
     setMaxStr(toStr(price.max));
   }, [price.min, price.max]);
 
-  // 부모 sort → 체크박스 동기화
-  useEffect(() => {
-    setSortKey(sort || "");
-  }, [sort]);
+  useEffect(() => { setSortKey(sort || ""); }, [sort]);
+  useEffect(() => { setQStr(query || ""); }, [query]);
 
   // 카테고리 칩 정렬
   const catChips = useMemo(() => {
     const list = categories.filter((c) => c.key !== "all");
     const map = new Map(list.map((c) => [c.key, c]));
-    return ORDER_KEYS.map((k) => map.get(k)).filter(Boolean);
+    const ordered = ORDER_KEYS.map((k) => map.get(k)).filter(Boolean);
+    list.forEach((c) => { if (!ORDER_KEYS.includes(c.key)) ordered.push(c); });
+    return ordered;
   }, [categories]);
 
-  // 입력 즉시 3자리 콤마 적용
+  // 가격
   const handleMinChange = (e) => setMinStr(fmt(onlyDigits(e.target.value)));
   const handleMaxChange = (e) => setMaxStr(fmt(onlyDigits(e.target.value)));
-
-  // 가격 emit: min > max면 자동 스왑
   const emitPrice = () => {
     let min = Number(onlyDigits(minStr)) || 0;
     let max = Number(onlyDigits(maxStr)) || 0;
     if (min > 0 && max > 0 && min > max) [min, max] = [max, min];
     onChangePrice?.({ min, max });
   };
-
   const handlePriceKey = (e) => {
-    if (e.key === "Enter") {
-      e.currentTarget.blur();
-      emitPrice();
-    }
+    if (e.key === "Enter") { e.currentTarget.blur(); emitPrice(); }
   };
 
-  // 정렬: 단일선택 + 같은 키 재클릭시 해제
+  // 정렬 (토글, 빈 문자열은 최신순)
   const handleSort = (key) => {
     setSortKey((prev) => {
       const next = prev === key ? "" : key;
@@ -88,28 +85,41 @@ export default function FilterSidebar({
     });
   };
 
-  const handleCategory = (key) => onChangeCategory?.(key);
+  // 검색
+  const handleQueryChange = (e) => {
+    const v = e.target.value;
+    setQStr(v);
+    onChangeQuery?.(v);
+  };
 
-  // Clear
+  // 카테고리(다중 토글)
+  const toggleCategory = (key) => {
+    onChangeCategories?.((prev) => {
+      const set = new Set(prev || []);
+      if (set.has(key)) set.delete(key); else set.add(key);
+      return Array.from(set);
+    });
+  };
+
   const handleClear = () => {
     setMinStr("");
     setMaxStr("");
     setSortKey("");
+    setQStr("");
+    onChangeQuery?.("");
     onChangePrice?.({ min: 0, max: 0 });
     onChangeSort?.("");
-    onChangeCategory?.("all");
+    onChangeCategories?.([]);
     onClear?.();
   };
 
   return (
     <div className={styles.wrap}>
-      {/* 지도 */}
       <div className={styles.mapCard}>
         <img className={styles.mapImg} src={mapPng} alt="map" />
         <div className={styles.locPill}>경기도 고양시 덕양구</div>
       </div>
 
-      {/* 패널 */}
       <section className={styles.panel}>
         <header className={styles.panelHead}>
           <h4 className={styles.panelTitle}>Filter by:</h4>
@@ -117,6 +127,43 @@ export default function FilterSidebar({
             Clear
           </button>
         </header>
+
+        {/* 검색 */}
+        <div className={styles.group}>
+          <button
+            type="button"
+            className={styles.groupHead}
+            aria-expanded={openSearch}
+            onClick={() => setOpenSearch((v) => !v)}
+          >
+            <span>검색</span>
+            <Icon icon="solar:alt-arrow-down-linear" className={`${styles.chev} ${openSearch ? styles.chevOpen : ""}`} />
+          </button>
+
+          {openSearch && (
+            <div className={styles.searchWrap}>
+              <Icon icon="solar:magnifer-linear" className={styles.searchIcon} />
+              <input
+                className={styles.searchInput}
+                placeholder="제목 검색"
+                value={qStr}
+                onChange={handleQueryChange}
+                onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                aria-label="제목 검색"
+              />
+              {qStr && (
+                <button
+                  type="button"
+                  className={styles.searchClear}
+                  onClick={() => { setQStr(""); onChangeQuery?.(""); }}
+                  aria-label="검색어 지우기"
+                >
+                  <Icon icon="solar:close-circle-linear" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* 가격 범위 */}
         <div className={styles.group}>
@@ -127,10 +174,7 @@ export default function FilterSidebar({
             onClick={() => setOpenPrice((v) => !v)}
           >
             <span>가격 범위</span>
-            <Icon
-              icon="solar:alt-arrow-down-linear"
-              className={`${styles.chev} ${openPrice ? styles.chevOpen : ""}`}
-            />
+            <Icon icon="solar:alt-arrow-down-linear" className={`${styles.chev} ${openPrice ? styles.chevOpen : ""}`} />
           </button>
 
           {openPrice && (
@@ -171,7 +215,7 @@ export default function FilterSidebar({
           )}
         </div>
 
-        {/* 정렬 옵션 */}
+        {/* 정렬 */}
         <div className={styles.group}>
           <button
             type="button"
@@ -180,10 +224,7 @@ export default function FilterSidebar({
             onClick={() => setOpenSort((v) => !v)}
           >
             <span>정렬 옵션</span>
-            <Icon
-              icon="solar:alt-arrow-down-linear"
-              className={`${styles.chev} ${openSort ? styles.chevOpen : ""}`}
-            />
+            <Icon icon="solar:alt-arrow-down-linear" className={`${styles.chev} ${openSort ? styles.chevOpen : ""}`} />
           </button>
 
           {openSort && (
@@ -202,7 +243,7 @@ export default function FilterSidebar({
           )}
         </div>
 
-        {/* 카테고리 */}
+        {/* 카테고리 (다중) */}
         <div className={styles.group}>
           <button
             type="button"
@@ -211,24 +252,19 @@ export default function FilterSidebar({
             onClick={() => setOpenCats((v) => !v)}
           >
             <span>카테고리</span>
-            <Icon
-              icon="solar:alt-arrow-down-linear"
-              className={`${styles.chev} ${openCats ? styles.chevOpen : ""}`}
-            />
+            <Icon icon="solar:alt-arrow-down-linear" className={`${styles.chev} ${openCats ? styles.chevOpen : ""}`} />
           </button>
 
           {openCats && (
-            <div className={styles.chipWrap} role="radiogroup" aria-label="카테고리">
+            <div className={styles.chipWrap} role="group" aria-label="카테고리(다중)">
               {catChips.map(({ key, label, icon }) => {
-                const active = activeCategory === key;
+                const active = (activeCategories || []).includes(key);
                 return (
                   <button
                     key={key}
                     type="button"
                     className={`${styles.chip} ${active ? styles.isActive : ""}`}
-                    onClick={() => handleCategory(key)}
-                    role="radio"
-                    aria-checked={active}
+                    onClick={() => toggleCategory(key)}
                     title={label}
                   >
                     <span className={styles.chipIcon}><Icon icon={icon} /></span>
