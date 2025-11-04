@@ -16,6 +16,7 @@
     "dayjs": "^1.11.18",
     "lucide-react": "^0.545.0",
     "react": "^19.2.0",
+    "react-cookie": "^8.0.1",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.3",
     "react-scripts": "5.0.1",
