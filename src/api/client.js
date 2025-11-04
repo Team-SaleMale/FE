@@ -23,8 +23,12 @@ function serializeParams(params = {}) {
 }
 
 const api = axios.create({
-  // 두 환경 모두 지원: config.API_URL 우선, 없으면 REACT_APP_API_URL 사용
-  baseURL: (config && config.API_URL) || process.env.REACT_APP_API_URL || "",
+  // 두 환경 모두 지원: config.API_URL > VITE_API_BASE_URL > REACT_APP_API_URL
+  baseURL:
+    (config && config.API_URL) ||
+    (import.meta && import.meta.env && import.meta.env.VITE_API_BASE_URL) ||
+    process.env.REACT_APP_API_URL ||
+    "",
   withCredentials: true,
   timeout: 10000,
   headers: {
@@ -53,7 +57,12 @@ const validateContentType = (response) => {
   const ct = (response.headers?.["content-type"] || "").toLowerCase();
   const st = response.status;
   if (st === 204) return;
-  if (ct.includes("application/json") || ct.includes("text/")) return;
+  if (
+    ct.includes("application/json") ||
+    ct.includes("application/problem+json") ||
+    ct.includes("text/")
+  )
+    return;
   if (
     ct.includes("multipart/") ||
     ct.includes("image/") ||
@@ -61,6 +70,19 @@ const validateContentType = (response) => {
   )
     return;
   throw new Error("서버 응답이 올바르지 않습니다.");
+};
+
+// 표준 에러 메시지 추출
+const extractFriendlyMessage = (error) => {
+  // 서버 표준: { message: string } 또는 { error: { message } } 등을 최대한 흡수
+  const data = error?.response?.data;
+  return (
+    data?.message ||
+    data?.error?.message ||
+    data?.errorMessage ||
+    error?.message ||
+    "요청 실패"
+  );
 };
 
 // 응답 인터셉터: 에러 처리 + CT 검증
@@ -75,6 +97,9 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    // 어떤 경우든 friendlyMessage 붙여서 상위에서 공통 사용 가능
+    error.friendlyMessage = extractFriendlyMessage(error);
+
     if (error.response) {
       // 서버 응답이 있는 경우
       switch (error.response.status) {
@@ -84,7 +109,13 @@ api.interceptors.response.use(
           try {
             localStorage.removeItem(ACCESS_TOKEN_KEY);
           } catch (_) {}
-          if (typeof window !== "undefined") window.location.href = "/login";
+          // 로그인 페이지에서 다시 /login으로 보내 무한루프 방지
+//          if (
+//            typeof window !== "undefined" &&
+//            window.location.pathname !== "/login"
+//          ) {
+//            window.location.href = "/login";
+//          }
           break;
         }
         case 403:

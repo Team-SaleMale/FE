@@ -6,8 +6,16 @@ const endpoints = {
     LOGIN:    "/auth/login",
     LOGOUT:   "/auth/logout",
     ME:       "/auth/me",
+    ME_DELETE:"/auth/me",   
     CHECK_NICK:  "/auth/check/nickname",
-    CHECK_EMAIL: "/auth/check/email",
+    CHECK_EMAIL: "/auth/check/email", 
+    EMAIL_VERIFY_REQUEST: "/auth/email/verify/request",   
+    EMAIL_VERIFY_CONFIRM: "/auth/email/verify/confirm", 
+    SOCIAL_COMPLETE: "/auth/social/complete", 
+    OAUTH2_LOGIN: "/auth/oauth2/login",     
+    PASSWORD_RESET_REQUEST: "/auth/password/reset",  
+    PASSWORD_RESET_VERIFY:  "/auth/password/reset/verify", 
+    PASSWORD_RESET_CONFIRM: "/auth/password/reset/confirm",
   },
 
   USERS: {

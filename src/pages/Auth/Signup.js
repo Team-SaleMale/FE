@@ -6,10 +6,13 @@ import "../../styles/Auth/Signup.css";
 import naverLogo from "../../assets/img/logo/naver_logo.png";
 import kakaoLogo from "../../assets/img/logo/kakao_logo.png";
 
-// NOTE(ChatGPT): 이 파일은 UI 미리보기용 목업입니다(실제 API 호출 없음).
-// - 이메일 중복: "used"가 들어가면 중복 처리
-// - 인증번호: "000000" 입력 시 성공
-// - 닉네임 중복: "admin" 이면 중복 처리
+import {
+  checkEmail,
+  requestEmailCode,
+  verifyEmailCode,
+  checkNickname,
+  register,
+} from "../../api/auth/service";
 
 function Signup() {
   const [step, setStep] = useState(1);
@@ -31,39 +34,49 @@ function Signup() {
   const [loading, setLoading] = useState(false);
   const disabled = loading;
 
-  // Step1 목업
+  // Step1 이메일 중복 확인
   const onCheckEmail = async () => {
     if (!email) return alert("이메일을 입력하세요");
     if (!emailValid) return alert("이메일 형식을 확인하세요");
-    setLoading(true);
-    setTimeout(() => {
-      const available = !email.toLowerCase().includes("used");
+    try {
+      setLoading(true);
+      const { available } = await checkEmail(email);
       setEmailAvailable(available);
       alert(available ? "사용 가능한 이메일입니다." : "이미 사용 중인 이메일입니다.");
+    } catch (err) {
+      alert(err.friendlyMessage || "이메일 중복 확인 실패");
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   const onRequestCode = async () => {
     if (!email) return alert("이메일을 입력하세요");
     if (!emailValid) return alert("이메일 형식을 확인하세요");
     if (emailAvailable === false) return alert("이미 사용 중인 이메일입니다.");
-    setLoading(true);
-    setTimeout(() => {
-      alert("인증번호가 이메일로 전송되었다고 가정합니다. (목업)");
+    try {
+      setLoading(true);
+      await requestEmailCode(email);
+      alert("인증번호가 이메일로 전송되었습니다.");
+    } catch (err) {
+      alert(err.friendlyMessage || "인증번호 요청 실패");
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   const onVerifyCode = async () => {
     if (!code) return alert("인증번호를 입력하세요");
-    setLoading(true);
-    setTimeout(() => {
-      const verified = code === "000000"; // 목업 규칙
+    try {
+      setLoading(true);
+      const { verified } = await verifyEmailCode(email, code);
       setEmailVerified(verified);
-      alert(verified ? "이메일 인증이 완료되었습니다." : "인증번호가 올바르지 않습니다. (000000 입력 시 성공)");
+      alert(verified ? "이메일 인증이 완료되었습니다." : "인증번호가 올바르지 않습니다.");
+    } catch (err) {
+      alert(err.friendlyMessage || "인증번호 확인 실패");
+    } finally {
       setLoading(false);
-    }, 400);
+    }
   };
 
   const goNextFromEmail = () => {
@@ -71,16 +84,19 @@ function Signup() {
     setStep(2);
   };
 
-  // Step2 목업
+  // Step2 닉네임 중복
   const onCheckNickname = async () => {
     if (!nickname) return alert("닉네임을 입력하세요");
-    setLoading(true);
-    setTimeout(() => {
-      const isAvailable = nickname.toLowerCase() !== "admin";
-      setNicknameAvailable(isAvailable);
-      alert(isAvailable ? "사용 가능한 닉네임입니다." : "이미 사용 중인 닉네임입니다. (admin은 중복 처리)");
+    try {
+      setLoading(true);
+      const { available } = await checkNickname(nickname);
+      setNicknameAvailable(available);
+      alert(available ? "사용 가능한 닉네임입니다." : "이미 사용 중인 닉네임입니다.");
+    } catch (err) {
+      alert(err.friendlyMessage || "닉네임 중복 확인 실패");
+    } finally {
       setLoading(false);
-    }, 400);
+    }
   };
 
   const goNextFromNickname = () => {
@@ -88,14 +104,22 @@ function Signup() {
     setStep(3);
   };
 
-  // Step3 목업
-  const onSubmitSignup = (e) => {
+  // Step3 회원가입
+  const onSubmitSignup = async (e) => {
     e.preventDefault();
     if (!pw) return alert("비밀번호를 입력하세요");
     if (pw.length < 8) return alert("비밀번호는 8자 이상이어야 합니다");
     if (pw !== pw2) return alert("비밀번호가 일치하지 않습니다");
-    alert("회원가입이 완료되었습니다. (목업)"); // 여기서 실제 navigate 등을 연결하면 됨
-    navigate("/login");
+    try {
+      setLoading(true);
+      await register({ email, password: pw, nickname });
+      alert("회원가입이 완료되었습니다.");
+      navigate("/login");
+    } catch (err) {
+      alert(err.friendlyMessage || "회원가입 실패");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
