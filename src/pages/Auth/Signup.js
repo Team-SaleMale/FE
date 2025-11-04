@@ -21,7 +21,7 @@ function Signup() {
   const loc = useLocation();
   const params = new URLSearchParams(loc.search);
   const isSocial = params.get("social") === "true";
-  const signupToken = params.get("signupToken") || ""; // 소셜 회원가입 콜백에서 전달됨
+  const signupToken = params.get("signupToken") || "";
 
   const [step, setStep] = useState(isSocial ? 2 : 1);
   const navigate = useNavigate();
@@ -36,8 +36,8 @@ function Signup() {
   const [nickname, setNickname] = useState("");
   const [nicknameAvailable, setNicknameAvailable] = useState(null);
 
-  // 소셜 회원가입 전용: 지역 선택(필수 파라미터)
-  const [regionId, setRegionId] = useState(""); // 예: "1" 같은 숫자 문자열
+  // 소셜 회원가입 전용
+  const [regionId, setRegionId] = useState("");
 
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
@@ -121,7 +121,6 @@ function Signup() {
       }
       try {
         setLoading(true);
-        // GET /auth/oauth2/login?signupToken=&nickname=&regionId=
         await completeSocialSignup({
           signupToken,
           nickname,
@@ -212,7 +211,7 @@ function Signup() {
                 <input
                   type="text"
                   className="auth-input"
-                  placeholder='인증번호 입력'
+                  placeholder="인증번호 입력"
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                 />
@@ -272,7 +271,7 @@ function Signup() {
                 placeholder="닉네임 입력"
                 value={nickname}
                 onChange={(e) => {
-                  setNickname(e.target.value);
+                  setNickname(e.target.value.replace(/\s+/g, " ").trimStart());
                   setNicknameAvailable(null);
                 }}
               />

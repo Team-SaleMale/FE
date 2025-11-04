@@ -8,14 +8,12 @@ export const logout   = () => patch(endpoints.AUTH.LOGOUT, {});
 export const me       = () => get(endpoints.AUTH.ME);
 
 export const checkNickname = (nickname) =>
-  get(endpoints.AUTH.CHECK_NICK, { value: nickname }).then((res) => {
-    const r = res?.result || {};
-    const available =
-      (typeof r.isAvailable === "boolean" && r.isAvailable) ||
-      (typeof r.available === "boolean" && r.available) ||
-      Object.values(r).some((v) => v === true);
-    return { available };
-  });
+  get(endpoints.AUTH.CHECK_NICK, { value: String(nickname || "").trim() })
+    .then((res) => {
+      const exists = Boolean(res?.result?.exists);
+      return { available: !exists };
+    });
+
 export const checkEmail = (email) =>
   get(endpoints.AUTH.CHECK_EMAIL, { value: email }).then((res) => {
     const r = res?.result || {};
