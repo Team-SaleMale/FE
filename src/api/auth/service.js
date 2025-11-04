@@ -18,28 +18,23 @@ export const checkNickname = (nickname) =>
   });
 export const checkEmail = (email) =>
   get(endpoints.AUTH.CHECK_EMAIL, { value: email }).then((res) => {
-    // 서버 응답 예시:
-    // { isSuccess: true, result: { isDuplicated: true } }
     const r = res?.result || {};
     const isDuplicated =
       (typeof r.isDuplicated === "boolean" && r.isDuplicated) ||
       (typeof r.duplicated === "boolean" && r.duplicated) ||
       (typeof r.exists === "boolean" && r.exists) ||
       (typeof r.isExists === "boolean" && r.isExists);
-
-    // 중복이면 false, 아니면 true
     const available = !isDuplicated;
-
-    // message 기반 예비 판정 (혹시 result가 비어있을 경우)
     if (!Object.keys(r).length && res?.message) {
       const msg = res.message.toLowerCase();
       if (msg.includes("중복") || msg.includes("이미")) return { available: false };
       if (msg.includes("가능")) return { available: true };
     }
-
     return { available };
   });
 
 
 export const requestEmailCode = (email) => get(endpoints.AUTH.EMAIL_VERIFY_REQUEST, { email });
 export const verifyEmailCode = (email, code) => post(endpoints.AUTH.EMAIL_VERIFY_CONFIRM, { email, code });
+
+export const completeSocialSignup = (params) => get(endpoints.AUTH.OAUTH2_COMPLETE, params);
