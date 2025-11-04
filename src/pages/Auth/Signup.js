@@ -1,18 +1,29 @@
 // src/pages/Auth/Signup.jsx
 import React, { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import "../../styles/Auth/Signup.css";
 import naverLogo from "../../assets/img/logo/naver_logo.png";
 import kakaoLogo from "../../assets/img/logo/kakao_logo.png";
 
-// NOTE(ChatGPT): 이 파일은 UI 미리보기용 목업입니다(실제 API 호출 없음).
-// - 이메일 중복: "used"가 들어가면 중복 처리
-// - 인증번호: "000000" 입력 시 성공
-// - 닉네임 중복: "admin" 이면 중복 처리
+import {
+  checkEmail,
+  requestEmailCode,
+  verifyEmailCode,
+  checkNickname,
+  register,
+  completeSocialSignup,
+} from "../../api/auth/service";
+import endpoints from "../../api/endpoints";
+import config from "../../config";
 
 function Signup() {
-  const [step, setStep] = useState(1);
+  const loc = useLocation();
+  const params = new URLSearchParams(loc.search);
+  const isSocial = params.get("social") === "true";
+  const signupToken = params.get("signupToken") || ""; // 소셜 회원가입 콜백에서 전달됨
+
+  const [step, setStep] = useState(isSocial ? 2 : 1);
   const navigate = useNavigate();
 
   // 공통 상태
@@ -25,45 +36,58 @@ function Signup() {
   const [nickname, setNickname] = useState("");
   const [nicknameAvailable, setNicknameAvailable] = useState(null);
 
+  // 소셜 회원가입 전용: 지역 선택(필수 파라미터)
+  const [regionId, setRegionId] = useState(""); // 예: "1" 같은 숫자 문자열
+
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
 
   const [loading, setLoading] = useState(false);
   const disabled = loading;
 
-  // Step1 목업
+  // ===== Step1 (일반 회원가입 전용) =====
   const onCheckEmail = async () => {
     if (!email) return alert("이메일을 입력하세요");
     if (!emailValid) return alert("이메일 형식을 확인하세요");
-    setLoading(true);
-    setTimeout(() => {
-      const available = !email.toLowerCase().includes("used");
+    try {
+      setLoading(true);
+      const { available } = await checkEmail(email);
       setEmailAvailable(available);
       alert(available ? "사용 가능한 이메일입니다." : "이미 사용 중인 이메일입니다.");
+    } catch (err) {
+      alert(err.friendlyMessage || "이메일 중복 확인 실패");
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   const onRequestCode = async () => {
     if (!email) return alert("이메일을 입력하세요");
     if (!emailValid) return alert("이메일 형식을 확인하세요");
     if (emailAvailable === false) return alert("이미 사용 중인 이메일입니다.");
-    setLoading(true);
-    setTimeout(() => {
-      alert("인증번호가 이메일로 전송되었다고 가정합니다. (목업)");
+    try {
+      setLoading(true);
+      await requestEmailCode(email);
+      alert("인증번호가 이메일로 전송되었습니다.");
+    } catch (err) {
+      alert(err.friendlyMessage || "인증번호 요청 실패");
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   const onVerifyCode = async () => {
     if (!code) return alert("인증번호를 입력하세요");
-    setLoading(true);
-    setTimeout(() => {
-      const verified = code === "000000"; // 목업 규칙
+    try {
+      setLoading(true);
+      const { verified } = await verifyEmailCode(email, code);
       setEmailVerified(verified);
-      alert(verified ? "이메일 인증이 완료되었습니다." : "인증번호가 올바르지 않습니다. (000000 입력 시 성공)");
+      alert(verified ? "이메일 인증이 완료되었습니다." : "인증번호가 올바르지 않습니다.");
+    } catch (err) {
+      alert(err.friendlyMessage || "인증번호 확인 실패");
+    } finally {
       setLoading(false);
-    }, 400);
+    }
   };
 
   const goNextFromEmail = () => {
@@ -71,31 +95,77 @@ function Signup() {
     setStep(2);
   };
 
-  // Step2 목업
+  // ===== Step2 (공통 / 소셜 회원가입은 여기서만 진행) =====
   const onCheckNickname = async () => {
     if (!nickname) return alert("닉네임을 입력하세요");
-    setLoading(true);
-    setTimeout(() => {
-      const isAvailable = nickname.toLowerCase() !== "admin";
-      setNicknameAvailable(isAvailable);
-      alert(isAvailable ? "사용 가능한 닉네임입니다." : "이미 사용 중인 닉네임입니다. (admin은 중복 처리)");
+    try {
+      setLoading(true);
+      const { available } = await checkNickname(nickname);
+      setNicknameAvailable(available);
+      alert(available ? "사용 가능한 닉네임입니다." : "이미 사용 중인 닉네임입니다.");
+    } catch (err) {
+      alert(err.friendlyMessage || "닉네임 중복 확인 실패");
+    } finally {
       setLoading(false);
-    }, 400);
+    }
   };
 
-  const goNextFromNickname = () => {
+  const goNextFromNickname = async () => {
     if (nicknameAvailable !== true) return alert("닉네임 중복 확인을 완료하세요.");
+
+    // 소셜 회원가입: 여기서 최종 완료 처리
+    if (isSocial) {
+      if (!signupToken) return alert("소셜 회원가입 토큰(signupToken)이 없습니다.");
+      if (!regionId || Number.isNaN(Number(regionId))) {
+        return alert("지역을 선택하세요 (숫자 ID)");
+      }
+      try {
+        setLoading(true);
+        // GET /auth/oauth2/login?signupToken=&nickname=&regionId=
+        await completeSocialSignup({
+          signupToken,
+          nickname,
+          regionId: Number(regionId),
+        });
+        alert("소셜 회원가입이 완료되었습니다.");
+        navigate("/", { replace: true });
+      } catch (err) {
+        alert(err.friendlyMessage || "소셜 회원가입 실패");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // 일반 회원가입: 다음 단계(비밀번호 설정)
     setStep(3);
   };
 
-  // Step3 목업
-  const onSubmitSignup = (e) => {
+  // ===== Step3 (일반 회원가입 전용) =====
+  const onSubmitSignup = async (e) => {
     e.preventDefault();
     if (!pw) return alert("비밀번호를 입력하세요");
     if (pw.length < 8) return alert("비밀번호는 8자 이상이어야 합니다");
     if (pw !== pw2) return alert("비밀번호가 일치하지 않습니다");
-    alert("회원가입이 완료되었습니다. (목업)"); // 여기서 실제 navigate 등을 연결하면 됨
-    navigate("/login");
+    try {
+      setLoading(true);
+      await register({ email, password: pw, nickname });
+      alert("회원가입이 완료되었습니다.");
+      navigate("/login");
+    } catch (err) {
+      alert(err.friendlyMessage || "회원가입 실패");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ===== 소셜 로그인 버튼 클릭 (백엔드 OAuth2 엔드포인트로 이동) =====
+  const apiBase = (config && config.API_URL) || process.env.REACT_APP_API_URL || "";
+  const goNaver = () => {
+    window.location.href = `${apiBase}${endpoints.AUTH.OAUTH2_NAVER}`;
+  };
+  const goKakao = () => {
+    window.location.href = `${apiBase}${endpoints.AUTH.OAUTH2_KAKAO}`;
   };
 
   return (
@@ -103,16 +173,17 @@ function Signup() {
       <div className="auth-card">
         <h1 className="auth-title">회원가입</h1>
 
-        {/* 단계 표시 */}
+        {/* 단계 표시: 소셜 회원가입이면 2단계만 노출 */}
         <div className="stepper" aria-label="signup steps">
-          <span className={`step-dot ${step >= 1 ? "active" : ""}`}>1</span>
-          <span className={`step-connector ${step >= 2 ? "active" : ""}`} />
+          {!isSocial && <span className={`step-dot ${step >= 1 ? "active" : ""}`}>1</span>}
+          {!isSocial && <span className={`step-connector ${step >= 2 ? "active" : ""}`} />}
           <span className={`step-dot ${step >= 2 ? "active" : ""}`}>2</span>
-          <span className={`step-connector ${step >= 3 ? "active" : ""}`} />
-          <span className={`step-dot ${step >= 3 ? "active" : ""}`}>3</span>
+          {!isSocial && <span className={`step-connector ${step >= 3 ? "active" : ""}`} />}
+          {!isSocial && <span className={`step-dot ${step >= 3 ? "active" : ""}`}>3</span>}
         </div>
 
-        {step === 1 && (
+        {/* ===== Step 1: 이메일 인증 (일반 회원가입 전용) ===== */}
+        {!isSocial && step === 1 && (
           <>
             <p className="auth-sub">이메일 인증</p>
             <form className="auth-form" onSubmit={(e) => e.preventDefault()}>
@@ -141,7 +212,7 @@ function Signup() {
                 <input
                   type="text"
                   className="auth-input"
-                  placeholder='인증번호 입력 (예: "000000")'
+                  placeholder='인증번호 입력'
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                 />
@@ -161,10 +232,22 @@ function Signup() {
               </div>
 
               <div className="social-card-row">
-                <button type="button" className="social-card" aria-label="네이버로 가입" disabled={disabled}>
+                <button
+                  type="button"
+                  className="social-card"
+                  aria-label="네이버로 가입"
+                  disabled={disabled}
+                  onClick={goNaver}
+                >
                   <img src={naverLogo} alt="Naver" className="social-card-logo" />
                 </button>
-                <button type="button" className="social-card" aria-label="카카오로 가입" disabled={disabled}>
+                <button
+                  type="button"
+                  className="social-card"
+                  aria-label="카카오로 가입"
+                  disabled={disabled}
+                  onClick={goKakao}
+                >
                   <img src={kakaoLogo} alt="Kakao" className="social-card-logo" />
                 </button>
               </div>
@@ -178,14 +261,15 @@ function Signup() {
           </>
         )}
 
+        {/* ===== Step 2: 닉네임 설정 (소셜/일반 공통) ===== */}
         {step === 2 && (
           <>
-            <p className="auth-sub">닉네임 설정</p>
+            <p className="auth-sub">닉네임 설정{isSocial && " (소셜 회원가입)"}</p>
             <form className="auth-form" onSubmit={(e) => e.preventDefault()}>
               <input
                 type="text"
                 className="auth-input"
-                placeholder='닉네임 입력 (예: "admin"은 중복 처리)'
+                placeholder="닉네임 입력"
                 value={nickname}
                 onChange={(e) => {
                   setNickname(e.target.value);
@@ -196,6 +280,24 @@ function Signup() {
                 닉네임 중복 확인
               </button>
 
+              {/* 소셜 회원가입일 때만 지역 입력 노출 */}
+              {isSocial && (
+                <>
+                  <input
+                    type="number"
+                    className="auth-input"
+                    placeholder="지역 ID 입력 (예: 1)"
+                    value={regionId}
+                    onChange={(e) => setRegionId(e.target.value)}
+                  />
+                  {!signupToken && (
+                    <div className="hint">
+                      <span className="warn">signupToken이 없습니다. 콜백 경로 설정을 확인하세요.</span>
+                    </div>
+                  )}
+                </>
+              )}
+
               <div className="hint">
                 {nickname && nickname.length < 2 && <span className="warn">닉네임은 2자 이상 권장</span>}
                 {nicknameAvailable === true && <span className="ok">✔ 사용 가능한 닉네임</span>}
@@ -203,18 +305,21 @@ function Signup() {
               </div>
 
               <div className="row-2">
-                <button type="button" className="btn-outline" onClick={() => setStep(1)} disabled={disabled}>
-                  이전
-                </button>
+                {!isSocial && (
+                  <button type="button" className="btn-outline" onClick={() => setStep(1)} disabled={disabled}>
+                    이전
+                  </button>
+                )}
                 <button type="button" className="auth-submit" onClick={goNextFromNickname} disabled={disabled}>
-                  다음
+                  {isSocial ? "회원가입 완료" : "다음"}
                 </button>
               </div>
             </form>
           </>
         )}
 
-        {step === 3 && (
+        {/* ===== Step 3: 비밀번호 설정 (일반 회원가입 전용) ===== */}
+        {!isSocial && step === 3 && (
           <>
             <p className="auth-sub">비밀번호 설정</p>
             <form className="auth-form" onSubmit={onSubmitSignup}>

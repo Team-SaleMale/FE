@@ -18,8 +18,10 @@ import PriceCheck from "./pages/PriceCheck/PriceCheck";
 import InquiryList from "./pages/Inquiry/InquiryList";
 import InquiryWrite from "./pages/Inquiry/InquiryWrite";
 import InquiryDetail from "./pages/Inquiry/InquiryDetail";
+import AuthCallback from "pages/Auth/AuthCallback";
 
 console.log({ InquiryList, InquiryWrite, InquiryDetail });
+console.log("[App] mounted path:", window.location.pathname, "hash:", window.location.hash);
 
 export default function App() {
   const location = useLocation();
@@ -58,6 +60,10 @@ export default function App() {
         <Route path="/inquiries" element={<InquiryList />} />
         <Route path="/inquiries/new" element={<InquiryWrite />} />
         <Route path="/inquiries/:id" element={<InquiryDetail />} />
+
+        <Route path="/auth/callback/*" element={<AuthCallback />} />
+
+
       </Routes>
 
       {!hideAuthLayout && <Footer />}
