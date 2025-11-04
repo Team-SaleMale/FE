@@ -1,4 +1,4 @@
-.bar { position: sticky; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #e6e9f2; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; }
+.bar { margin-top:50px; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #e6e9f2; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; }
 .left { font-size:13px; }
 .error { color:#d92d20; }
 .btn { height:44px; min-width:160px; padding:0 18px; border:0; border-radius:12px; background:#111; color:#fff; font-weight:600; }

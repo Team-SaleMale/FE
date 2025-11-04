@@ -1,13 +1,13 @@
 import styles from "../../../styles/MyPage/Overview/UserStats.module.css";
 
-export default function UserStats() {
+export default function UserStats({ mannerScore = 0 }) {
   return (
     <section className={styles.root}>
       <div className={styles.metricBlock}>
         <div className={styles.metricHeader}>경매지수</div>
-        <div className={styles.metricScore}>85 / 100</div>
+        <div className={styles.metricScore}>{mannerScore} / 100</div>
         <div className={styles.metricBar}>
-          <div className={styles.metricFill} style={{ width: "85%" }} />
+          <div className={styles.metricFill} style={{ width: `${mannerScore}%` }} />
         </div>
       </div>
 

@@ -2,7 +2,6 @@
 // - Single select (라디오처럼 1개만 선택)
 // - 버튼은 내용 길이만큼(width: fit-content) 배치 (CSS에서 처리)
 // - '기타'는 별도 입력 없이 그냥 'etc' 값으로 선택되도록 단순화
-
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/AuctionRegistration/CategoryChips.module.css";
@@ -18,6 +17,7 @@ const CATEGORIES = [
   { key: "beauty",         label: "뷰티/미용",      icon: "solar:magic-stick-3-linear" },
   { key: "clothes",        label: "의류",           icon: "solar:hanger-broken" },
   { key: "health-food",    label: "건강기능식품",    icon: "solar:dumbbell-large-minimalistic-linear" },
+  { key: "pet",            label: "반려동물",       icon: "solar:cat-linear" },              /* ✅ 추가 */
   { key: "book",           label: "도서",           icon: "solar:notebook-broken" },
   { key: "kids",           label: "유아동",         icon: "solar:smile-circle-linear" },
   { key: "digital",        label: "디지털 기기",     icon: "solar:laptop-minimalistic-linear" },
@@ -30,6 +30,7 @@ const CATEGORIES = [
 const ORDER_KEYS = [
   "women-acc","food-processed","sports","plant","game-hobby",
   "ticket","furniture","beauty","clothes","health-food",
+  "pet", /* ✅ 추가 순서 반영 */
   "book","kids","digital","living-kitchen","home-appliance","etc"
 ];
 

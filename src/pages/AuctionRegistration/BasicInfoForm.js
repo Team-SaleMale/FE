@@ -33,7 +33,7 @@ function BasicInfoForm({ title = "", description = "", onChange }) {
         />
       </div>
 
-      {/* 내용 */}
+      {/* 내용 - 고정 높이 + 내부 스크롤 */}
       <div className={styles.field}>
         <label className={styles.label} htmlFor="ar-desc">
           내용
@@ -44,7 +44,6 @@ function BasicInfoForm({ title = "", description = "", onChange }) {
           placeholder="제품에 대한 상세 설명을 입력하세요."
           value={description}
           onChange={handleDesc}
-          rows={9}
         />
       </div>
     </div>

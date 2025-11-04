@@ -1,122 +1,92 @@
-import { useMemo, useState } from "react";
+// src/pages/Main/CategoryPopular.jsx
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/Main/CategoryPopular.module.css";
-
-/** 로컬 이미지(기본) — 기타 카테고리에서 사용 */
-import ha01 from "../../assets/img/Main/CategoryPopular/ha-01.png";
-import ha02 from "../../assets/img/Main/CategoryPopular/ha-02.png";
-import ha03 from "../../assets/img/Main/CategoryPopular/ha-03.png";
-import ha04 from "../../assets/img/Main/CategoryPopular/ha-04.png";
-import ha05 from "../../assets/img/Main/CategoryPopular/ha-05.png";
-import ha06 from "../../assets/img/Main/CategoryPopular/ha-06.png";
-
-/** 건강기능식품 전용 이미지 */
-import hf01 from "../../assets/img/Main/CategoryPopular/hf-01.png";
-import hf02 from "../../assets/img/Main/CategoryPopular/hf-02.png";
-import hf03 from "../../assets/img/Main/CategoryPopular/hf-03.png";
-import hf04 from "../../assets/img/Main/CategoryPopular/hf-04.png";
-import hf05 from "../../assets/img/Main/CategoryPopular/hf-05.png";
-import hf06 from "../../assets/img/Main/CategoryPopular/hf-06.png";
-
-/** 뷰티/미용 전용 이미지 */
-import bt01 from "../../assets/img/Main/CategoryPopular/bt-01.png";
-import bt02 from "../../assets/img/Main/CategoryPopular/bt-02.png";
-import bt03 from "../../assets/img/Main/CategoryPopular/bt-03.png";
-import bt04 from "../../assets/img/Main/CategoryPopular/bt-04.png";
-import bt05 from "../../assets/img/Main/CategoryPopular/bt-05.png";
-import bt06 from "../../assets/img/Main/CategoryPopular/bt-06.png";
+import { fetchCategoryPopular } from "../../api/auctions/service";
 
 /** 17개 카테고리 (solar 아이콘 사용) */
 const CATEGORIES = [
   { key: "home-appliance", label: "생활가전", icon: "solar:washing-machine-minimalistic-linear" },
-  { key: "health-food", label: "건강기능식품", icon: "solar:dumbbell-large-minimalistic-linear" },
-  { key: "beauty", label: "뷰티/미용", icon: "solar:magic-stick-3-linear" },
+  { key: "health-food",    label: "건강기능식품", icon: "solar:dumbbell-large-minimalistic-linear" },
+  { key: "beauty",         label: "뷰티/미용", icon: "solar:magic-stick-3-linear" },
   { key: "food-processed", label: "가공식품", icon: "solar:chef-hat-linear" },
-  { key: "pet", label: "반려동물", icon: "solar:cat-linear" },
-  { key: "digital", label: "디지털 기기", icon: "solar:laptop-minimalistic-linear" },
+  { key: "pet",            label: "반려동물", icon: "solar:cat-linear" },
+  { key: "digital",        label: "디지털 기기", icon: "solar:laptop-minimalistic-linear" },
   { key: "living-kitchen", label: "생활/주방", icon: "solar:whisk-linear" },
-  { key: "women-acc", label: "여성잡화", icon: "solar:bag-smile-outline" },
-  { key: "sports", label: "스포츠/레저", icon: "solar:balls-linear" },
-  { key: "plant", label: "식물", icon: "solar:waterdrop-linear" },
-  { key: "game-hobby", label: "게임/취미/음반", icon: "solar:reel-2-broken" },
-  { key: "ticket", label: "티켓", icon: "solar:ticket-sale-linear" },
-  { key: "furniture", label: "가구/인테리어", icon: "solar:armchair-2-linear" },
-  { key: "book", label: "도서", icon: "solar:notebook-broken" },
-  { key: "kids", label: "유아동", icon: "solar:smile-circle-linear" },
-  { key: "clothes", label: "의류", icon: "solar:hanger-broken" },
-  { key: "etc", label: "기타", icon: "solar:add-square-broken" },
+  { key: "women-acc",      label: "여성잡화", icon: "solar:bag-smile-outline" },
+  { key: "sports",         label: "스포츠/레저", icon: "solar:balls-linear" },
+  { key: "plant",          label: "식물", icon: "solar:waterdrop-linear" },
+  { key: "game-hobby",     label: "게임/취미/음반", icon: "solar:reel-2-broken" },
+  { key: "ticket",         label: "티켓", icon: "solar:ticket-sale-linear" },
+  { key: "furniture",      label: "가구/인테리어", icon: "solar:armchair-2-linear" },
+  { key: "book",           label: "도서", icon: "solar:notebook-broken" },
+  { key: "kids",           label: "유아동", icon: "solar:smile-circle-linear" },
+  { key: "clothes",        label: "의류", icon: "solar:hanger-broken" },
+  { key: "etc",            label: "기타", icon: "solar:add-square-broken" },
 ];
 
-/** API 연동 전 더미 데이터 구성 */
-function buildFallbackProducts() {
-  // 기본(생활가전 기준) 샘플 — 기타 카테고리에서 공통 사용
-  const defaultSample = [
-    { id: "p1", title: "삼성 무풍에어컨 17평형 (청정)", imageUrl: ha01 },
-    { id: "p2", title: "LG 트롬 스타일러 S3BF", imageUrl: ha02 },
-    { id: "p3", title: "쿠쿠 압력밥솥 10인용", imageUrl: ha03 },
-    { id: "p4", title: "다이슨 V12 무선청소기", imageUrl: ha04 },
-    { id: "p5", title: "발뮤다 더 토스터 화이트", imageUrl: ha05 },
-    { id: "p6", title: "코웨이 얼음 정수기", imageUrl: ha06 },
-  ];
-
-  // 건강기능식품 전용 샘플
-  const healthFoodSample = [
-    { id: "hf1", title: "오메가3 프리미엄 1200mg (180캡슐)", imageUrl: hf01 },
-    { id: "hf2", title: "프로바이오틱스 100억 유산균 (60포)", imageUrl: hf02 },
-    { id: "hf3", title: "비타민D3 4000IU (90정)", imageUrl: hf03 },
-    { id: "hf4", title: "6년근 홍삼스틱 30포", imageUrl: hf04 },
-    { id: "hf5", title: "밀크씨슬 간건강 (90정)", imageUrl: hf05 },
-    { id: "hf6", title: "루테인 지아잔틴 (60캡슐)", imageUrl: hf06 },
-  ];
-
-  // 뷰티/미용 전용 샘플
-  const beautySample = [
-    { id: "bt1", title: "비타민C 브라이트닝 앰플 30ml", imageUrl: bt01 },
-    { id: "bt2", title: "롱웨어 쿠션 파운데이션 21호", imageUrl: bt02 },
-    { id: "bt3", title: "히알루론 산 에센스 50ml", imageUrl: bt03 },
-    { id: "bt4", title: "수분진정 토너 300ml", imageUrl: bt04 },
-    { id: "bt5", title: "아이크림 레티놀 20ml", imageUrl: bt05 },
-    { id: "bt6", title: "자외선 차단 선크림 SPF50+ 50ml", imageUrl: bt06 },
-  ];
-
-  // 카테고리 → 샘플 매핑
-  const map = {};
-  CATEGORIES.forEach((c) => {
-    const base =
-      c.key === "health-food" ? healthFoodSample
-      : c.key === "beauty" ? beautySample
-      : defaultSample;
-
-    map[c.key] = base.map((it, i) => ({ ...it, id: `${c.key}-${i}` }));
-  });
-  return map;
-}
-
-/**
- * CategoryPopular
- * - 카드 클릭 시 /auctions/:id 이동
- * - 이후 API 연결 시 fetchPopular(categoryKey)로 서버 데이터 사용 가능
- *   예) <CategoryPopular fetchPopular={(key) => serverMap[key]} />
- */
-export default function CategoryPopular({ initialCategory = "home-appliance", fetchPopular }) {
+export default function CategoryPopular({ initialCategory = "home-appliance" }) {
   const navigate = useNavigate();
-  const fallback = useMemo(buildFallbackProducts, []);
   const [activeKey, setActiveKey] = useState(initialCategory);
   const [tabStart, setTabStart] = useState(0); // 0 → 7 → 14
 
+  // 데이터 상태
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [items, setItems] = useState([]); // 서버 아이템 그대로(정규화 X)
+
+  // 탭 페이징
   const tabsPage = CATEGORIES.slice(tabStart, Math.min(tabStart + 7, CATEGORIES.length));
   const atFirst = tabStart === 0;
   const atLast = tabStart + 7 >= CATEGORIES.length;
 
-  const products =
-    (typeof fetchPopular === "function" ? fetchPopular(activeKey) : null) ||
-    fallback[activeKey] ||
-    [];
-
   const gotoPrev = () => !atFirst && setTabStart((s) => Math.max(0, s - 7));
   const gotoNext = () => !atLast && setTabStart((s) => Math.min(CATEGORIES.length - 1, s + 7));
   const goDetail = (id) => navigate(`/auctions/${id}`);
+
+  // 서버 호출: 카테고리별 인기 상품
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        setLoading(true);
+        setError("");
+        setItems([]);
+
+        const res = await fetchCategoryPopular({
+          categoryKey: activeKey, // UI key 그대로 넘겨도 서비스에서 매핑 처리
+          page: 1,
+          size: 12,
+        });
+
+        if (!alive) return;
+
+        if (!res?.isSuccess) {
+          throw new Error(res?.message || "API error");
+        }
+
+        const list = Array.isArray(res.result?.items) ? res.result.items : [];
+        setItems(list);
+      } catch (e) {
+        if (!alive) return;
+        setError(e?.message || "오류가 발생했습니다.");
+        setItems([]);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, [activeKey]);
+
+  // 첫 이미지 선택(썸네일)
+  const toThumb = (it) => {
+    const arr = Array.isArray(it?.imageUrls) ? it.imageUrls.filter(Boolean) : [];
+    return arr[0] || it?.thumbnailUrl || it?.imageUrl || "";
+  };
+
+  // 화면에 6개만 노출
+  const top6 = useMemo(() => (items || []).slice(0, 6), [items]);
 
   return (
     <section className={styles.wrap} aria-label="카테고리별 인기 상품">
@@ -165,26 +135,43 @@ export default function CategoryPopular({ initialCategory = "home-appliance", fe
           </div>
         </div>
 
-        {/* 상품 6개 */}
-        <ul className={styles.grid}>
-          {products.slice(0, 6).map((p) => (
-            <li
-              className={styles.card}
-              key={p.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => goDetail(p.id)}
-              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && goDetail(p.id)}
-            >
-              <div className={styles.thumb}>
-                <img src={p.imageUrl} alt={p.title} loading="lazy" />
-              </div>
-              <p className={styles.productTitle} title={p.title}>
-                {p.title}
-              </p>
-            </li>
-          ))}
-        </ul>
+        {/* 리스트 영역 */}
+        {loading && <div className={styles.state}>불러오는 중…</div>}
+        {!loading && error && <div className={styles.state}>오류: {error}</div>}
+        {!loading && !error && top6.length === 0 && (
+          <div className={styles.state}>해당 카테고리의 인기 상품이 없습니다.</div>
+        )}
+
+        {!loading && !error && top6.length > 0 && (
+          <ul className={styles.grid}>
+            {top6.map((it) => {
+              const id = it?.itemId ?? it?.id ?? it?.auctionId ?? it?.productId;
+              const title = it?.title ?? it?.name ?? "";
+              const img = toThumb(it);
+              return (
+                <li
+                  className={styles.card}
+                  key={String(id)}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => goDetail(id)}
+                  onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && goDetail(id)}
+                >
+                  <div className={styles.thumb}>
+                    {img ? (
+                      <img src={img} alt={title} loading="lazy" />
+                    ) : (
+                      <div className={styles.thumbFallback} />
+                    )}
+                  </div>
+                  <p className={styles.productTitle} title={title}>
+                    {title}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
     </section>
   );

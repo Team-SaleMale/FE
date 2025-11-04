@@ -3,15 +3,14 @@ import PreviewCard from "./PreviewCard";
 import styles from "../../styles/AuctionRegistration/AuctionComplete.module.css";
 
 /**
- * 경매 등록 완료 페이지
- * - navigate("/auction/complete", { state: { preview, startDate, endDate } }) 형태로 값이 넘어온다고 가정
- * - 새로고침/직접 접근 대비 fallback 존재
+ * navigate("/auctions/success", { state: { itemId, preview, startDate, endDate } })
  */
 export default function AuctionComplete() {
   const { state } = useLocation();
   const navigate = useNavigate();
 
-  // 프리뷰 스냅샷 (등록 시점 그대로)
+  const itemId = state?.itemId;
+
   const fallbackPreview = {
     imageUrl: "",
     title: "아이패드 프로 12.9 6세대 256GB",
@@ -23,13 +22,11 @@ export default function AuctionComplete() {
   };
   const preview = state?.preview || fallbackPreview;
 
-  // 날짜 포맷터: 'YYYY-MM-DDTHH:mm' 또는 ISO → 'YYYY/MM/DD'
   const formatDate = (v) => {
     if (!v) return "";
     try {
       const d = new Date(v);
       if (isNaN(d.getTime())) {
-        // datetime-local 원본 그대로에서 날짜부만 뽑는 fallback
         return String(v).slice(0, 10).replaceAll("-", "/");
       }
       const y = d.getFullYear();
@@ -47,7 +44,6 @@ export default function AuctionComplete() {
   return (
     <div className={styles.wrap}>
       <div className={styles.inner}>
-        {/* 좌측: 완료 메시지 & 액션 */}
         <section className={styles.left}>
           <div className={styles.head}>
             <div className={styles.check} aria-hidden>✓</div>
@@ -81,7 +77,10 @@ export default function AuctionComplete() {
             <button
               type="button"
               className={styles.primaryBtn}
-              onClick={() => navigate("/auctions/300")}
+              onClick={() => {
+                if (itemId) navigate(`/auctions/${itemId}`);
+                else navigate("/auctions");
+              }}
             >
               등록 화면 확인하기
             </button>
@@ -106,7 +105,6 @@ export default function AuctionComplete() {
           </div>
         </section>
 
-        {/* 우측: 등록 페이지와 동일한 미리보기 카드 */}
         <aside className={styles.right}>
           <div className={styles.cardWrap}>
             <PreviewCard {...preview} />

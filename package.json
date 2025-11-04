@@ -46,6 +46,7 @@
     ]
   },
   "devDependencies": {
+    "http-proxy-middleware": "^3.0.5",
     "netlify-cli": "^23.9.1"
   }
 }
