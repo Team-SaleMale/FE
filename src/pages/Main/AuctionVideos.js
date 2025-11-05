@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";

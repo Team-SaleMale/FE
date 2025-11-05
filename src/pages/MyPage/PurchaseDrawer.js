@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/MyPage/PurchaseDrawer.module.css";
