@@ -20,7 +20,7 @@ function AuthCallback() {
     }
 
     const sp = new URLSearchParams(hash);
-    const token = sp.get("token");               // JWT
+    const token = sp.get("token"); // JWT
     const signupTokenFromHash = sp.get("signupToken");
 
     console.log("[AuthCallback] raw hash:", hash);
