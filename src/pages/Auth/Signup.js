@@ -38,6 +38,7 @@ function Signup() {
   const [emailAvailable, setEmailAvailable] = useState(null); // null|true|false
   const [code, setCode] = useState("");
   const [emailVerified, setEmailVerified] = useState(false);
+  const [verifySessionToken, setVerifySessionToken] = useState("");
   const emailValid = useMemo(() => /^\S+@\S+\.\S+$/.test(email), [email]);
 
   const [nickname, setNickname] = useState("");
@@ -91,6 +92,7 @@ function Signup() {
 
       const verified = !!(res?.isSuccess && res?.result?.sessionToken); // 성공 여부 판단
       setEmailVerified(verified);
+      if (verified) setVerifySessionToken(res.result.sessionToken);
 
       if (verified) {
         alert("이메일 인증이 완료되었습니다.");
@@ -171,6 +173,9 @@ function Signup() {
   // ===== Step3 (일반 회원가입 전용) =====
   const onSubmitSignup = async (e) => {
     e.preventDefault();
+    if (!emailVerified || !verifySessionToken) {
+      return alert("이메일 인증을 먼저 완료해주세요.");
+    }
     if (!regionId || Number.isNaN(Number(regionId))) return alert("지역을 선택하세요 (숫자 ID)");
     if (!pw) return alert("비밀번호를 입력하세요");
     if (pw.length < 8) return alert("비밀번호는 8자 이상이어야 합니다");
@@ -182,6 +187,7 @@ function Signup() {
         nickname,
         password: pw,
         regionId: Number(regionId),
+        sessionToken: verifySessionToken,
       });
       alert("회원가입이 완료되었습니다.");
       navigate("/login");
@@ -229,6 +235,7 @@ function Signup() {
                   setEmail(e.target.value);
                   setEmailAvailable(null);
                   setEmailVerified(false);
+                  setVerifySessionToken("");
                 }}
                 disabled={disabled}
               />
