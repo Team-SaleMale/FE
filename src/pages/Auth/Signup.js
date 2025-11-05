@@ -21,7 +21,7 @@ function Signup() {
   const loc = useLocation();
   const params = new URLSearchParams(loc.search);
   const isSocial = params.get("social") === "true";
-  const signupToken = params.get("signupToken") || "";
+  const signupToken = isSocial ? (sessionStorage.getItem("signupToken") || "") : "";
 
   const [step, setStep] = useState(isSocial ? 2 : 1);
   const navigate = useNavigate();
@@ -126,6 +126,7 @@ function Signup() {
           nickname,
           regionId: Number(regionId),
         });
+        sessionStorage.removeItem("signupToken");
         alert("소셜 회원가입이 완료되었습니다.");
         navigate("/", { replace: true });
       } catch (err) {
