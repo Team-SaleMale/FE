@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useMemo, useState } from "react";
 import styles from "../../styles/AuctionProductDetails/CalendarPanel.module.css";
 
