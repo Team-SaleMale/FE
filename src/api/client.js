@@ -35,13 +35,41 @@ const api = axios.create({
   paramsSerializer: { serialize: serializeParams },
 });
 
+// NOTE(ChatGPT): 무인증 경로(회원가입/이메일 인증 등)에서는 어떤 경우에도 토큰/쿠키가 나가지 않도록 보강
+const NO_AUTH_PATHS = [
+  "/auth/email/verify/request",
+  "/auth/email/verify/confirm",
+  "/auth/check/email",
+  "/auth/check/nickname",
+  "/auth/register",
+  "/auth/login",
+  "/auth/password/reset",
+  "/auth/password/reset/verify",
+  "/auth/password/reset/confirm",
+];
+
 api.interceptors.request.use(
   (cfg) => {
+    // 1) 명시적 Skip 플래그 처리 (우선)
     if (cfg.headers && cfg.headers["X-Skip-Auth"]) {
       cfg.withCredentials = false;
       delete cfg.headers["X-Skip-Auth"];
+      // 방어적으로 Authorization 제거
+      if (cfg.headers.Authorization) delete cfg.headers.Authorization;
+      if (cfg.headers.authorization) delete cfg.headers.authorization;
       return cfg;
     }
+
+    // 2) 무인증 경로일 경우에도 방어적으로 쿠키/토큰 차단
+    const url = cfg.url || "";
+    if (NO_AUTH_PATHS.some((p) => url.includes(p))) {
+      cfg.withCredentials = false; // 쿠키 차단
+      if (cfg.headers.Authorization) delete cfg.headers.Authorization;
+      if (cfg.headers.authorization) delete cfg.headers.authorization;
+      return cfg;
+    }
+
+    // 3) 일반 경로: 토큰 주입
     const cookieToken = cookies.get(ACCESS_TOKEN_KEY);
     const lsToken =
       typeof window !== "undefined"
@@ -176,11 +204,11 @@ export const getNoAuth = async (url, params = {}, options = {}) => {
 
 export const postNoAuth = async (url, data = {}, options = {}) => {
   const res = await api.post(url, data, {
-    withCredentials: false,
+    withCredentials: false, // 쿠키 금지
     headers: {
       ...(options.headers || {}),
       "Content-Type": "application/json",
-      "X-Skip-Auth": "1",
+      "X-Skip-Auth": "1", // 인터셉터가 토큰 주입을 건너뛰도록 지시
     },
     ...options,
   });

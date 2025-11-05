@@ -33,11 +33,12 @@ export const checkEmail = (email) =>
     return { available };
   });
 
+// NOTE(ChatGPT): 인증 없이 본문(JSON)으로 이메일 전송하도록 고정
 export const requestEmailCode = (email) =>
   postNoAuth(endpoints.AUTH.EMAIL_VERIFY_REQUEST, {}, { params: { email } });
 
 export const verifyEmailCode = (email, code) =>
-  postNoAuth(endpoints.AUTH.EMAIL_VERIFY_CONFIRM, { email, code });
+  postNoAuth(endpoints.AUTH.EMAIL_VERIFY_CONFIRM, {}, { params: { email, code } });
 
 export async function completeSocialSignup({ signupToken, nickname, regionId }) {
   const qs = new URLSearchParams({
