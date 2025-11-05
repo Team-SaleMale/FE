@@ -1,6 +1,6 @@
 // src/api/auth/service.js
 import endpoints from "../endpoints";
-import { get, post, patch, postNoAuth } from "../client"; // ✅ postNoAuth import
+import { get, post, patch, getNoAuth, postNoAuth } from "../client";
 
 // ===== Auth (일반) =====
 export const register = (payload) => postNoAuth(endpoints.AUTH.REGISTER, payload);
@@ -38,10 +38,10 @@ export const checkEmail = (email) =>
 
 // ===== Email verify =====
 export const requestEmailCode = (email) =>
-  get(endpoints.AUTH.EMAIL_VERIFY_REQUEST, { email });
+  getNoAuth(endpoints.AUTH.EMAIL_VERIFY_REQUEST, { email });
 
 export const verifyEmailCode = (email, code) =>
-  post(endpoints.AUTH.EMAIL_VERIFY_CONFIRM, { email, code });
+  postNoAuth(endpoints.AUTH.EMAIL_VERIFY_CONFIRM, { email, code });
 
 // ===== Social signup complete (@RequestParam 기반: query 전송) =====
 export async function completeSocialSignup({ signupToken, nickname, regionId }) {

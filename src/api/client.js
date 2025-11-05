@@ -177,10 +177,11 @@ export const postMultipart = async (url, formData, options = {}) => {
   return res.data;
 };
 
-// ✅ 인증 헤더를 강제로 제거해서 GET (익명 엔드포인트용)
+
 export const getNoAuth = async (url, params = {}, options = {}) => {
   const res = await api.get(url, {
     params,
+    withCredentials: false, // ✅ 쿠키도 차단
     ...options,
     headers: { ...(options.headers || {}), "X-Skip-Auth": "1" },
   });
@@ -188,14 +189,15 @@ export const getNoAuth = async (url, params = {}, options = {}) => {
 };
 
 export const postNoAuth = async (url, data = {}, options = {}) => {
-  const res = await api.post(
-    url,
-    data,
-    {
-      headers: { ...(options.headers || {}), "Content-Type": "application/json", "X-Skip-Auth": "1" },
-      ...options,
-    }
-  );
+  const res = await api.post(url, data, {
+    withCredentials: false, // ✅ 쿠키도 차단
+    headers: {
+      ...(options.headers || {}),
+      "Content-Type": "application/json",
+      "X-Skip-Auth": "1",
+    },
+    ...options,
+  });
   return res.data;
 };
 
