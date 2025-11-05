@@ -37,10 +37,13 @@ export const checkEmail = (email) =>
 export const requestEmailCode = (email) => get(endpoints.AUTH.EMAIL_VERIFY_REQUEST, { email });
 export const verifyEmailCode = (email, code) => post(endpoints.AUTH.EMAIL_VERIFY_CONFIRM, { email, code });
 
-// ✅ 소셜 회원가입 완료: 반드시 POST + 무인증
-export const completeSocialSignup = ({ signupToken, nickname, regionId }) =>
-  postNoAuth(endpoints.AUTH.OAUTH2_COMPLETE, {
+
+
+export async function completeSocialSignup({ signupToken, nickname, regionId }) {
+  const qs = new URLSearchParams({
     signupToken,
     nickname,
-    regionId, // number
-  });
+    regionId: String(regionId),
+  }).toString();
+  return post(`${endpoints.AUTH.SOCIAL_COMPLETE}?${qs}`); // 바디 없이 POST
+}
