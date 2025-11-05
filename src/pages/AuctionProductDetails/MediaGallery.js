@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/role-supports-aria-props */
 import { useEffect, useMemo, useState } from "react";
 import styles from "../../styles/AuctionProductDetails/MediaGallery.module.css";
 
