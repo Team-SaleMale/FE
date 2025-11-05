@@ -130,12 +130,13 @@ function Signup() {
   const goNextFromNickname = async () => {
     if (nicknameAvailable !== true) return alert("닉네임 중복 확인을 완료하세요.");
 
+    // 공통: 지역 ID 검증
+    if (!regionId || Number.isNaN(Number(regionId))) {
+      return alert("지역을 선택하세요 (숫자 ID)");
+    }  
     // 소셜 회원가입: 여기서 최종 완료 처리
     if (isSocial) {
       if (!signupToken) return alert("소셜 회원가입 토큰(signupToken)이 없습니다.");
-      if (!regionId || Number.isNaN(Number(regionId))) {
-        return alert("지역을 선택하세요 (숫자 ID)");
-      }
       try {
         setLoading(true);
         await completeSocialSignup({
@@ -170,12 +171,18 @@ function Signup() {
   // ===== Step3 (일반 회원가입 전용) =====
   const onSubmitSignup = async (e) => {
     e.preventDefault();
+    if (!regionId || Number.isNaN(Number(regionId))) return alert("지역을 선택하세요 (숫자 ID)");
     if (!pw) return alert("비밀번호를 입력하세요");
     if (pw.length < 8) return alert("비밀번호는 8자 이상이어야 합니다");
     if (pw !== pw2) return alert("비밀번호가 일치하지 않습니다");
     try {
       setLoading(true);
-      await register({ email, password: pw, nickname });
+      await register({
+        email,
+        nickname,
+        password: pw,
+        regionId: Number(regionId),
+      });
       alert("회원가입이 완료되었습니다.");
       navigate("/login");
     } catch (err) {
