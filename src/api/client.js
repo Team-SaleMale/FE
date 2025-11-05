@@ -192,27 +192,37 @@ export const postMultipart = async (url, formData, options = {}) => {
   return res.data;
 };
 
-export const getNoAuth = async (url, params = {}, options = {}) => {
-  const res = await api.get(url, {
-    params,
+export const postNoAuth = async (url, data = {}, options = {}) => {
+  const mergedHeaders = {
+    "Content-Type": "application/json",
+    "X-Skip-Auth": "1",
+    ...(options.headers || {}), // ← 호출자가 추가하면 덧씌우되 X-Skip-Auth를 유지하려면 아래처럼 보호
+  };
+  if (!("X-Skip-Auth" in mergedHeaders)) mergedHeaders["X-Skip-Auth"] = "1";
+
+  const res = await api.post(url, data, {
     withCredentials: false,
-    ...options,
-    headers: { ...(options.headers || {}), "X-Skip-Auth": "1" },
+    ...options,                 // ← 먼저 펼치고
+    headers: mergedHeaders,     // ← 마지막에 확정
   });
   return res.data;
 };
 
-export const postNoAuth = async (url, data = {}, options = {}) => {
-  const res = await api.post(url, data, {
-    withCredentials: false, // 쿠키 금지
-    headers: {
-      ...(options.headers || {}),
-      "Content-Type": "application/json",
-      "X-Skip-Auth": "1", // 인터셉터가 토큰 주입을 건너뛰도록 지시
-    },
+export const getNoAuth = async (url, params = {}, options = {}) => {
+  const mergedHeaders = {
+    "X-Skip-Auth": "1",
+    ...(options.headers || {}),
+  };
+  if (!("X-Skip-Auth" in mergedHeaders)) mergedHeaders["X-Skip-Auth"] = "1";
+
+  const res = await api.get(url, {
+    params,
+    withCredentials: false,
     ...options,
+    headers: mergedHeaders,
   });
   return res.data;
 };
+
 
 export default api;
