@@ -309,23 +309,19 @@ function Signup() {
                 닉네임 중복 확인
               </button>
 
-              {/* 소셜 회원가입일 때만 지역 입력 노출 */}
-              {isSocial && (
-                <>
-                  <input
-                    type="number"
-                    className="auth-input"
-                    placeholder="지역 ID 입력 (예: 1)"
-                    value={regionId}
-                    onChange={(e) => setRegionId(e.target.value)}
-                    disabled={disabled}
-                  />
-                  {!signupToken && (
-                    <div className="hint">
-                      <span className="warn">signupToken이 없습니다. 콜백 경로를 확인하세요.</span>
-                    </div>
-                  )}
-                </>
+              {/* 지역 입력: 소셜/로컬 공통 */}
+              <input
+                type="number"
+                className="auth-input"
+                placeholder="지역 ID 입력 (예: 1)"
+                value={regionId}
+                onChange={(e) => setRegionId(e.target.value)}
+                disabled={disabled}
+              />
+              {isSocial && !signupToken && (
+                <div className="hint">
+                  <span className="warn">signupToken이 없습니다. 콜백 경로를 확인하세요.</span>
+                </div>
               )}
 
               <div className="hint">
