@@ -37,9 +37,16 @@ const api = axios.create({
   paramsSerializer: { serialize: serializeParams },
 });
 
-// 요청 인터셉터: 인증 토큰 자동 추가
+// 요청 인터셉터: 인증 토큰 자동 추가 (+ 특정 요청은 스킵 지원)
 api.interceptors.request.use(
   (cfg) => {
+    // ✅ 이 헤더가 있으면 Authorization을 절대 붙이지 않음 (익명 호출용)
+    if (cfg.headers && cfg.headers["X-Skip-Auth"]) {
+      // 서버로는 이 커스텀 헤더가 가지 않도록 여기서 제거
+      delete cfg.headers["X-Skip-Auth"];
+      return cfg;
+    }
+
     const cookieToken = cookies.get(ACCESS_TOKEN_KEY);
     const lsToken =
       typeof window !== "undefined"
@@ -74,7 +81,6 @@ const validateContentType = (response) => {
 
 // 표준 에러 메시지 추출
 const extractFriendlyMessage = (error) => {
-  // 서버 표준: { message: string } 또는 { error: { message } } 등을 최대한 흡수
   const data = error?.response?.data;
   return (
     data?.message ||
@@ -92,7 +98,6 @@ api.interceptors.response.use(
       validateContentType(response);
     } catch (e) {
       console.error(e?.message || e);
-      // 필요하면 여기서 사용자 알림/UI 처리
     }
     return response;
   },
@@ -101,21 +106,13 @@ api.interceptors.response.use(
     error.friendlyMessage = extractFriendlyMessage(error);
 
     if (error.response) {
-      // 서버 응답이 있는 경우
       switch (error.response.status) {
         case 401: {
-          // 인증 실패 - 토큰 제거 후 로그인 페이지로 리다이렉트
+          // 인증 실패 - 토큰 제거
           cookies.remove(ACCESS_TOKEN_KEY, { path: "/" });
           try {
             localStorage.removeItem(ACCESS_TOKEN_KEY);
           } catch (_) {}
-          // 로그인 페이지에서 다시 /login으로 보내 무한루프 방지
-//          if (
-//            typeof window !== "undefined" &&
-//            window.location.pathname !== "/login"
-//          ) {
-//            window.location.href = "/login";
-//          }
           break;
         }
         case 403:
@@ -131,10 +128,8 @@ api.interceptors.response.use(
           console.error("에러가 발생했습니다:", error.response.data);
       }
     } else if (error.request) {
-      // 요청은 보냈지만 응답이 없는 경우
       console.error("서버로부터 응답이 없습니다.");
     } else {
-      // 요청 설정 중 에러가 발생한 경우
       console.error("요청 중 에러가 발생했습니다:", error.message);
     }
     return Promise.reject(error);
@@ -179,6 +174,16 @@ export const patch = async (url, data, options = {}) => {
 export const postMultipart = async (url, formData, options = {}) => {
   // 헤더 비워두면 Axios가 boundary 자동 설정
   const res = await api.post(url, formData, { headers: {}, ...options });
+  return res.data;
+};
+
+// ✅ 인증 헤더를 강제로 제거해서 GET (익명 엔드포인트용)
+export const getNoAuth = async (url, params = {}, options = {}) => {
+  const res = await api.get(url, {
+    params,
+    ...options,
+    headers: { ...(options.headers || {}), "X-Skip-Auth": "1" },
+  });
   return res.data;
 };
 
