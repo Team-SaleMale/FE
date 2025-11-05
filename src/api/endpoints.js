@@ -18,6 +18,7 @@ const endpoints = {
     PASSWORD_RESET_CONFIRM: "/auth/password/reset/confirm",
     OAUTH2_KAKAO: "/oauth2/authorization/kakao",
     OAUTH2_NAVER: "/oauth2/authorization/naver",
+    OAUTH2_COMPLETE: "/auth/social/complete",
   },
 
   USERS: {

@@ -1,5 +1,5 @@
 // src/pages/Auth/Signup.jsx
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 import "../../styles/Auth/Signup.css";
@@ -18,13 +18,20 @@ import endpoints from "../../api/endpoints";
 import config from "../../config";
 
 function Signup() {
+  const navigate = useNavigate();
   const loc = useLocation();
   const params = new URLSearchParams(loc.search);
   const isSocial = params.get("social") === "true";
-  const signupToken = params.get("signupToken") || ""; // 소셜 회원가입 콜백에서 전달됨
+  const signupToken = isSocial ? sessionStorage.getItem("signupToken") || "" : "";
+
+  // 소셜 가입 화면 진입 가드: signupToken 없으면 홈으로
+  useEffect(() => {
+    if (isSocial && !signupToken) {
+      navigate("/", { replace: true });
+    }
+  }, [isSocial, signupToken, navigate]);
 
   const [step, setStep] = useState(isSocial ? 2 : 1);
-  const navigate = useNavigate();
 
   // 공통 상태
   const [email, setEmail] = useState("");
@@ -36,8 +43,8 @@ function Signup() {
   const [nickname, setNickname] = useState("");
   const [nicknameAvailable, setNicknameAvailable] = useState(null);
 
-  // 소셜 회원가입 전용: 지역 선택(필수 파라미터)
-  const [regionId, setRegionId] = useState(""); // 예: "1" 같은 숫자 문자열
+  // 소셜 회원가입 전용
+  const [regionId, setRegionId] = useState("");
 
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
@@ -55,7 +62,7 @@ function Signup() {
       setEmailAvailable(available);
       alert(available ? "사용 가능한 이메일입니다." : "이미 사용 중인 이메일입니다.");
     } catch (err) {
-      alert(err.friendlyMessage || "이메일 중복 확인 실패");
+      alert(err?.friendlyMessage || "이메일 중복 확인 실패");
     } finally {
       setLoading(false);
     }
@@ -70,7 +77,7 @@ function Signup() {
       await requestEmailCode(email);
       alert("인증번호가 이메일로 전송되었습니다.");
     } catch (err) {
-      alert(err.friendlyMessage || "인증번호 요청 실패");
+      alert(err?.friendlyMessage || "인증번호 요청 실패");
     } finally {
       setLoading(false);
     }
@@ -84,7 +91,7 @@ function Signup() {
       setEmailVerified(verified);
       alert(verified ? "이메일 인증이 완료되었습니다." : "인증번호가 올바르지 않습니다.");
     } catch (err) {
-      alert(err.friendlyMessage || "인증번호 확인 실패");
+      alert(err?.friendlyMessage || "인증번호 확인 실패");
     } finally {
       setLoading(false);
     }
@@ -96,6 +103,8 @@ function Signup() {
   };
 
   // ===== Step2 (공통 / 소셜 회원가입은 여기서만 진행) =====
+  console.log("[complete] signupToken=", signupToken, "nickname=", nickname, "regionId=", regionId);
+
   const onCheckNickname = async () => {
     if (!nickname) return alert("닉네임을 입력하세요");
     try {
@@ -104,7 +113,7 @@ function Signup() {
       setNicknameAvailable(available);
       alert(available ? "사용 가능한 닉네임입니다." : "이미 사용 중인 닉네임입니다.");
     } catch (err) {
-      alert(err.friendlyMessage || "닉네임 중복 확인 실패");
+      alert(err?.friendlyMessage || "닉네임 중복 확인 실패");
     } finally {
       setLoading(false);
     }
@@ -121,16 +130,25 @@ function Signup() {
       }
       try {
         setLoading(true);
-        // GET /auth/oauth2/login?signupToken=&nickname=&regionId=
         await completeSocialSignup({
           signupToken,
           nickname,
           regionId: Number(regionId),
         });
+        sessionStorage.removeItem("signupToken");
         alert("소셜 회원가입이 완료되었습니다.");
         navigate("/", { replace: true });
       } catch (err) {
-        alert(err.friendlyMessage || "소셜 회원가입 실패");
+        // 백엔드 표준 에러 형태 대응
+        const code = err?.code || err?.response?.data?.code;
+        if (code === "USER4003") {
+          // 이미 가입된 이메일 → 로그인 화면으로 유도
+          sessionStorage.removeItem("signupToken");
+          alert("이미 가입된 계정입니다. 로그인 화면으로 이동합니다.");
+          navigate("/login", { replace: true });
+        } else {
+          alert(err?.friendlyMessage || err?.response?.data?.message || "소셜 회원가입 실패");
+        }
       } finally {
         setLoading(false);
       }
@@ -153,7 +171,7 @@ function Signup() {
       alert("회원가입이 완료되었습니다.");
       navigate("/login");
     } catch (err) {
-      alert(err.friendlyMessage || "회원가입 실패");
+      alert(err?.friendlyMessage || "회원가입 실패");
     } finally {
       setLoading(false);
     }
@@ -197,6 +215,7 @@ function Signup() {
                   setEmailAvailable(null);
                   setEmailVerified(false);
                 }}
+                disabled={disabled}
               />
 
               <div className="row-2">
@@ -212,9 +231,10 @@ function Signup() {
                 <input
                   type="text"
                   className="auth-input"
-                  placeholder='인증번호 입력'
+                  placeholder="인증번호 입력"
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
+                  disabled={disabled}
                 />
                 <button type="button" className="btn-outline" onClick={onVerifyCode} disabled={disabled}>
                   인증번호 확인
@@ -272,9 +292,10 @@ function Signup() {
                 placeholder="닉네임 입력"
                 value={nickname}
                 onChange={(e) => {
-                  setNickname(e.target.value);
+                  setNickname(e.target.value.replace(/\s+/g, " ").trimStart());
                   setNicknameAvailable(null);
                 }}
+                disabled={disabled}
               />
               <button type="button" className="btn-outline" onClick={onCheckNickname} disabled={disabled}>
                 닉네임 중복 확인
@@ -289,10 +310,11 @@ function Signup() {
                     placeholder="지역 ID 입력 (예: 1)"
                     value={regionId}
                     onChange={(e) => setRegionId(e.target.value)}
+                    disabled={disabled}
                   />
                   {!signupToken && (
                     <div className="hint">
-                      <span className="warn">signupToken이 없습니다. 콜백 경로 설정을 확인하세요.</span>
+                      <span className="warn">signupToken이 없습니다. 콜백 경로를 확인하세요.</span>
                     </div>
                   )}
                 </>
@@ -329,6 +351,7 @@ function Signup() {
                 placeholder="비밀번호 (8자 이상)"
                 value={pw}
                 onChange={(e) => setPw(e.target.value)}
+                disabled={disabled}
               />
               <input
                 type="password"
@@ -336,6 +359,7 @@ function Signup() {
                 placeholder="비밀번호 확인"
                 value={pw2}
                 onChange={(e) => setPw2(e.target.value)}
+                disabled={disabled}
               />
 
               <div className="row-2">

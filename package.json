@@ -16,6 +16,7 @@
     "dayjs": "^1.11.18",
     "lucide-react": "^0.545.0",
     "react": "^19.2.0",
+    "react-cookie": "^8.0.1",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.3",
     "react-scripts": "5.0.1",
@@ -25,7 +26,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "eslint 'src/**/*.{js,jsx,ts,tsx}'"
   },
   "eslintConfig": {
     "extends": [
@@ -46,6 +48,8 @@
     ]
   },
   "devDependencies": {
+    "eslint": "^8.57.1",
+    "eslint-config-react-app": "^7.0.1",
     "http-proxy-middleware": "^3.0.5",
     "netlify-cli": "^23.9.1"
   }

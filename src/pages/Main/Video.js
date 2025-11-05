@@ -2,14 +2,12 @@ import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import styles from "../../styles/Main/Video.module.css";
 
-// 유튜브 embed URL 생성기 (필요 옵션만 넣어 사용)
+// 유튜브 embed URL 생성기
 function buildYouTubeEmbedUrl(id, opts = {}) {
   const params = new URLSearchParams({
     rel: "0",
     modestbranding: "1",
     playsinline: "1",
-    // autoplay: "1",  // 자동재생 원하면 주석 해제 (정책상 음소거 필요할 수 있음)
-    // mute: "1",
     ...opts,
   });
   return `https://www.youtube.com/embed/${id}?${params.toString()}`;
@@ -40,7 +38,6 @@ export default function Video() {
           height="100%"
           style={{ border: 0 }}
           src={embedUrl}
-          // 유튜브 임베드 권장 allow 속성
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
           referrerPolicy="strict-origin-when-cross-origin"

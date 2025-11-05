@@ -1,21 +1,24 @@
+// src/api/auth/service.js
 import endpoints from "../endpoints";
-import { get, post, patch } from "../client";
+import { get, post, patch, getNoAuth, postNoAuth } from "../client";
 
-export const register = (payload) => post(endpoints.AUTH.REGISTER, payload);
-export const login    = (payload) => post(endpoints.AUTH.LOGIN, payload);
-export const refresh  = (payload={}) => post(endpoints.AUTH.REFRESH, payload);
+// ===== Auth (일반) =====
+export const register = (payload) => postNoAuth(endpoints.AUTH.REGISTER, payload);
+export const login    = (payload) => postNoAuth(endpoints.AUTH.LOGIN, payload);
+export const refresh  = (payload = {}) => post(endpoints.AUTH.REFRESH, payload);
 export const logout   = () => patch(endpoints.AUTH.LOGOUT, {});
 export const me       = () => get(endpoints.AUTH.ME);
 
+// ===== Validation =====
 export const checkNickname = (nickname) =>
-  get(endpoints.AUTH.CHECK_NICK, { value: nickname }).then((res) => {
-    const r = res?.result || {};
-    const available =
-      (typeof r.isAvailable === "boolean" && r.isAvailable) ||
-      (typeof r.available === "boolean" && r.available) ||
-      Object.values(r).some((v) => v === true);
-    return { available };
-  });
+  get(endpoints.AUTH.CHECK_NICK, { value: String(nickname || "").trim() })
+    .then((res) => {
+      const raw = res?.result?.exists;
+      const exists =
+        raw === true || raw === "true" || raw === 1 || raw === "1"; // 안전 파싱
+      return { available: !exists };
+    });
+
 export const checkEmail = (email) =>
   get(endpoints.AUTH.CHECK_EMAIL, { value: email }).then((res) => {
     const r = res?.result || {};
@@ -33,8 +36,20 @@ export const checkEmail = (email) =>
     return { available };
   });
 
+// ===== Email verify =====
+export const requestEmailCode = (email) =>
+  getNoAuth(endpoints.AUTH.EMAIL_VERIFY_REQUEST, { email });
 
-export const requestEmailCode = (email) => get(endpoints.AUTH.EMAIL_VERIFY_REQUEST, { email });
-export const verifyEmailCode = (email, code) => post(endpoints.AUTH.EMAIL_VERIFY_CONFIRM, { email, code });
+export const verifyEmailCode = (email, code) =>
+  postNoAuth(endpoints.AUTH.EMAIL_VERIFY_CONFIRM, { email, code });
 
-export const completeSocialSignup = (params) => get(endpoints.AUTH.OAUTH2_COMPLETE, params);
+// ===== Social signup complete (@RequestParam 기반: query 전송) =====
+export async function completeSocialSignup({ signupToken, nickname, regionId }) {
+  const qs = new URLSearchParams({
+    signupToken,
+    nickname,
+    regionId: String(regionId),
+  }).toString();
+  // 바디 없이 POST (쿼리 파라미터로 전달)
+  return post(`${endpoints.AUTH.SOCIAL_COMPLETE}?${qs}`);
+}
