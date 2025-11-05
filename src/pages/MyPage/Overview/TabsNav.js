@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/role-supports-aria-props */
 import { useEffect, useRef, useState } from "react";
 import styles from "../../../styles/MyPage/Overview/TabsNav.module.css";
 
