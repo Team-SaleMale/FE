@@ -96,6 +96,8 @@ function Signup() {
   };
 
   // ===== Step2 (공통 / 소셜 회원가입은 여기서만 진행) =====
+  console.log("[complete] signupToken=", signupToken, "nickname=", nickname, "regionId=", regionId);
+
   const onCheckNickname = async () => {
     if (!nickname) return alert("닉네임을 입력하세요");
     try {
