@@ -6,7 +6,6 @@ import config from "../config";
 const cookies = new Cookies();
 const ACCESS_TOKEN_KEY = "accessToken";
 
-/** ?a=1&a=2 형태로 직렬화 (배열 쿼리 서버 호환) */
 function serializeParams(params = {}) {
   const usp = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => {
@@ -23,7 +22,6 @@ function serializeParams(params = {}) {
 }
 
 const api = axios.create({
-  // 두 환경 모두 지원: config.API_URL > VITE_API_BASE_URL > REACT_APP_API_URL
   baseURL:
     (config && config.API_URL) ||
     (import.meta && import.meta.env && import.meta.env.VITE_API_BASE_URL) ||
@@ -37,16 +35,13 @@ const api = axios.create({
   paramsSerializer: { serialize: serializeParams },
 });
 
-// 요청 인터셉터: 인증 토큰 자동 추가 (+ 특정 요청은 스킵 지원)
 api.interceptors.request.use(
   (cfg) => {
-    // ✅ 이 헤더가 있으면 Authorization을 절대 붙이지 않음 (익명 호출용)
     if (cfg.headers && cfg.headers["X-Skip-Auth"]) {
-      // 서버로는 이 커스텀 헤더가 가지 않도록 여기서 제거
+      cfg.withCredentials = false;
       delete cfg.headers["X-Skip-Auth"];
       return cfg;
     }
-
     const cookieToken = cookies.get(ACCESS_TOKEN_KEY);
     const lsToken =
       typeof window !== "undefined"
@@ -59,7 +54,6 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// 응답 Content-Type 간단 검증 (필요 시 조정)
 const validateContentType = (response) => {
   const ct = (response.headers?.["content-type"] || "").toLowerCase();
   const st = response.status;
@@ -79,7 +73,6 @@ const validateContentType = (response) => {
   throw new Error("서버 응답이 올바르지 않습니다.");
 };
 
-// 표준 에러 메시지 추출
 const extractFriendlyMessage = (error) => {
   const data = error?.response?.data;
   return (
@@ -91,7 +84,6 @@ const extractFriendlyMessage = (error) => {
   );
 };
 
-// 응답 인터셉터: 에러 처리 + CT 검증
 api.interceptors.response.use(
   (response) => {
     try {
@@ -102,17 +94,14 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // 어떤 경우든 friendlyMessage 붙여서 상위에서 공통 사용 가능
     error.friendlyMessage = extractFriendlyMessage(error);
-
     if (error.response) {
       switch (error.response.status) {
         case 401: {
-          // 인증 실패 - 토큰 제거
           cookies.remove(ACCESS_TOKEN_KEY, { path: "/" });
           try {
             localStorage.removeItem(ACCESS_TOKEN_KEY);
-          } catch (_) {}
+          } catch {}
           break;
         }
         case 403:
@@ -136,7 +125,6 @@ api.interceptors.response.use(
   }
 );
 
-// --- 편의 헬퍼들: 항상 data만 반환 ---
 export const get = async (url, params = {}, options = {}) => {
   const res = await api.get(url, { params, ...options });
   return res.data;
@@ -172,16 +160,14 @@ export const patch = async (url, data, options = {}) => {
 };
 
 export const postMultipart = async (url, formData, options = {}) => {
-  // 헤더 비워두면 Axios가 boundary 자동 설정
   const res = await api.post(url, formData, { headers: {}, ...options });
   return res.data;
 };
 
-
 export const getNoAuth = async (url, params = {}, options = {}) => {
   const res = await api.get(url, {
     params,
-    withCredentials: false, // ✅ 쿠키도 차단
+    withCredentials: false,
     ...options,
     headers: { ...(options.headers || {}), "X-Skip-Auth": "1" },
   });
@@ -190,7 +176,7 @@ export const getNoAuth = async (url, params = {}, options = {}) => {
 
 export const postNoAuth = async (url, data = {}, options = {}) => {
   const res = await api.post(url, data, {
-    withCredentials: false, // ✅ 쿠키도 차단
+    withCredentials: false,
     headers: {
       ...(options.headers || {}),
       "Content-Type": "application/json",
