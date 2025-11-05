@@ -187,4 +187,16 @@ export const getNoAuth = async (url, params = {}, options = {}) => {
   return res.data;
 };
 
+export const postNoAuth = async (url, data = {}, options = {}) => {
+  const res = await api.post(
+    url,
+    data,
+    {
+      headers: { ...(options.headers || {}), "Content-Type": "application/json", "X-Skip-Auth": "1" },
+      ...options,
+    }
+  );
+  return res.data;
+};
+
 export default api;
