@@ -37,12 +37,8 @@
     export const requestEmailCode = (email) =>
     postNoAuth(endpoints.AUTH.EMAIL_VERIFY_REQUEST, { email });
 
-    export const verifyEmailCode = async (email, code) => {
-    const res = await postNoAuth("/auth/email/verify/confirm", { email, code });
-    return {
-        verified: !!(res?.isSuccess && res?.result?.sessionToken),
-        sessionToken: res?.result?.sessionToken || null,
-    };
+    export const verifyEmailCode = (email, code) => {
+      return postNoAuth("/auth/email/verify/confirm", { email, code });
     };
 
     export async function completeSocialSignup({ signupToken, nickname, regionId }) {

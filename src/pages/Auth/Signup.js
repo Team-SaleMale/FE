@@ -87,11 +87,16 @@ function Signup() {
     if (!code) return alert("인증번호를 입력하세요");
     try {
       setLoading(true);
-      const { verified, sessionToken } = await verifyEmailCode(email, code);
+      const res = await verifyEmailCode(email, code); // 서버 응답 전체 받기
+
+      const verified = !!(res?.isSuccess && res?.result?.sessionToken); // 성공 여부 판단
       setEmailVerified(verified);
-      // 필요하면 sessionToken을 상태로 보관 (회원가입 시 사용)
-      // setVerifySessionToken(sessionToken);
-      alert(verified ? "이메일 인증이 완료되었습니다." : "인증번호가 올바르지 않습니다.");
+
+      if (verified) {
+        alert("이메일 인증이 완료되었습니다.");
+      } else {
+        alert("인증번호가 올바르지 않습니다.");
+      }
     } catch (err) {
       alert(err?.friendlyMessage || "인증번호 확인 실패");
     } finally {
