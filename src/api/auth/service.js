@@ -2,7 +2,10 @@
     import endpoints from "../endpoints";
     import { get, post, patch, postNoAuth } from "../client";
 
-    export const register = (payload) => postNoAuth(endpoints.AUTH.REGISTER, payload);
+    export const register = (payload, verifyToken) =>
+      postNoAuth(endpoints.AUTH.REGISTER, payload, {
+        headers: { "X-Email-Verify-Token": verifyToken },
+      });
     export const login = (payload) => postNoAuth(endpoints.AUTH.LOGIN, payload);
     export const refresh = (payload = {}) => post(endpoints.AUTH.REFRESH, payload);
     export const logout = () => patch(endpoints.AUTH.LOGOUT, {});

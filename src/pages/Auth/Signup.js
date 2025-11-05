@@ -188,7 +188,7 @@ function Signup() {
         password: pw,
         regionId: Number(regionId),
         sessionToken: verifySessionToken,
-      });
+      }, verifySessionToken);
       alert("회원가입이 완료되었습니다.");
       navigate("/login");
     } catch (err) {
