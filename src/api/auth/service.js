@@ -1,21 +1,18 @@
 // src/api/auth/service.js
 import endpoints from "../endpoints";
-import { get, post, patch, getNoAuth, postNoAuth } from "../client";
+import { get, post, patch, postNoAuth } from "../client";
 
-// ===== Auth (일반) =====
 export const register = (payload) => postNoAuth(endpoints.AUTH.REGISTER, payload);
-export const login    = (payload) => postNoAuth(endpoints.AUTH.LOGIN, payload);
-export const refresh  = (payload = {}) => post(endpoints.AUTH.REFRESH, payload);
-export const logout   = () => patch(endpoints.AUTH.LOGOUT, {});
-export const me       = () => get(endpoints.AUTH.ME);
+export const login = (payload) => postNoAuth(endpoints.AUTH.LOGIN, payload);
+export const refresh = (payload = {}) => post(endpoints.AUTH.REFRESH, payload);
+export const logout = () => patch(endpoints.AUTH.LOGOUT, {});
+export const me = () => get(endpoints.AUTH.ME);
 
-// ===== Validation =====
 export const checkNickname = (nickname) =>
   get(endpoints.AUTH.CHECK_NICK, { value: String(nickname || "").trim() })
     .then((res) => {
       const raw = res?.result?.exists;
-      const exists =
-        raw === true || raw === "true" || raw === 1 || raw === "1"; // 안전 파싱
+      const exists = raw === true || raw === "true" || raw === 1 || raw === "1";
       return { available: !exists };
     });
 
@@ -36,20 +33,17 @@ export const checkEmail = (email) =>
     return { available };
   });
 
-// ===== Email verify =====
 export const requestEmailCode = (email) =>
-  getNoAuth(endpoints.AUTH.EMAIL_VERIFY_REQUEST, { email });
+  postNoAuth(endpoints.AUTH.EMAIL_VERIFY_REQUEST, {}, { params: { email } });
 
 export const verifyEmailCode = (email, code) =>
   postNoAuth(endpoints.AUTH.EMAIL_VERIFY_CONFIRM, { email, code });
 
-// ===== Social signup complete (@RequestParam 기반: query 전송) =====
 export async function completeSocialSignup({ signupToken, nickname, regionId }) {
   const qs = new URLSearchParams({
     signupToken,
     nickname,
     regionId: String(regionId),
   }).toString();
-  // 바디 없이 POST (쿼리 파라미터로 전달)
   return post(`${endpoints.AUTH.SOCIAL_COMPLETE}?${qs}`);
 }
