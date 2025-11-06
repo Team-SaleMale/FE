@@ -1,0 +1,8 @@
+.bar { display:flex; align-items:center; gap:12px; padding:10px 12px; border-bottom:1px solid #eee; }
+.title { font-weight:700; }
+.group { display:flex; align-items:center; gap:8px; }
+.muted { color:#6b7280; font-size:14px; display:flex; align-items:center; gap:8px; }
+.range { appearance:none; width:180px; height:4px; background:#e5e7eb; border-radius:999px; }
+.range::-webkit-slider-thumb { appearance:none; width:18px; height:18px; border-radius:50%; background:#111827; cursor:pointer; }
+.btn, .btnActive { padding:6px 10px; border:1px solid #e5e7eb; border-radius:8px; background:#fff; cursor:pointer; }
+.btnActive { background:#111827; color:#fff; border-color:#111827; }
