@@ -109,25 +109,101 @@ api.interceptors.request.use(
   (err) => Promise.reject(err)
 );
 
+
+// 응답 Content-Type 검증
+const validateContentType = (response) => {
+  const ct = (response.headers?.["content-type"] || "").toLowerCase();
+  const st = response.status;
+  if (st === 204) return;
+  if (
+    ct.includes("application/json") ||
+    ct.includes("application/problem+json") ||
+    ct.includes("text/")
+  )
+    return;
+  if (
+    ct.includes("multipart/") ||
+    ct.includes("image/") ||
+    ct.includes("octet-stream")
+  )
+    return;
+  throw new Error("서버 응답이 올바르지 않습니다.");
+};
+
+// 에러 메시지 안전 추출
+const extractFriendlyMessage = (error) => {
+  const data = error?.response?.data;
+  return (
+    data?.message ||
+    data?.error?.message ||
+    data?.errorMessage ||
+    error?.message ||
+    "요청 실패"
+  );
+};
+
+
+
 // =================== 응답 인터셉터 ===================
 api.interceptors.response.use(
   (response) => {
-    // NOTE(ChatGPT): 로그인/리프레시 응답 시 헤더의 Authorization 수거
-    const authHeader = response.headers?.authorization || response.headers?.Authorization;
-    const token = extractTokenFromHeader(authHeader);
-    if (token) {
-      saveToken(token);
-      console.log("[client.js] Authorization 헤더에서 accessToken 저장됨");
+    try {
+      validateContentType(response);
+    } catch (e) {
+      console.error(e?.message || e);
     }
+
+    // ✅ ChatGPT 추가: 응답에서 accessToken 자동 추출 및 저장
+    try {
+      const data = response?.data || {};
+      const token =
+        data?.result?.accessToken ||
+        data?.accessToken ||
+        response?.headers?.authorization ||
+        response?.headers?.Authorization;
+
+      if (token) {
+        console.log("[Interceptor] accessToken detected:", token.slice(0, 20) + "...");
+        cookies.set("accessToken", token, { path: "/" });
+        localStorage.setItem("accessToken", token);
+      }
+    } catch (err) {
+      console.error("[Interceptor] token auto-save failed:", err);
+    }
+
     return response;
   },
   (error) => {
-    const status = error?.response?.status;
-    if (status === 401) clearToken();
-    else if (status >= 500) console.error("서버 에러:", error);
+    error.friendlyMessage = extractFriendlyMessage(error);
+    if (error.response) {
+      switch (error.response.status) {
+        case 401:
+          cookies.remove(ACCESS_TOKEN_KEY, { path: "/" });
+          try {
+            localStorage.removeItem(ACCESS_TOKEN_KEY);
+          } catch {}
+          break;
+        case 403:
+          console.error("접근 권한이 없습니다.");
+          break;
+        case 404:
+          console.error("요청한 리소스를 찾을 수 없습니다.");
+          break;
+        case 500:
+          console.error("서버 에러가 발생했습니다.");
+          break;
+        default:
+          console.error("에러가 발생했습니다:", error.response.data);
+      }
+    } else if (error.request) {
+      console.error("서버로부터 응답이 없습니다.");
+    } else {
+      console.error("요청 중 에러가 발생했습니다:", error.message);
+    }
     return Promise.reject(error);
   }
 );
+
 
 // =================== 공통 요청 함수 ===================
 export const get = async (url, params = {}, options = {}) => {
