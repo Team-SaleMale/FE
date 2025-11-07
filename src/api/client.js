@@ -47,7 +47,7 @@ function extractTokenFromHeader(headerVal) {
 const api = axios.create({
   baseURL:
     config?.API_URL ||
-    import.meta?.env?.VITE_API_BASE_URL ||
+    (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE_URL) ||
     process.env.REACT_APP_API_URL ||
     "",
   withCredentials: true,
