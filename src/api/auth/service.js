@@ -114,7 +114,7 @@ export const logout = async () => {
 };
 
 export const me = () => get(endpoints.AUTH.ME);
-export const myProfile = () => get(endpoints.USERS.PROFILE);
+export const myProfile = () => get(endpoints.USERS.PROFILE2);
 
 export const checkNickname = (nickname) =>
   get(endpoints.AUTH.CHECK_NICK, { value: String(nickname || "").trim() })
