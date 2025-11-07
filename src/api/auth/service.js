@@ -114,7 +114,21 @@ export const logout = async () => {
 };
 
 export const me = () => get(endpoints.AUTH.ME);
-export const myProfile = () => get(endpoints.USERS.PROFILE2);
+export const myProfile = async () => {
+  try {
+    // 1️⃣ 팀원이 쓰는 기본 경로 (/api/users)
+    const res = await get(endpoints.USERS.PROFILE);
+    return res;
+  } catch (e) {
+    // 2️⃣ 현재 서버가 /mypage만 허용하는 경우 자동 폴백
+    if (e?.response?.status === 404) {
+      console.warn("[Fallback] /api/users → /mypage로 재시도합니다.");
+      const res = await get("/mypage");
+      return res;
+    }
+    throw e;
+  }
+};
 
 export const checkNickname = (nickname) =>
   get(endpoints.AUTH.CHECK_NICK, { value: String(nickname || "").trim() })

@@ -23,7 +23,6 @@ const endpoints = {
 
   USERS: {
     PROFILE: "/api/users",
-    PROFILE2: "/mypage", 
     SET_REGION: "/api/users/region",
     CHANGE_RANGE: "/api/users/range-setting",
     RESET_PASSWORD: "/api/users/password",
