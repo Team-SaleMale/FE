@@ -1,54 +1,122 @@
-import { useMemo, useState } from "react";
+// src/pages/PriceCheck/UsedPriceTab.jsx
+import React, { useEffect, useState } from "react";
 import PriceCheckHeader from "../../components/pricecheck/PriceCheckHeader";
 import ipadImg from "../../assets/img/PriceCheck/ipadpro.png";
 import "../../styles/PriceCheck/UsedPriceTab.css";
 
-const MOCK = Array.from({ length: 10 }).map((_, i) => ({
-  id: i + 1,
-  status: i % 2 === 0 ? "경매 진행 중" : "낙찰 완료",
-  title: "Apple 아이패드 프로 12.9 6세대 M2 스페이스 그레이 128GB, WiFi전용",
-  category: "디지털/가전 > 태블릿PC",
-  spec:
-    "화면크기 : 32.77cm(12.9인치) | 해상도 : 2732 x 2048 | 메모리 : 8GB | 저장용량 : 128GB | 칩셋 : M2 | 운영체제 : iPadOS | 디스플레이 : 미니LED | 주사율 : 120Hz | 생체인식 : 페이스ID",
-  image: ipadImg,
-  startPrice: 1000000,
-  currentPrice: 1899990,
-  finalPrice: 2106000,
-}));
+// 서비스 레이어 (아래 경로는 네가 만든 파일 위치에 맞춰 조정)
+import { getNoAuth } from "../../api/client";
+import endpoints from "../../api/endpoints";
 
-export default function UsedPriceTab({ activeTab, setActiveTab }) {
-  // 입력 중 값
+/** 목록: /auctions  (로그인 불필요 시 NO_AUTH_PATHS에 /auctions 추가해두면 좋아) */
+function fetchUsedList({ page = 1, size = 5 }) {
+  return getNoAuth(endpoints.AUCTIONS.LIST, { page, size });
+}
+
+/** 검색: /search/items?q=...  */
+function searchUsedItems({ q, page = 1, size = 5 }) {
+  return getNoAuth(endpoints.SEARCH.ITEMS, { q, page, size });
+}
+
+const PER_PAGE = 5;
+const FALLBACK_IMG = ipadImg;
+
+export default function UsedPriceTab({ setActiveTab }) {
+  // 입력 중 검색어
   const [tempQuery, setTempQuery] = useState("");
-  // 제출된 검색어 (이 값이 있을 때만 결과를 보여줌)
+  // 제출된 검색어
   const [searchTerm, setSearchTerm] = useState("");
+  // 페이지
   const [page, setPage] = useState(1);
-  const PER_PAGE = 5;
 
-  const filtered = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase();
-    if (!q) return [];
-    return MOCK.filter(
-      (x) =>
-        x.title.toLowerCase().includes(q) ||
-        x.category.toLowerCase().includes(q) ||
-        x.spec.toLowerCase().includes(q)
-    );
-  }, [searchTerm]);
+  // 데이터 상태
+  const [items, setItems] = useState([]);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const total = filtered.length;
-  const totalPages = total > 0 ? Math.ceil(total / PER_PAGE) : 0;
-  const slice =
-    total > 0 ? filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE) : [];
-
+  // 제출 핸들러
   const onSubmit = (e) => {
     e.preventDefault();
-    setSearchTerm(tempQuery);
+    const q = (tempQuery || "").trim();
+    setSearchTerm(q);
     setPage(1);
   };
 
+  // API 호출
+  useEffect(() => {
+    const load = async () => {
+      const q = (searchTerm || "").trim();
+      if (!q) {
+        // 검색어 없으면 기본 목록
+        await loadList();
+      } else {
+        // 검색어 있으면 검색 API
+        await loadSearch(q);
+      }
+    };
+
+    const loadList = async () => {
+      try {
+        setLoading(true);
+        setErrorMsg("");
+        const res = await fetchUsedList({ page, size: PER_PAGE });
+        applyResponse(res);
+      } catch (err) {
+        setItems([]);
+        setTotalPages(0);
+        setTotalCount(0);
+        setErrorMsg(err?.friendlyMessage || "목록 조회 실패");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const loadSearch = async (q) => {
+      try {
+        setLoading(true);
+        setErrorMsg("");
+        const res = await searchUsedItems({ q, page, size: PER_PAGE });
+        applyResponse(res);
+      } catch (err) {
+        setItems([]);
+        setTotalPages(0);
+        setTotalCount(0);
+        setErrorMsg(err?.friendlyMessage || "검색 실패");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    /** 백엔드 응답 통합 매핑 */
+    const applyResponse = (res) => {
+      // 흔한 형태들을 모두 수용 (result 래핑/직접 등)
+      const box = res?.result ?? res ?? {};
+      const list = box.content ?? box.items ?? box.list ?? [];
+      const tp =
+        box.totalPages ??
+        box.pageInfo?.totalPages ??
+        (box.total ? Math.ceil(box.total / PER_PAGE) : 0);
+      const tot =
+        box.total ??
+        box.totalElements ??
+        box.pageInfo?.totalElements ??
+        list.length;
+
+      const mapped = list.map(normalizeItem);
+      setItems(mapped);
+      setTotalPages(tp || (tot ? Math.ceil(tot / PER_PAGE) : 0));
+      setTotalCount(tot);
+    };
+
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, page]);
+
   return (
     <div className="used-wrap">
-      {/* ✅ 공용 헤더: Enter / Q 버튼으로 제출 */}
+      {/* 헤더: Enter / Q 버튼으로 제출 */}
       <form onSubmit={onSubmit}>
         <PriceCheckHeader
           title="시세 둘러보기"
@@ -64,21 +132,26 @@ export default function UsedPriceTab({ activeTab, setActiveTab }) {
           정가 시세 보기
         </button>
         <button className="tab active">
-          중고 시세 보기{total ? ` ${total.toLocaleString()}` : ""}
+          중고 시세 보기{totalCount ? ` ${Number(totalCount).toLocaleString()}` : ""}
         </button>
       </div>
 
       {/* 본문 */}
       <div className="used-list-area">
-        {/* 검색어가 비었거나 결과가 없으면 동일 문구 표시 */}
-        {(!searchTerm.trim() || total === 0) && (
-          <p className="used-hint">검색 결과가 없습니다.</p>
+        {loading && <p className="used-hint">불러오는 중…</p>}
+        {!loading && errorMsg && <p className="used-hint warn">{errorMsg}</p>}
+
+        {/* 데이터 없음 */}
+        {!loading && !errorMsg && items.length === 0 && (
+          <p className="used-hint">
+            {searchTerm ? "검색 결과가 없습니다." : "표시할 경매가 없습니다."}
+          </p>
         )}
 
-        {/* 검색어가 있으며 결과가 있을 때만 카드 출력 */}
-        {searchTerm.trim() && total > 0 && (
+        {/* 카드 리스트 */}
+        {!loading && !errorMsg && items.length > 0 && (
           <>
-            {slice.map((it) => (
+            {items.map((it) => (
               <article key={it.id} className="used-card">
                 <div className="used-card-left">
                   <span
@@ -95,13 +168,13 @@ export default function UsedPriceTab({ activeTab, setActiveTab }) {
 
                 <div className="used-card-right">
                   <div className="used-brand-row">
-                    <span className="used-brand">Apple</span>
+                    <span className="used-brand">{it.brand || "상품"}</span>
                     <span className="used-auth">Authorized Reseller</span>
                   </div>
 
                   <h3 className="used-name">{it.title}</h3>
                   <div className="used-meta">{it.category}</div>
-                  <p className="used-spec">{it.spec}</p>
+                  {it.spec && <p className="used-spec">{it.spec}</p>}
 
                   <div className="used-pricebox">
                     <div className="used-price-row">
@@ -130,7 +203,7 @@ export default function UsedPriceTab({ activeTab, setActiveTab }) {
                 <button
                   className="used-nav"
                   disabled={page === 1}
-                  onClick={() => setPage(page - 1)}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
                   ‹
                 </button>
@@ -146,7 +219,7 @@ export default function UsedPriceTab({ activeTab, setActiveTab }) {
                 <button
                   className="used-nav"
                   disabled={page === totalPages}
-                  onClick={() => setPage(page + 1)}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 >
                   ›
                 </button>
@@ -159,6 +232,39 @@ export default function UsedPriceTab({ activeTab, setActiveTab }) {
   );
 }
 
+/** 서버 아이템 → 화면 모델 변환 */
+function normalizeItem(x) {
+  return {
+    id: x.id ?? x.itemId ?? x.auctionId ?? cryptoRandomId(),
+    status: mapStatus(x.status, x.finished),
+    title: x.title ?? x.name ?? "",
+    brand: x.brand ?? "",
+    category: x.categoryPath ?? x.category ?? "",
+    spec: x.spec ?? x.description ?? "",
+    image: x.imageUrl ?? x.thumbnailUrl ?? x.thumbnail ?? FALLBACK_IMG,
+    startPrice: num(x.startPrice ?? x.openingPrice),
+    currentPrice: num(x.currentPrice ?? x.bidPrice),
+    finalPrice: num(x.finalPrice ?? x.winningBid),
+  };
+}
+
+function mapStatus(status, finished) {
+  if (finished === true) return "낙찰 완료";
+  const s = (status || "").toUpperCase();
+  if (s === "FINISHED" || s === "CLOSED" || s === "DONE") return "낙찰 완료";
+  return "경매 진행 중";
+}
+
+function num(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
 function fmt(n) {
-  return n.toLocaleString("ko-KR") + "원";
+  const v = num(n);
+  return v ? v.toLocaleString("ko-KR") + "원" : "-";
+}
+
+function cryptoRandomId() {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }

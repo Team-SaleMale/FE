@@ -6,15 +6,13 @@ import config from "../config";
 const cookies = new Cookies();
 const ACCESS_TOKEN_KEY = "accessToken";
 
-/** ?a=1&a=2 형태로 직렬화 (배열 쿼리 서버 호환) */
+// =================== 공통 유틸 ===================
 function serializeParams(params = {}) {
   const usp = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => {
     if (v === undefined || v === null) return;
     if (Array.isArray(v)) {
-      v.forEach((vv) => {
-        if (vv !== undefined && vv !== null) usp.append(k, String(vv));
-      });
+      v.forEach((vv) => vv != null && usp.append(k, String(vv)));
     } else {
       usp.append(k, String(v));
     }
@@ -22,44 +20,112 @@ function serializeParams(params = {}) {
   return usp.toString();
 }
 
+// NOTE: accessToken 저장/삭제 유틸
+function saveToken(token) {
+  if (!token || typeof token !== "string") return;
+  try {
+    cookies.set(ACCESS_TOKEN_KEY, token, { path: "/" });
+    localStorage.setItem(ACCESS_TOKEN_KEY, token);
+  } catch {}
+}
+function clearToken() {
+  try {
+    cookies.remove(ACCESS_TOKEN_KEY, { path: "/" });
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+  } catch {}
+}
+
+// NOTE: Authorization 헤더에서 토큰 추출
+function extractTokenFromHeader(headerVal) {
+  if (!headerVal) return null;
+  const val = String(headerVal).trim();
+  if (val.startsWith("Bearer ")) return val.slice(7);
+  return val;
+}
+
+// =================== axios 인스턴스 ===================
 const api = axios.create({
-  // 두 환경 모두 지원: config.API_URL > VITE_API_BASE_URL > REACT_APP_API_URL
   baseURL:
-    (config && config.API_URL) ||
-    (import.meta && import.meta.env && import.meta.env.VITE_API_BASE_URL) ||
+    config?.API_URL ||
+    (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE_URL) ||
     process.env.REACT_APP_API_URL ||
     "",
   withCredentials: true,
   timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
   paramsSerializer: { serialize: serializeParams },
 });
 
-// 요청 인터셉터: 인증 토큰 자동 추가 (+ 특정 요청은 스킵 지원)
+// =================== 무인증 경로 정의 ===================
+// 1) 정확 일치(쿼리 제외)일 때만 무인증
+const NO_AUTH_EXACT = new Set([
+  "/auth/email/verify/request",
+  "/auth/email/verify/confirm",
+  "/auth/check/email",
+  "/auth/check/nickname",
+  "/auth/register",
+  "/auth/login",
+  "/auth/password/reset",
+  "/auth/password/reset/verify",
+  "/auth/password/reset/confirm",
+  "/auth/refresh",
+]);
+// 2) 명시적 prefix가 붙은 경로만 무인증 (상세/이미지 등 공개 라우트가 있을 경우)
+const NO_AUTH_PREFIX = [
+];
+
+// =================== 요청 인터셉터 ===================
 api.interceptors.request.use(
   (cfg) => {
-    // ✅ 이 헤더가 있으면 Authorization을 절대 붙이지 않음 (익명 호출용)
-    if (cfg.headers && cfg.headers["X-Skip-Auth"]) {
-      // 서버로는 이 커스텀 헤더가 가지 않도록 여기서 제거
+    const url = cfg.url || "";
+    const pathOnly = url.split("?")[0] || ""; // 쿼리 제거 후 경로만 비교
+
+    const wantsCreds =
+      cfg.withCredentials === true ||
+      cfg.headers?.["X-Allow-Credentials"] === "1" ||
+      pathOnly === "/auth/login" ||
+      pathOnly === "/auth/refresh";
+
+    // X-Skip-Auth 지정 시 건너뛰기
+    if (cfg.headers?.["X-Skip-Auth"]) {
+      cfg.withCredentials = !!wantsCreds;
       delete cfg.headers["X-Skip-Auth"];
+      if (!wantsCreds) delete cfg.headers.Authorization;
+      delete cfg.headers["X-Allow-Credentials"];
       return cfg;
     }
 
+    // ✅ 여기서 중복 선언 제거하고, 기존 pathOnly 그대로 사용
+    if (pathOnly === "/auctions" || pathOnly.startsWith("/auctions/")) {
+      const token =
+        localStorage.getItem("accessToken") || cookies.get("accessToken");
+      if (token) cfg.headers.Authorization = `Bearer ${token}`;
+      cfg.withCredentials = true;
+      console.log("[FORCE AUTH] /auctions 경로에 accessToken 강제 부착됨");
+    }
+
+    // 무인증 경로: 정확 일치 또는 허용 prefix일 때만
+    const isNoAuthExact = NO_AUTH_EXACT.has(pathOnly);
+    const isNoAuthPrefix = NO_AUTH_PREFIX.some((p) => pathOnly.startsWith(p));
+    if (isNoAuthExact || isNoAuthPrefix) {
+      cfg.withCredentials = !!wantsCreds;
+      if (!wantsCreds) delete cfg.headers.Authorization;
+      delete cfg.headers["X-Allow-Credentials"];
+      return cfg;
+    }
+
+    // 인증 경로 → Authorization 주입
     const cookieToken = cookies.get(ACCESS_TOKEN_KEY);
-    const lsToken =
-      typeof window !== "undefined"
-        ? window.localStorage.getItem(ACCESS_TOKEN_KEY)
-        : null;
+    const lsToken = localStorage.getItem(ACCESS_TOKEN_KEY);
     const token = cookieToken || lsToken;
     if (token) cfg.headers.Authorization = `Bearer ${token}`;
     return cfg;
   },
-  (error) => Promise.reject(error)
+  (err) => Promise.reject(err)
 );
 
-// 응답 Content-Type 간단 검증 (필요 시 조정)
+
+// =================== 응답 Content-Type 검증 ===================
 const validateContentType = (response) => {
   const ct = (response.headers?.["content-type"] || "").toLowerCase();
   const st = response.status;
@@ -79,7 +145,7 @@ const validateContentType = (response) => {
   throw new Error("서버 응답이 올바르지 않습니다.");
 };
 
-// 표준 에러 메시지 추출
+// =================== 에러 메시지 안전 추출 ===================
 const extractFriendlyMessage = (error) => {
   const data = error?.response?.data;
   return (
@@ -91,7 +157,7 @@ const extractFriendlyMessage = (error) => {
   );
 };
 
-// 응답 인터셉터: 에러 처리 + CT 검증
+// =================== 응답 인터셉터 ===================
 api.interceptors.response.use(
   (response) => {
     try {
@@ -99,20 +165,45 @@ api.interceptors.response.use(
     } catch (e) {
       console.error(e?.message || e);
     }
+
+    // ✅ 응답에서 accessToken 자동 추출 및 저장 (body 우선, 없으면 header)
+    try {
+      const data = response?.data || {};
+      let token =
+        data?.result?.accessToken ||
+        data?.accessToken ||
+        null;
+      if (!token) {
+        const h = response?.headers?.authorization || response?.headers?.Authorization;
+        token = extractTokenFromHeader(h);
+      }
+      if (token && typeof token === "string") {
+        console.log("[Interceptor] accessToken detected:", token.slice(0, 20) + "…");
+        saveToken(token);
+      }
+    } catch (err) {
+      console.error("[Interceptor] token auto-save failed:", err);
+    }
+
     return response;
   },
   (error) => {
-    // 어떤 경우든 friendlyMessage 붙여서 상위에서 공통 사용 가능
     error.friendlyMessage = extractFriendlyMessage(error);
 
     if (error.response) {
-      switch (error.response.status) {
+      const status = error.response.status;
+      const url = String(error.config?.url || "");
+      const pathOnly = url.split("?")[0] || "";
+      switch (status) {
         case 401: {
-          // 인증 실패 - 토큰 제거
-          cookies.remove(ACCESS_TOKEN_KEY, { path: "/" });
-          try {
-            localStorage.removeItem(ACCESS_TOKEN_KEY);
-          } catch (_) {}
+          const hadAuth = !!error.config?.headers?.Authorization;
+          const isAuthRoute = pathOnly === "/auth/login" || pathOnly === "/auth/refresh";
+          if (hadAuth && !isAuthRoute) {
+            console.warn("[Interceptor][401] clearing token from:", url);
+            clearToken();
+          } else {
+            console.warn("[Interceptor][401] skip clear for:", url);
+          }
           break;
         }
         case 403:
@@ -132,71 +223,59 @@ api.interceptors.response.use(
     } else {
       console.error("요청 중 에러가 발생했습니다:", error.message);
     }
+
     return Promise.reject(error);
   }
 );
 
-// --- 편의 헬퍼들: 항상 data만 반환 ---
+// =================== 공통 요청 함수 ===================
 export const get = async (url, params = {}, options = {}) => {
   const res = await api.get(url, { params, ...options });
   return res.data;
 };
-
 export const post = async (url, data, options = {}) => {
-  const res = await api.post(url, data, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
+  const res = await api.post(url, data, { ...options });
   return res.data;
 };
-
 export const put = async (url, data, options = {}) => {
-  const res = await api.put(url, data, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
+  const res = await api.put(url, data, { ...options });
   return res.data;
 };
-
 export const del = async (url, options = {}) => {
   const res = await api.delete(url, options);
   return res.data;
 };
-
 export const patch = async (url, data, options = {}) => {
-  const res = await api.patch(url, data, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
+  const res = await api.patch(url, data, { ...options });
   return res.data;
 };
-
 export const postMultipart = async (url, formData, options = {}) => {
-  // 헤더 비워두면 Axios가 boundary 자동 설정
   const res = await api.post(url, formData, { headers: {}, ...options });
   return res.data;
 };
 
-
-export const getNoAuth = async (url, params = {}, options = {}) => {
-  const res = await api.get(url, {
-    params,
-    withCredentials: false, // ✅ 쿠키도 차단
+// ✅ 무인증 호출
+export const postNoAuth = async (url, data = {}, options = {}) => {
+  const res = await api.post(url, data, {
+    withCredentials: options.withCredentials ?? false,
     ...options,
-    headers: { ...(options.headers || {}), "X-Skip-Auth": "1" },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Skip-Auth": "1",
+      ...(options.headers || {}),
+    },
   });
   return res.data;
 };
-
-export const postNoAuth = async (url, data = {}, options = {}) => {
-  const res = await api.post(url, data, {
-    withCredentials: false, // ✅ 쿠키도 차단
-    headers: {
-      ...(options.headers || {}),
-      "Content-Type": "application/json",
-      "X-Skip-Auth": "1",
-    },
+export const getNoAuth = async (url, params = {}, options = {}) => {
+  const res = await api.get(url, {
+    params,
+    withCredentials: options.withCredentials ?? false,
     ...options,
+    headers: {
+      "X-Skip-Auth": "1",
+      ...(options.headers || {}),
+    },
   });
   return res.data;
 };

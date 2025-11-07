@@ -1,21 +1,140 @@
 // src/api/auth/service.js
 import endpoints from "../endpoints";
-import { get, post, patch, getNoAuth, postNoAuth } from "../client";
+import { get, post, patch, postNoAuth } from "../client";
+import { Cookies } from "react-cookie";
 
-// ===== Auth (일반) =====
-export const register = (payload) => postNoAuth(endpoints.AUTH.REGISTER, payload);
-export const login    = (payload) => postNoAuth(endpoints.AUTH.LOGIN, payload);
-export const refresh  = (payload = {}) => post(endpoints.AUTH.REFRESH, payload);
-export const logout   = () => patch(endpoints.AUTH.LOGOUT, {});
-export const me       = () => get(endpoints.AUTH.ME);
+const cookies = new Cookies();
+const ACCESS_TOKEN_KEY = "accessToken";
 
-// ===== Validation =====
+// 다양한 서버 응답 포맷에서 토큰을 최대한 안전하게 뽑아내기
+function extractToken(res) {
+  if (!res) return null;
+  if (typeof res.accessToken === "string") return res.accessToken;
+  if (typeof res.token === "string") return res.token;
+  if (res.result) {
+    if (typeof res.result.accessToken === "string") return res.result.accessToken;
+    if (typeof res.result.token === "string") return res.result.token;
+    if (typeof res.result.jwt === "string") return res.result.jwt;
+    if (typeof res.result.access_token === "string") return res.result.access_token;
+  }
+  if (res.data) {
+    if (typeof res.data.accessToken === "string") return res.data.accessToken;
+    if (res.data.result && typeof res.data.result.accessToken === "string")
+      return res.data.result.accessToken;
+  }
+  return null;
+}
+
+function saveToken(token) {
+  try {
+    cookies.set(ACCESS_TOKEN_KEY, token, { path: "/" });
+    localStorage.setItem(ACCESS_TOKEN_KEY, token);
+  } catch {}
+}
+
+// refresh 응답에서 accessToken 안전 추출
+function extractAccessTokenFromRefresh(res) {
+  const data = res?.result ?? res?.data ?? res;
+  return data?.accessToken || null;
+}
+
+function clearToken() {
+  try {
+    cookies.remove(ACCESS_TOKEN_KEY, { path: "/" });
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+  } catch {}
+}
+
+export const register = (payload, verifyToken) =>
+  postNoAuth(endpoints.AUTH.REGISTER, payload, {
+    headers: { "X-Email-Verify-Token": verifyToken },
+  });
+
+// 중복 호출 가드 (선택)
+let refreshing = false;
+
+// ✅ 로그인: 서버가 (1) 응답 헤더 Authorization 또는 (2) 응답 바디 result.accessToken 중 하나로 토큰을 줄 수 있음
+// NOTE(ChatGPT): client.js 응답 인터셉터가 Authorization 헤더를 자동 저장하므로, 여기서는 바디에 있으면 추가로 저장하는 ‘보강’만 수행.
+export const login = async (payload) => {
+  // 1) 로그인 (쿠키 수신 허용)
+  const res = await postNoAuth(endpoints.AUTH.LOGIN, payload, {
+    withCredentials: true,
+    headers: { "X-Allow-Credentials": "1" },
+  });
+
+  // 2) 응답 바디에 accessToken이 있으면 즉시 저장 (헤더 경로가 없을 때 대비)
+  try {
+    const tokenFromBody = extractToken(res);
+    if (tokenFromBody) {
+      saveToken(tokenFromBody);
+    }
+  } catch {
+    // no-op
+  }
+
+  // 3) 보수적 리프레시 시도: 토큰이 끝내 저장되지 않았을 때만 1회
+  if (!cookies.get(ACCESS_TOKEN_KEY) && !localStorage.getItem(ACCESS_TOKEN_KEY) && !refreshing) {
+    try {
+      refreshing = true;
+      const refreshRes = await post(
+        endpoints.AUTH.REFRESH,
+        {},
+        {
+          withCredentials: true,
+          headers: { "X-Allow-Credentials": "1" },
+        }
+      );
+      // 서버가 본문에 accessToken을 줄 수도 있고(스웨거 예시),
+      // 헤더 Authorization으로 줄 수도 있으므로 client.js 인터셉터가 처리함.
+      const maybe = extractAccessTokenFromRefresh(refreshRes);
+      if (maybe) saveToken(maybe);
+    } catch (e) {
+      console.error("[login] optional refresh after login failed:", e);
+    } finally {
+      refreshing = false;
+    }
+  }
+
+  return res;
+};
+
+export const refresh = (payload = {}) =>
+  post(endpoints.AUTH.REFRESH, payload, {
+    withCredentials: true,
+    headers: { "X-Allow-Credentials": "1" },
+  });
+
+// ✅ 로그아웃: 서버 호출 성공/실패와 무관하게 로컬 토큰 정리
+export const logout = async () => {
+  try {
+    await patch(endpoints.AUTH.LOGOUT, {}, { withCredentials: true });
+  } finally {
+    clearToken();
+  }
+};
+
+export const me = () => get(endpoints.AUTH.ME);
+export const myProfile = async () => {
+  try {
+    // 1️⃣ 팀원이 쓰는 기본 경로 (/api/users)
+    const res = await get(endpoints.USERS.PROFILE);
+    return res;
+  } catch (e) {
+    // 2️⃣ 현재 서버가 /mypage만 허용하는 경우 자동 폴백
+    if (e?.response?.status === 404) {
+      console.warn("[Fallback] /api/users → /mypage로 재시도합니다.");
+      const res = await get("/mypage");
+      return res;
+    }
+    throw e;
+  }
+};
+
 export const checkNickname = (nickname) =>
   get(endpoints.AUTH.CHECK_NICK, { value: String(nickname || "").trim() })
     .then((res) => {
       const raw = res?.result?.exists;
-      const exists =
-        raw === true || raw === "true" || raw === 1 || raw === "1"; // 안전 파싱
+      const exists = raw === true || raw === "true" || raw === 1 || raw === "1";
       return { available: !exists };
     });
 
@@ -36,20 +155,19 @@ export const checkEmail = (email) =>
     return { available };
   });
 
-// ===== Email verify =====
+// NOTE: 인증 없이 본문(JSON)으로 이메일 전송
 export const requestEmailCode = (email) =>
-  getNoAuth(endpoints.AUTH.EMAIL_VERIFY_REQUEST, { email });
+  postNoAuth(endpoints.AUTH.EMAIL_VERIFY_REQUEST, { email });
 
 export const verifyEmailCode = (email, code) =>
   postNoAuth(endpoints.AUTH.EMAIL_VERIFY_CONFIRM, { email, code });
 
-// ===== Social signup complete (@RequestParam 기반: query 전송) =====
 export async function completeSocialSignup({ signupToken, nickname, regionId }) {
   const qs = new URLSearchParams({
     signupToken,
     nickname,
     regionId: String(regionId),
   }).toString();
-  // 바디 없이 POST (쿼리 파라미터로 전달)
+  // 서버가 POST 쿼리수신을 기대하므로 유지
   return post(`${endpoints.AUTH.SOCIAL_COMPLETE}?${qs}`);
 }

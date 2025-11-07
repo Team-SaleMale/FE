@@ -1,4 +1,4 @@
-// src/api/endpoint.js
+// src/api/endpoints.js
 const endpoints = {
   AUTH: {
     REGISTER: "/auth/register",
@@ -47,6 +47,9 @@ const endpoints = {
     LIKED:    "/auctions/liked",
     UPLOAD_IMAGES: "/auctions/images",
     SUGGEST_TITLE: "/auctions/registration/suggest-title",
+  },
+  SEARCH: {
+    ITEMS: "/search/items",   // 시세 둘러보기 검색용
   },
 };
 
