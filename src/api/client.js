@@ -69,11 +69,9 @@ const NO_AUTH_EXACT = new Set([
   "/auth/password/reset/verify",
   "/auth/password/reset/confirm",
   "/auth/refresh",
-  "/search/items",    // 공개 검색 (쿼리有)
 ]);
 // 2) 명시적 prefix가 붙은 경로만 무인증 (상세/이미지 등 공개 라우트가 있을 경우)
 const NO_AUTH_PREFIX = [
-  "/search/items/",   // 필요시
 ];
 
 // =================== 요청 인터셉터 ===================
