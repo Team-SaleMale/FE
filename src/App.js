@@ -19,6 +19,7 @@ import InquiryList from "./pages/Inquiry/InquiryList";
 import InquiryWrite from "./pages/Inquiry/InquiryWrite";
 import InquiryDetail from "./pages/Inquiry/InquiryDetail";
 import AuthCallback from "pages/Auth/AuthCallback";
+import HotDealPage from "./pages/HotDeal/HotDeal"; 
 
 console.log({ InquiryList, InquiryWrite, InquiryDetail });
 console.log("[App] mounted path:", window.location.pathname, "hash:", window.location.hash);
@@ -55,6 +56,9 @@ export default function App() {
 
         {/* 시세 확인 */}
         <Route path="/price-check" element={<PriceCheck />} />
+
+         {/* 핫딜 */}
+        <Route path="/hotdeal" element={<HotDealPage />} />
 
         {/* 문의 */}
         <Route path="/inquiries" element={<InquiryList />} />
