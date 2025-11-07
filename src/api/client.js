@@ -69,13 +69,9 @@ const NO_AUTH_EXACT = new Set([
   "/auth/password/reset/verify",
   "/auth/password/reset/confirm",
   "/auth/refresh",
-  "/auctions",        // 공개 목록 (쿼리有)
-  "/search/items",    // 공개 검색 (쿼리有)
 ]);
 // 2) 명시적 prefix가 붙은 경로만 무인증 (상세/이미지 등 공개 라우트가 있을 경우)
 const NO_AUTH_PREFIX = [
-  "/auctions/",       // 예: /auctions/123 (공개 상세)
-  "/search/items/",   // 필요시
 ];
 
 // =================== 요청 인터셉터 ===================
@@ -99,6 +95,15 @@ api.interceptors.request.use(
       return cfg;
     }
 
+    // ✅ 여기서 중복 선언 제거하고, 기존 pathOnly 그대로 사용
+    if (pathOnly === "/auctions" || pathOnly.startsWith("/auctions/")) {
+      const token =
+        localStorage.getItem("accessToken") || cookies.get("accessToken");
+      if (token) cfg.headers.Authorization = `Bearer ${token}`;
+      cfg.withCredentials = true;
+      console.log("[FORCE AUTH] /auctions 경로에 accessToken 강제 부착됨");
+    }
+
     // 무인증 경로: 정확 일치 또는 허용 prefix일 때만
     const isNoAuthExact = NO_AUTH_EXACT.has(pathOnly);
     const isNoAuthPrefix = NO_AUTH_PREFIX.some((p) => pathOnly.startsWith(p));
@@ -118,6 +123,7 @@ api.interceptors.request.use(
   },
   (err) => Promise.reject(err)
 );
+
 
 // =================== 응답 Content-Type 검증 ===================
 const validateContentType = (response) => {
