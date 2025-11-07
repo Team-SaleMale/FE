@@ -1,0 +1,39 @@
+.root{
+  display:flex;
+  flex-direction:column;
+  width:100%;
+}
+
+/* 툴바 아래 실제 화면 캔버스 */
+.canvas{
+  position:relative;
+  display:flex;
+  width:100%;
+  height:calc(100vh - 72px);   /* 헤더/툴바만큼 차감 */
+  min-height:680px;
+}
+
+/* 지도/로드뷰 분할(기본: 지도 100%) */
+.mapArea{ flex:1 1 auto; min-width:0; }
+.roadArea{
+  display:none;
+  width:50%;
+  min-width:480px;
+  border-left:1px solid #e5e7eb;
+  background:#000;            /* 로드뷰 로딩시 깜빡임 방지 */
+}
+/* 로드뷰 모드일 때: 지도 50% + 로드뷰 50% */
+.road .mapArea{ width:50%; }
+.road .roadArea{ display:block; }
+
+/* 지도 위 모달 컨테이너(HotDealModal 렌더 위치) */
+.modalRoot{
+  position:absolute;
+  top:16px;
+  left:50%;
+  transform:translateX(-50%);
+  width:100%;
+  max-width:960px;
+  z-index:999;
+  pointer-events:none;        /* 내부 모달 요소만 클릭 가능 */
+}

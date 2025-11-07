@@ -1,0 +1,120 @@
+/* ───────── 공통 ───────── */
+:root { /* 필요 시 전역에서 override 가능 */ }
+
+/* DetailPanel 오른쪽 너비를 제외한 왼쪽 dim */
+.dim{
+  position:fixed; top:0; bottom:0; left:0; right:var(--detail-w, 560px);
+  background:rgba(0,0,0,.28);
+  z-index:740;
+}
+
+/* 드로어 패널: DetailPanel의 왼쪽에 붙음 */
+.panel{
+  position:fixed; top:0; right:calc(var(--detail-w, 560px) + -420px);
+  /* 위 계산은 초기 offscreen. open 시 right: var(--detail-w) */
+  width:420px; max-width:92vw; height:100vh;
+  background:#fff; border-left:1px solid #EEF1F6;
+  box-shadow:-8px 0 24px rgba(0,0,0,.12);
+  z-index:750; overflow:auto;
+  transition:right .25s ease;
+}
+.open{ right:var(--detail-w, 560px); }
+
+/* 헤더 */
+.header{
+  position:sticky; top:0; z-index:1;
+  display:flex; align-items:flex-start; gap:10px;
+  padding:14px 14px 10px;
+  background:#fff; border-bottom:1px solid #EEF1F6;
+}
+.titleBox{ flex:1 1 auto; min-width:0; }
+.subTitleRow{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
+.badge{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:4px 8px; border-radius:8px;
+  font-size:12px; font-weight:600; color:#0F172A;
+  background:#F6F7FB; border:1px solid #E6E9F0;
+}
+.badgeLight{
+  display:inline-flex; align-items:center;
+  padding:4px 8px; border-radius:8px;
+  font-size:12px; color:#334155; background:#F8FAFC; border:1px solid #E5E7EB;
+}
+.title{
+  margin:0; font-size:18px; font-weight:700; color:#0F172A; line-height:1.25;
+}
+
+.closeBtn{
+  height:34px; padding:0 12px; border-radius:10px;
+  border:1px solid #E5E7EB; background:#fff; color:#0F172A;
+  font-weight:600; cursor:pointer;
+}
+.closeBtn:hover{ background:#F8FAFC; }
+
+/* 본문 */
+.body{ padding:14px; }
+.block{ margin-bottom:16px; }
+
+/* 상품 타이틀 */
+.itemTitle{
+  font-size:14px; color:#334155; line-height:1.45;
+  margin:0 0 8px 0; word-break:keep-all;
+}
+
+/* Key-Value */
+.kv{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 10px; border:1px solid #E5E7EB; border-radius:10px;
+  background:#fff; font-size:14px; margin-top:8px;
+}
+.kv span{ color:#6B7280; }
+.kv b{ font-weight:700; color:#0F172A; }
+.accent{ color:#1D4ED8; }
+
+/* 입력 */
+.label{ display:block; font-size:13px; color:#374151; margin:4px 0 6px; }
+.inputRow{
+  display:flex; align-items:center; gap:8px;
+  border:1px solid #CBD5E1; border-radius:10px; padding:10px 12px; background:#fff;
+}
+.won{ color:#64748B; font-weight:700; }
+.input{
+  width:100%; border:0; outline:0; font-size:18px; font-weight:700; color:#0F172A;
+  background:transparent;
+}
+
+/* 퀵 버튼 */
+.quickRow{
+  display:grid; grid-template-columns:repeat(5,1fr); gap:8px;
+  margin-top:10px;
+}
+.quickRow > button{
+  height:36px; border:1px solid #E5E7EB; border-radius:10px; background:#fff;
+  font-size:13px; font-weight:600; cursor:pointer;
+}
+.quickRow > button:hover{ background:#F8FAFC; }
+
+/* 에러 */
+.error{
+  margin:10px 0 0; color:#DC2626; font-size:13px;
+}
+
+/* 제출 */
+.submit{
+  width:100%; height:44px; margin-top:12px;
+  border:0; border-radius:10px; cursor:pointer;
+  background:#111827; color:#fff; font-weight:800; font-size:15px;
+  box-shadow:0 6px 20px rgba(17,24,39,.18);
+}
+.submit:disabled{ opacity:.6; cursor:not-allowed; }
+
+/* 안내 */
+.note{
+  margin-top:8px; font-size:12.5px; color:#64748B; line-height:1.55;
+}
+
+/* 모바일 */
+@media (max-width:640px){
+  .panel{ width:100vw; }
+  .dim{ right:0; } /* 모바일에선 DetailPanel 옆이 아니라 전체 dim */
+}
