@@ -56,8 +56,9 @@ const api = axios.create({
   paramsSerializer: { serialize: serializeParams },
 });
 
-// =================== 무인증 경로 ===================
-const NO_AUTH_PATHS = [
+// =================== 무인증 경로 정의 ===================
+// 1) 정확 일치(쿼리 제외)일 때만 무인증
+const NO_AUTH_EXACT = new Set([
   "/auth/email/verify/request",
   "/auth/email/verify/confirm",
   "/auth/check/email",
@@ -67,20 +68,27 @@ const NO_AUTH_PATHS = [
   "/auth/password/reset",
   "/auth/password/reset/verify",
   "/auth/password/reset/confirm",
-  "/auctions",
-  "/search/items",
   "/auth/refresh",
+  "/auctions",        // 공개 목록 (쿼리有)
+  "/search/items",    // 공개 검색 (쿼리有)
+]);
+// 2) 명시적 prefix가 붙은 경로만 무인증 (상세/이미지 등 공개 라우트가 있을 경우)
+const NO_AUTH_PREFIX = [
+  "/auctions/",       // 예: /auctions/123 (공개 상세)
+  "/search/items/",   // 필요시
 ];
 
 // =================== 요청 인터셉터 ===================
 api.interceptors.request.use(
   (cfg) => {
     const url = cfg.url || "";
+    const pathOnly = url.split("?")[0] || ""; // 쿼리 제거 후 경로만 비교
+
     const wantsCreds =
       cfg.withCredentials === true ||
       cfg.headers?.["X-Allow-Credentials"] === "1" ||
-      url.includes("/auth/login") ||
-      url.includes("/auth/refresh");
+      pathOnly === "/auth/login" ||
+      pathOnly === "/auth/refresh";
 
     // X-Skip-Auth 지정 시 건너뛰기
     if (cfg.headers?.["X-Skip-Auth"]) {
@@ -91,8 +99,10 @@ api.interceptors.request.use(
       return cfg;
     }
 
-    // 무인증 경로
-    if (NO_AUTH_PATHS.some((p) => url.includes(p))) {
+    // 무인증 경로: 정확 일치 또는 허용 prefix일 때만
+    const isNoAuthExact = NO_AUTH_EXACT.has(pathOnly);
+    const isNoAuthPrefix = NO_AUTH_PREFIX.some((p) => pathOnly.startsWith(p));
+    if (isNoAuthExact || isNoAuthPrefix) {
       cfg.withCredentials = !!wantsCreds;
       if (!wantsCreds) delete cfg.headers.Authorization;
       delete cfg.headers["X-Allow-Credentials"];
@@ -177,10 +187,11 @@ api.interceptors.response.use(
     if (error.response) {
       const status = error.response.status;
       const url = String(error.config?.url || "");
+      const pathOnly = url.split("?")[0] || "";
       switch (status) {
         case 401: {
           const hadAuth = !!error.config?.headers?.Authorization;
-          const isAuthRoute = url.includes("/auth/login") || url.includes("/auth/refresh");
+          const isAuthRoute = pathOnly === "/auth/login" || pathOnly === "/auth/refresh";
           if (hadAuth && !isAuthRoute) {
             console.warn("[Interceptor][401] clearing token from:", url);
             clearToken();
