@@ -20,7 +20,7 @@ function serializeParams(params = {}) {
   return usp.toString();
 }
 
-// NOTE(ChatGPT): accessToken 저장/삭제 유틸
+// NOTE: accessToken 저장/삭제 유틸
 function saveToken(token) {
   if (!token || typeof token !== "string") return;
   try {
@@ -35,7 +35,7 @@ function clearToken() {
   } catch {}
 }
 
-// NOTE(ChatGPT): Authorization 헤더에서 토큰 추출
+// NOTE: Authorization 헤더에서 토큰 추출
 function extractTokenFromHeader(headerVal) {
   if (!headerVal) return null;
   const val = String(headerVal).trim();
@@ -109,8 +109,7 @@ api.interceptors.request.use(
   (err) => Promise.reject(err)
 );
 
-
-// 응답 Content-Type 검증
+// =================== 응답 Content-Type 검증 ===================
 const validateContentType = (response) => {
   const ct = (response.headers?.["content-type"] || "").toLowerCase();
   const st = response.status;
@@ -130,7 +129,7 @@ const validateContentType = (response) => {
   throw new Error("서버 응답이 올바르지 않습니다.");
 };
 
-// 에러 메시지 안전 추출
+// =================== 에러 메시지 안전 추출 ===================
 const extractFriendlyMessage = (error) => {
   const data = error?.response?.data;
   return (
@@ -142,8 +141,6 @@ const extractFriendlyMessage = (error) => {
   );
 };
 
-
-
 // =================== 응답 인터셉터 ===================
 api.interceptors.response.use(
   (response) => {
@@ -153,19 +150,20 @@ api.interceptors.response.use(
       console.error(e?.message || e);
     }
 
-    // ✅ ChatGPT 추가: 응답에서 accessToken 자동 추출 및 저장
+    // ✅ 응답에서 accessToken 자동 추출 및 저장 (body 우선, 없으면 header)
     try {
       const data = response?.data || {};
-      const token =
+      let token =
         data?.result?.accessToken ||
         data?.accessToken ||
-        response?.headers?.authorization ||
-        response?.headers?.Authorization;
-
-      if (token) {
-        console.log("[Interceptor] accessToken detected:", token.slice(0, 20) + "...");
-        cookies.set("accessToken", token, { path: "/" });
-        localStorage.setItem("accessToken", token);
+        null;
+      if (!token) {
+        const h = response?.headers?.authorization || response?.headers?.Authorization;
+        token = extractTokenFromHeader(h);
+      }
+      if (token && typeof token === "string") {
+        console.log("[Interceptor] accessToken detected:", token.slice(0, 20) + "…");
+        saveToken(token);
       }
     } catch (err) {
       console.error("[Interceptor] token auto-save failed:", err);
@@ -175,14 +173,22 @@ api.interceptors.response.use(
   },
   (error) => {
     error.friendlyMessage = extractFriendlyMessage(error);
+
     if (error.response) {
-      switch (error.response.status) {
-        case 401:
-          cookies.remove(ACCESS_TOKEN_KEY, { path: "/" });
-          try {
-            localStorage.removeItem(ACCESS_TOKEN_KEY);
-          } catch {}
+      const status = error.response.status;
+      const url = String(error.config?.url || "");
+      switch (status) {
+        case 401: {
+          const hadAuth = !!error.config?.headers?.Authorization;
+          const isAuthRoute = url.includes("/auth/login") || url.includes("/auth/refresh");
+          if (hadAuth && !isAuthRoute) {
+            console.warn("[Interceptor][401] clearing token from:", url);
+            clearToken();
+          } else {
+            console.warn("[Interceptor][401] skip clear for:", url);
+          }
           break;
+        }
         case 403:
           console.error("접근 권한이 없습니다.");
           break;
@@ -200,10 +206,10 @@ api.interceptors.response.use(
     } else {
       console.error("요청 중 에러가 발생했습니다:", error.message);
     }
+
     return Promise.reject(error);
   }
 );
-
 
 // =================== 공통 요청 함수 ===================
 export const get = async (url, params = {}, options = {}) => {
