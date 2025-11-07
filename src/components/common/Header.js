@@ -26,15 +26,15 @@ export default function Header() {
     const fetchUser = async () => {
       try {
         const res = await myProfile(); // 200이면 OK
-        const profile = res?.result ?? res; // 스키마 유연화
+        const profile2 = res?.result ?? res; // 스키마 유연화
         const nickname =
-          profile?.nickname ??
-          profile?.name ??
-          profile?.user?.nickname ??
-          profile?.user?.name;
+          profile2?.nickname ??
+          profile2?.name ??
+          profile2?.user?.nickname ??
+          profile2?.user?.name;
 
         if (mounted && nickname) {
-          setUser(profile);
+          setUser(profile2);
         } else if (mounted) {
           setUser(null);
           console.warn("[Header] /mypage 응답에 식별자 필드가 없습니다:", res);
