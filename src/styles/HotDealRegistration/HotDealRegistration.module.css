@@ -1,0 +1,15 @@
+/* src/styles/HotDealRegistration/HotDealRegistration.module.css */
+.wrap{max-width:1160px;margin:0 auto;padding:16px;}
+.header{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.title{margin:0;font-size:22px;font-weight:800;color:#0f172a;}
+.submitBtn{padding:8px 12px;border:1px solid #111827;border-radius:10px;background:#111827;color:#fff;font-weight:700;cursor:pointer;}
+.submitBtn:disabled{opacity:.5;cursor:not-allowed;}
+.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;}
+.left{display:flex;flex-direction:column;gap:14px;}
+.right{display:flex;flex-direction:column;gap:12px;}
+.previewInfo{border:1px solid #e5e7eb;border-radius:12px;padding:12px;background:#fff;}
+.previewInfo h3{margin:0 0 8px 0;font-size:15px;font-weight:700;}
+.previewInfo ul{margin:0;padding-left:18px;color:#374151;font-size:14px;line-height:1.6;}
+@media (max-width:960px){
+  .grid{grid-template-columns:1fr;}
+}

@@ -7,10 +7,7 @@ import styles from "../../styles/HotDeal/HotDealBid.module.css";
  *
  * Props
  * - open: boolean
- * - item: {
- *     id, title, startPrice, currentPrice, bidCount, endsAt,
- *     minIncrement, categoryLabel, categoryKey
- *   }
+ * - item: { id, title, startPrice, currentPrice, bidCount, endsAt, minIncrement }
  * - onClose: () => void
  * - onSubmit: (price:number) => (Promise|void)   // 서버 연동 콜백
  * - detailWidth?: number                          // DetailPanel 너비(px). 기본 560
@@ -33,9 +30,7 @@ export default function HotDealBid({
 
   // 다음 최소 입찰가 계산
   const nextMin = useMemo(() => {
-    const cur = Number(
-      item?.currentPrice ?? item?.startPrice ?? 0
-    );
+    const cur = Number(item?.currentPrice ?? item?.startPrice ?? 0);
     const inc = Number(item?.minIncrement ?? 0);
     if (inc > 0) return cur + inc;
 
@@ -102,7 +97,7 @@ export default function HotDealBid({
           detail: {
             itemId: item?.id,
             price: n,
-            bidder: "나",          // 필요 시 로그인 사용자명으로 교체
+            bidder: "나",
             ts: Date.now(),
           },
         })
@@ -122,12 +117,7 @@ export default function HotDealBid({
   return (
     <>
       {/* 오른쪽 DetailPanel을 제외한 좌측 dim */}
-      <div
-        className={styles.dim}
-        style={styleVar}
-        onClick={onClose}
-        aria-hidden
-      />
+      <div className={styles.dim} style={styleVar} onClick={onClose} aria-hidden />
 
       <aside
         className={`${styles.panel} ${styles.open}`}
@@ -139,20 +129,11 @@ export default function HotDealBid({
           <div className={styles.titleBox}>
             <div className={styles.subTitleRow}>
               {item?.endsAt && <span className={styles.badge}>마감: {item.endsAt}</span>}
-              {(item?.categoryLabel || item?.categoryKey) && (
-                <span className={styles.badgeLight}>
-                  {item.categoryLabel || item.categoryKey}
-                </span>
-              )}
             </div>
             <h2 className={styles.title}>입찰하기</h2>
           </div>
 
-          <button
-            className={styles.closeBtn}
-            onClick={onClose}
-            aria-label="닫기"
-          >
+          <button className={styles.closeBtn} onClick={onClose} aria-label="닫기">
             닫기
           </button>
         </header>
@@ -160,7 +141,9 @@ export default function HotDealBid({
         <div className={styles.body}>
           {/* 개요 */}
           <section className={styles.block}>
-            <div className={styles.itemTitle} title={item?.title}>{item?.title}</div>
+            <div className={styles.itemTitle} title={item?.title}>
+              {item?.title}
+            </div>
             <div className={styles.kv}>
               <span>시작가</span>
               <b>₩{fmt(item?.startPrice)}</b>
@@ -209,11 +192,7 @@ export default function HotDealBid({
 
             {error && <p className={styles.error}>{error}</p>}
 
-            <button
-              type="submit"
-              className={styles.submit}
-              disabled={busy}
-            >
+            <button type="submit" className={styles.submit} disabled={busy}>
               {busy ? "입찰 처리 중..." : "입찰 제출"}
             </button>
           </form>

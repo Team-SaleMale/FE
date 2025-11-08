@@ -1,3 +1,4 @@
+// src/pages/HotDeal/DetailPanel.js
 import { useEffect, useMemo, useState } from "react";
 import styles from "../../styles/HotDeal/DetailPanel.module.css";
 
@@ -19,7 +20,6 @@ export default function DetailPanel({ item, onClose, onBid }) {
   // 아이템 바뀌면 메인 이미지 & 히스토리 초기화
   useEffect(() => {
     setHeroIdx(0);
-    // 서버에서 내려오는 초기 히스토리 필드가 있다면 반영, 없으면 빈 배열
     setHistory(Array.isArray(item?.bidHistory) ? [...item.bidHistory].reverse() : []);
   }, [item]);
 
@@ -94,14 +94,7 @@ export default function DetailPanel({ item, onClose, onBid }) {
             <h2 className={styles.title} title={item.title}>
               {item.title}
             </h2>
-
-            {(item.categoryLabel || item.categoryKey) && (
-              <div className={styles.metaRow}>
-                <span className={styles.categoryTag}>
-                  {item.categoryLabel || item.categoryKey}
-                </span>
-              </div>
-            )}
+            {/* 카테고리 표시는 제거됨 */}
           </div>
 
           <div className={styles.headerActions}>
@@ -146,7 +139,7 @@ export default function DetailPanel({ item, onClose, onBid }) {
             )}
           </section>
 
-          {/* ✅ 판매자 설명 (이미지 아래) */}
+          {/* 판매자 설명 */}
           {item.sellerDesc && (
             <section className={styles.section}>
               <h3 className={styles.secTitle}>판매자 설명</h3>
@@ -190,10 +183,7 @@ export default function DetailPanel({ item, onClose, onBid }) {
 
           {/* 하단 CTA */}
           <div className={styles.stickyCta}>
-            <button
-              className={styles.bidBtn}
-              onClick={() => onBid?.(item)}
-            >
+            <button className={styles.bidBtn} onClick={() => onBid?.(item)}>
               입찰하기
             </button>
           </div>
@@ -203,7 +193,7 @@ export default function DetailPanel({ item, onClose, onBid }) {
       {/* dim */}
       <div className={styles.dim} onClick={onClose} />
 
-      {/* ── 라이트박스 (큰 갤러리) ───────────────────── */}
+      {/* 라이트박스 */}
       {lightboxOpen && (
         <div className={styles.lb} role="dialog" aria-modal="true">
           <div className={styles.lbBackdrop} onClick={() => setLightboxOpen(false)} />

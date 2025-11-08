@@ -1,0 +1,32 @@
+.root{ position:fixed; inset:0; z-index:1200; display:grid; place-items:center; }
+.backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.45); }
+
+.modal{
+  position:relative; z-index:1;
+  width:min(440px,92vw);
+  padding:20px 16px;
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 20px 60px rgba(0,0,0,.25);
+  border:1px solid #e5e7eb;
+}
+
+/* 타이포(두께 낮춤) */
+.title{ margin:0 0 8px 0; font-size:17px; font-weight:600; color:#0f172a; }
+.desc { margin:0 0 16px 0; color:#374151; line-height:1.6; font-size:14.5px; font-weight:400; }
+
+/* Toolbar 버튼과 동일 스타일 */
+.actions{ display:flex; gap:8px; justify-content:flex-end; }
+.btn, .btnActive{
+  padding:6px 10px;
+  border:1px solid #e5e7eb;
+  border-radius:8px;
+  background:#fff;
+  cursor:pointer;
+  font-weight:400;
+}
+.btn:hover{ background:#f8fafc; }
+.btnActive{
+  background:#111827; color:#fff; border-color:#111827;
+}
+.btnActive:hover{ filter:brightness(1.05); }
