@@ -1,8 +1,55 @@
-.bar { display:flex; align-items:center; gap:12px; padding:10px 12px; border-bottom:1px solid #eee; }
-.title { font-weight:700; }
-.group { display:flex; align-items:center; gap:8px; }
-.muted { color:#6b7280; font-size:14px; display:flex; align-items:center; gap:8px; }
-.range { appearance:none; width:180px; height:4px; background:#e5e7eb; border-radius:999px; }
-.range::-webkit-slider-thumb { appearance:none; width:18px; height:18px; border-radius:50%; background:#111827; cursor:pointer; }
-.btn, .btnActive { padding:6px 10px; border:1px solid #e5e7eb; border-radius:8px; background:#fff; cursor:pointer; }
-.btnActive { background:#111827; color:#fff; border-color:#111827; }
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.title { font-weight: 700; }
+
+.group { display: flex; align-items: center; gap: 8px; }
+
+.muted {
+  color: #6b7280;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.range {
+  appearance: none;
+  width: 180px;
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 999px;
+}
+.range::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #111827;
+  cursor: pointer;
+}
+
+/* 기본/활성 버튼 */
+.btn, .btnActive {
+  padding: 6px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+.btnActive {
+  background: #111827;
+  color: #fff;
+  border-color: #111827;
+}
+
+/* 우측 정렬용 */
+.spacer { flex: 1 1 auto; }
+
+/* 상품 등록 버튼은 활성 버튼 룩 그대로 쓰되 살짝 여백만 */
+.registerBtn { margin-left: 8px; }

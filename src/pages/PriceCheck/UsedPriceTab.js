@@ -1,42 +1,69 @@
-// src/pages/PriceCheck/UsedPriceTab.jsx
+// src/pages/PriceCheck/UsedPriceTab.js
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import PriceCheckHeader from "../../components/pricecheck/PriceCheckHeader";
 import ipadImg from "../../assets/img/PriceCheck/ipadpro.png";
 import "../../styles/PriceCheck/UsedPriceTab.css";
-
-// 서비스 레이어 (아래 경로는 네가 만든 파일 위치에 맞춰 조정)
-import { getNoAuth } from "../../api/client";
+import { get } from "../../api/client";
 import endpoints from "../../api/endpoints";
 
-/** 목록: /auctions  (로그인 불필요 시 NO_AUTH_PATHS에 /auctions 추가해두면 좋아) */
-function fetchUsedList({ page = 1, size = 5 }) {
-  return getNoAuth(endpoints.AUCTIONS.LIST, { page, size });
-}
+const SS_KEY = "pricecheck:lastState"; // ← 부모와 같은 키 사용
 
-/** 검색: /search/items?q=...  */
 function searchUsedItems({ q, page = 1, size = 5 }) {
-  return getNoAuth(endpoints.SEARCH.ITEMS, { q, page, size });
+  const keyword = (q || "").trim();
+  const p0 = Math.max(0, Number(page) - 1);
+  return get(endpoints.SEARCH.ITEMS, { q: keyword, page: p0, size });
 }
 
 const PER_PAGE = 5;
 const FALLBACK_IMG = ipadImg;
 
-export default function UsedPriceTab({ setActiveTab }) {
-  // 입력 중 검색어
-  const [tempQuery, setTempQuery] = useState("");
-  // 제출된 검색어
-  const [searchTerm, setSearchTerm] = useState("");
-  // 페이지
-  const [page, setPage] = useState(1);
+export default function UsedPriceTab({
+  activeTab,
+  setActiveTab,
+  tempQuery,
+  setTempQuery,
+  searchTerm,
+  setSearchTerm,
+}) {
+  const navigate = useNavigate();
+  const detailPath = (id) => `/auctions/${id}`;
+  const goDetail = (id) => id && navigate(detailPath(id));
 
-  // 데이터 상태
+  // ① 세션에서 usedPage 복원
+  const loadSS = () => {
+    try {
+      const raw = sessionStorage.getItem(SS_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  };
+  const saved = loadSS();
+
+  const [page, setPage] = useState(saved?.usedPage || 1);
   const [items, setItems] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // 제출 핸들러
+  // ② usedPage 변경/검색어 변경 시 세션에 저장
+  useEffect(() => {
+    try {
+      const prev = loadSS() || {};
+      sessionStorage.setItem(
+        SS_KEY,
+        JSON.stringify({
+          ...prev,
+          usedPage: page,
+        })
+      );
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+
+  // 제출
   const onSubmit = (e) => {
     e.preventDefault();
     const q = (tempQuery || "").trim();
@@ -44,33 +71,19 @@ export default function UsedPriceTab({ setActiveTab }) {
     setPage(1);
   };
 
-  // API 호출
+  // 자동 재검색: searchTerm / page / activeTab 바뀔 때
   useEffect(() => {
     const load = async () => {
       const q = (searchTerm || "").trim();
       if (!q) {
-        // 검색어 없으면 기본 목록
-        await loadList();
-      } else {
-        // 검색어 있으면 검색 API
-        await loadSearch(q);
-      }
-    };
-
-    const loadList = async () => {
-      try {
-        setLoading(true);
-        setErrorMsg("");
-        const res = await fetchUsedList({ page, size: PER_PAGE });
-        applyResponse(res);
-      } catch (err) {
         setItems([]);
         setTotalPages(0);
         setTotalCount(0);
-        setErrorMsg(err?.friendlyMessage || "목록 조회 실패");
-      } finally {
+        setErrorMsg("");
         setLoading(false);
+        return;
       }
+      await loadSearch(q);
     };
 
     const loadSearch = async (q) => {
@@ -78,7 +91,25 @@ export default function UsedPriceTab({ setActiveTab }) {
         setLoading(true);
         setErrorMsg("");
         const res = await searchUsedItems({ q, page, size: PER_PAGE });
-        applyResponse(res);
+        const box = res?.result ?? res ?? {};
+        const list = box.content ?? box.items ?? box.list ?? [];
+        const tp =
+          box.totalPages ??
+          box.pageInfo?.totalPages ??
+          (box.total ? Math.ceil(box.total / PER_PAGE) : 0);
+        const tot =
+          box.total ??
+          box.totalElements ??
+          box.pageInfo?.totalElements ??
+          list.length;
+
+        const mapped = list.map(normalizeItem);
+        setItems(mapped);
+        setTotalPages(tp || (tot ? Math.ceil(tot / PER_PAGE) : 0));
+        setTotalCount(tot);
+
+        // 상세 설명 주입(옵션)
+        await injectDescriptions(mapped);
       } catch (err) {
         setItems([]);
         setTotalPages(0);
@@ -89,34 +120,33 @@ export default function UsedPriceTab({ setActiveTab }) {
       }
     };
 
-    /** 백엔드 응답 통합 매핑 */
-    const applyResponse = (res) => {
-      // 흔한 형태들을 모두 수용 (result 래핑/직접 등)
-      const box = res?.result ?? res ?? {};
-      const list = box.content ?? box.items ?? box.list ?? [];
-      const tp =
-        box.totalPages ??
-        box.pageInfo?.totalPages ??
-        (box.total ? Math.ceil(box.total / PER_PAGE) : 0);
-      const tot =
-        box.total ??
-        box.totalElements ??
-        box.pageInfo?.totalElements ??
-        list.length;
-
-      const mapped = list.map(normalizeItem);
-      setItems(mapped);
-      setTotalPages(tp || (tot ? Math.ceil(tot / PER_PAGE) : 0));
-      setTotalCount(tot);
-    };
+    async function injectDescriptions(baseItems) {
+      if (!Array.isArray(baseItems) || baseItems.length === 0) return;
+      const tasks = baseItems.map(async (it) => {
+        const id = it.id;
+        if (!id) return it;
+        try {
+          const detail = await get(endpoints.AUCTIONS.DETAIL(id));
+          const desc = detail?.result?.description || "";
+          return { ...it, description: desc };
+        } catch {
+          return it;
+        }
+      });
+      const withDesc = await Promise.all(tasks);
+      setItems((prev) => {
+        const byId = new Map(prev.map((p) => [p.id, p]));
+        for (const it of withDesc) byId.set(it.id, { ...byId.get(it.id), ...it });
+        return Array.from(byId.values());
+      });
+    }
 
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm, page]);
+    // 뒤로 오거나 탭 바꿔도 마지막 검색 상태로 재검색
+  }, [searchTerm, page, activeTab]);
 
   return (
     <div className="used-wrap">
-      {/* 헤더: Enter / Q 버튼으로 제출 */}
       <form onSubmit={onSubmit}>
         <PriceCheckHeader
           title="시세 둘러보기"
@@ -126,104 +156,99 @@ export default function UsedPriceTab({ setActiveTab }) {
         />
       </form>
 
-      {/* 탭 */}
       <div className="tabbar">
         <button className="tab muted" onClick={() => setActiveTab("regular")}>
           정가 시세 보기
         </button>
         <button className="tab active">
-          중고 시세 보기{totalCount ? ` ${Number(totalCount).toLocaleString()}` : ""}
+          중고 시세 보기
+          {searchTerm && totalCount ? ` ${Number(totalCount).toLocaleString()}` : ""}
         </button>
       </div>
 
-      {/* 본문 */}
       <div className="used-list-area">
-        {loading && <p className="used-hint">불러오는 중…</p>}
-        {!loading && errorMsg && <p className="used-hint warn">{errorMsg}</p>}
-
-        {/* 데이터 없음 */}
-        {!loading && !errorMsg && items.length === 0 && (
-          <p className="used-hint">
-            {searchTerm ? "검색 결과가 없습니다." : "표시할 경매가 없습니다."}
-          </p>
-        )}
-
-        {/* 카드 리스트 */}
-        {!loading && !errorMsg && items.length > 0 && (
+        {!searchTerm ? null : (
           <>
-            {items.map((it) => (
-              <article key={it.id} className="used-card">
-                <div className="used-card-left">
-                  <span
-                    className={`used-badge ${
-                      it.status === "낙찰 완료" ? "done" : "progress"
-                    }`}
+            {loading && <p className="used-hint">불러오는 중…</p>}
+            {!loading && errorMsg && <p className="used-hint warn">{errorMsg}</p>}
+
+            {!loading && !errorMsg && items.length === 0 && (
+              <p className="used-hint">검색 결과가 없습니다.</p>
+            )}
+
+            {!loading && !errorMsg && items.length > 0 && (
+              <>
+                {items.map((it) => (
+                  <article
+                    key={it.id}
+                    className="used-card"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => goDetail(it.id)}
+                    onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && goDetail(it.id)}
                   >
-                    {it.status}
-                  </span>
-                  <div className="used-thumb">
-                    <img className="used-img" src={it.image} alt={it.title} />
-                  </div>
-                </div>
-
-                <div className="used-card-right">
-                  <div className="used-brand-row">
-                    <span className="used-brand">{it.brand || "상품"}</span>
-                    <span className="used-auth">Authorized Reseller</span>
-                  </div>
-
-                  <h3 className="used-name">{it.title}</h3>
-                  <div className="used-meta">{it.category}</div>
-                  {it.spec && <p className="used-spec">{it.spec}</p>}
-
-                  <div className="used-pricebox">
-                    <div className="used-price-row">
-                      <span className="label">시작가</span>
-                      <span className="value">{fmt(it.startPrice)}</span>
+                    <div className="used-card-left">
+                      <span className={`used-badge ${it.status === "낙찰 완료" ? "done" : "progress"}`}>
+                        {it.status}
+                      </span>
+                      <div className="used-thumb">
+                        <img className="used-img" src={it.image} alt={it.title} />
+                      </div>
                     </div>
 
-                    {it.status === "경매 진행 중" ? (
-                      <div className="used-price-row strong">
-                        <span className="label">현재 경매가</span>
-                        <span className="value">{fmt(it.currentPrice)}</span>
-                      </div>
-                    ) : (
-                      <div className="used-price-row strong">
-                        <span className="label">최종 낙찰가</span>
-                        <span className="value">{fmt(it.finalPrice)}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </article>
-            ))}
+                    <div className="used-card-right">
+                      <h3 className="used-name">{it.title}</h3>
+                      {it.description && (
+                        <p className="used-desc">
+                          {it.description.length > 80 ? `${it.description.slice(0, 80)}...` : it.description}
+                        </p>
+                      )}
 
-            {totalPages > 1 && (
-              <div className="used-pagination">
-                <button
-                  className="used-nav"
-                  disabled={page === 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                >
-                  ‹
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-                  <button
-                    key={n}
-                    className={`used-page ${page === n ? "active" : ""}`}
-                    onClick={() => setPage(n)}
-                  >
-                    {n}
-                  </button>
+                      <div className="used-pricebox">
+                        <div className="used-price-row">
+                          <span className="label">시작가</span>
+                          <span className="value">{fmt(it.startPrice)}</span>
+                        </div>
+                        {it.status === "경매 진행 중" ? (
+                          <div className="used-price-row strong">
+                            <span className="label">현재 경매가</span>
+                            <span className="value">{fmt(it.currentPrice)}</span>
+                          </div>
+                        ) : (
+                          <div className="used-price-row strong">
+                            <span className="label">최종 낙찰가</span>
+                            <span className="value">{fmt(it.finalPrice)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </article>
                 ))}
-                <button
-                  className="used-nav"
-                  disabled={page === totalPages}
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                >
-                  ›
-                </button>
-              </div>
+
+                {totalPages > 1 && (
+                  <div className="used-pagination">
+                    <button className="used-nav" disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+                      ‹
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                      <button
+                        key={n}
+                        className={`used-page ${page === n ? "active" : ""}`}
+                        onClick={() => setPage(n)}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                    <button
+                      className="used-nav"
+                      disabled={page === totalPages}
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    >
+                      ›
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
@@ -241,11 +266,65 @@ function normalizeItem(x) {
     brand: x.brand ?? "",
     category: x.categoryPath ?? x.category ?? "",
     spec: x.spec ?? x.description ?? "",
-    image: x.imageUrl ?? x.thumbnailUrl ?? x.thumbnail ?? FALLBACK_IMG,
+    image: absolutize(pickImageUrl(x)) || FALLBACK_IMG,
+    description: x.description ?? "",
     startPrice: num(x.startPrice ?? x.openingPrice),
     currentPrice: num(x.currentPrice ?? x.bidPrice),
     finalPrice: num(x.finalPrice ?? x.winningBid),
   };
+}
+
+function pickImageUrl(x = {}) {
+  const single =
+    x.imageUrl ||
+    x.thumbnailUrl ||
+    x.thumbnail ||
+    x.mainImageUrl ||
+    x.mainImageURL ||
+    x.coverImageUrl ||
+    x.coverUrl ||
+    x.photoUrl ||
+    x.pictureUrl ||
+    x.imgUrl ||
+    x.img;
+  if (isNonEmptyStr(single)) return single;
+
+  for (const key of ["imageUrls", "images", "photos", "pictures"]) {
+    const arr = x[key];
+    if (Array.isArray(arr) && arr.every((v) => typeof v !== "object" || v === null || typeof v === "string")) {
+      const u = arr.find(isNonEmptyStr);
+      if (u) return u;
+    }
+  }
+
+  if (Array.isArray(x.images)) {
+    const sorted = [...x.images].sort((a, b) => (a?.imageOrder ?? 0) - (b?.imageOrder ?? 0));
+    for (const it of sorted) {
+      if (!it || typeof it !== "object") continue;
+      const u = it.imageUrl || it.url || it.src || it.path || it.fileUrl || it.downloadUrl;
+      if (isNonEmptyStr(u)) return u;
+    }
+  }
+
+  if (x.mainImage && typeof x.mainImage === "object") {
+    const u = x.mainImage.url || x.mainImage.src || x.mainImage.path;
+    if (isNonEmptyStr(u)) return u;
+  }
+  return "";
+}
+
+function isNonEmptyStr(v) {
+  return typeof v === "string" && v.trim().length > 0;
+}
+
+function absolutize(u) {
+  if (!isNonEmptyStr(u)) return "";
+  try {
+    const test = new URL(u, window.location.origin);
+    return test.href;
+  } catch {
+    return u;
+  }
 }
 
 function mapStatus(status, finished) {

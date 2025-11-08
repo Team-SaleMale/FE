@@ -282,3 +282,69 @@ export async function uploadAuctionImages(files = []) {
 
 export const suggestTitleFromImage = (imageUrl) =>
   post(endpoints.AUCTIONS.SUGGEST_TITLE, { imageUrl });
+
+
+/* ===== [추가] 검색 파라미터 & 공통 래핑 ===== */
+
+/** 검색 파라미터: 서버가 0-based면 page-1로 보정 */
+function buildSearchParams(input = {}) {
+  const q = (input.q ?? "").toString().trim();
+  const uiPage = Number(input.page ?? 1);
+  const size = Number(input.size ?? 20);
+  return {
+    q,
+    page: Math.max(0, uiPage - 1),
+    size,
+  };
+}
+
+/** 다양한 리스트 응답을 통일: {result:{items,totalElements,totalPages,...}} 형태로 변환 */
+function normalizeListFromPayload(payload, fallbackSize = 20) {
+  const box = payload?.result ?? payload ?? {};
+  const items =
+    box.items ??
+    box.content ??
+    box.list ??
+    [];
+  const size =
+    box.size ??
+    box.pageSize ??
+    (Number.isFinite(fallbackSize) ? fallbackSize : items.length || 20);
+  const totalElements =
+    box.totalElements ??
+    box.total ??
+    box.count ??
+    items.length;
+  const totalPages =
+    box.totalPages ??
+    box.pageInfo?.totalPages ??
+    (totalElements ? Math.ceil(totalElements / size) : 0);
+  const currentPage =
+    box.currentPage ??
+    box.page ??
+    box.pageNumber ??
+    box.pageIndex ??
+    0;
+
+  return {
+    isSuccess: payload?.isSuccess ?? true,
+    code: String(payload?.code ?? "200"),
+    message: payload?.message ?? "OK",
+    result: {
+      items,
+      totalElements,
+      totalPages,
+      currentPage,
+      size,
+      hasNext: currentPage + 1 < totalPages,
+      hasPrevious: currentPage > 0,
+    },
+  };
+}
+
+/* ===== [추가] 검색 API: /search/items (액세스 토큰 필요) ===== */
+export async function searchAuctionItems({ q, page = 1, size = 20 } = {}) {
+  const params = buildSearchParams({ q, page, size });
+  const res = await get(endpoints.SEARCH.ITEMS, params);
+  return normalizeListFromPayload(res, params.size);
+}

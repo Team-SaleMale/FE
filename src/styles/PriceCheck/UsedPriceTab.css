@@ -50,3 +50,16 @@
 .used-page.active{background:#111;color:#fff;font-weight:700}
 .used-nav{width:36px;height:36px;border:0;background:#fff;color:#111;cursor:pointer}
 .used-nav:disabled{opacity:.35;cursor:not-allowed}
+
+.used-desc {
+  color: #444;
+  font-size: 14px;
+  margin-top: 6px;
+  margin-bottom: 12px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* 2줄까지만 표시 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
