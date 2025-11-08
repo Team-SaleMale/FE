@@ -1,5 +1,5 @@
-// 핫딜 페이지 컨테이너: 툴바 + (지도 or 로드뷰) + 우측 상세 패널 + 모달 + 입찰 패널
 import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import styles from "../../styles/HotDeal/HotDeal.module.css";
 import Toolbar from "./Toolbar";
 import MapView from "./MapView";
@@ -7,23 +7,25 @@ import RoadView from "./RoadView";
 import HotDealModal from "./HotDealModal";
 import DetailPanel from "./DetailPanel";
 import HotDealBid from "./HotDealBid";
-import { fetchNearbyHotDeals } from "../../api/hotdeals/service"; // ✅ 부모에서만 fetch
+import AuthCancelModal from "./AuthCancelModal";
+import { fetchNearbyHotDeals } from "../../api/hotdeals/service";
 
 export default function HotDealPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [center, setCenter] = useState({ lat: 37.5665, lng: 126.9780 });
   const [radiusKm, setRadiusKm] = useState(3);
-  const [mode, setMode] = useState("map"); // "map" | "roadview"
+  const [mode, setMode] = useState("map");
 
-  // 데이터(부모가 전담)
   const [items, setItems] = useState([]);
-
-  // 모달/상세/입찰 상태
   const [selectedItem, setSelectedItem] = useState(null);
   const [detailItem, setDetailItem] = useState(null);
   const [bidOpen, setBidOpen] = useState(false);
   const [bidItem, setBidItem] = useState(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
-  // 현재 위치 받아오기
+  // 현재 위치
   useEffect(() => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
@@ -32,24 +34,36 @@ export default function HotDealPage() {
     );
   }, []);
 
-  // ✅ center, radiusKm 바뀔 때마다 service.js에서 데이터 로드(부모 전담)
+  // 주변 핫딜 로드
   useEffect(() => {
     let alive = true;
     (async () => {
       const data = await fetchNearbyHotDeals({ lat: center.lat, lng: center.lng, radiusKm });
       if (!alive) return;
-      setItems(data || []);
+      setItems(Array.isArray(data) ? data : []);
     })();
     return () => { alive = false; };
   }, [center.lat, center.lng, radiusKm]);
 
-  // 모달 → 상세 패널 오픈
+  // 등록페이지에서 넘어온 draft 반영
+  useEffect(() => {
+    const draft = location.state?.draft;
+    if (!draft) return;
+
+    setCenter({ lat: draft.lat, lng: draft.lng });
+    setItems(prev => [draft, ...prev]);
+    setDetailItem(draft);
+
+    // state 제거(뒤로가기/새로고침 중복 방지)
+    navigate(".", { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
+
   const openDetailFromModal = (item) => {
     setSelectedItem(null);
     setDetailItem(item);
   };
 
-  // 상세 패널에서 "입찰하기"
   const handleOpenBid = (item) => {
     const target = item || detailItem;
     if (!target) return;
@@ -57,13 +71,10 @@ export default function HotDealPage() {
     setBidOpen(true);
   };
 
-  // ✅ HotDealBid 제출 → 상세/리스트 동시 갱신 + 이벤트 발행(DetailPanel 히스토리 반영)
   const handleSubmitBid = async (price) => {
-    // 서버 연동 위치 (예: await api.bids.place({ itemId: bidItem.id, price }))
     const id = bidItem?.id;
     const nPrice = Number(price);
 
-    // 1) 리스트(부모 items) 낙관적 업데이트
     setItems((prev) =>
       prev.map((it) =>
         it.id === id
@@ -71,14 +82,12 @@ export default function HotDealPage() {
               ...it,
               currentPrice: Math.max(Number(it.currentPrice ?? 0), nPrice),
               bidCount: Number(it.bidCount ?? 0) + 1,
-              // 선택사항: 최신 bidHistory 한 줄 추가(서비스 스펙에 맞게)
               bidHistory: [{ price: nPrice, bidder: "나(테스트)", ts: Date.now() }, ...(it.bidHistory || [])],
             }
           : it
       )
     );
 
-    // 2) 상세 패널도 동기화
     setDetailItem((prev) =>
       prev && prev.id === id
         ? {
@@ -89,13 +98,27 @@ export default function HotDealPage() {
         : prev
     );
 
-    // 3) DetailPanel이 듣고 있는 커스텀 이벤트 발행
     window.dispatchEvent(new CustomEvent("valuebid:bid-submitted", {
       detail: { itemId: id, price: nPrice, bidder: "나(테스트)", ts: Date.now() }
     }));
 
-    // 4) 입찰 패널 닫기
     setBidOpen(false);
+  };
+
+  const GOOGLE_FORM_URL = "https://forms.gle/your-google-form-id";
+
+  async function checkBusinessAuth() {
+    const authorized = false;
+    return authorized;
+  }
+
+  const handleClickRegister = async () => {
+    const authorized = await checkBusinessAuth();
+    if (!authorized) {
+      setAuthModalOpen(true);
+      return;
+    }
+    navigate("/hotdeal/registration");
   };
 
   const DETAIL_WIDTH = 560;
@@ -107,6 +130,7 @@ export default function HotDealPage() {
         onRadiusChange={setRadiusKm}
         mode={mode}
         onModeChange={setMode}
+        onClickRegister={handleClickRegister}
       />
 
       <div className={styles.canvas}>
@@ -114,20 +138,19 @@ export default function HotDealPage() {
           <MapView
             center={center}
             radiusKm={radiusKm}
-            items={items}                 // ✅ 부모가 내려줌
+            items={items}
             onSelect={setSelectedItem}
           />
         ) : (
           <RoadView
             center={center}
             radiusKm={radiusKm}
-            items={items}                 // ✅ 부모가 내려줌
+            items={items}
             onCenterChange={setCenter}
             onSelect={setSelectedItem}
           />
         )}
 
-        {/* 지도/로드뷰 위 모달 */}
         <div className={styles.modalRoot}>
           <HotDealModal
             open={!!selectedItem}
@@ -138,20 +161,24 @@ export default function HotDealPage() {
         </div>
       </div>
 
-      {/* 우측 상세 패널 */}
       <DetailPanel
         item={detailItem}
         onClose={() => setDetailItem(null)}
         onBid={handleOpenBid}
       />
 
-      {/* 입찰 패널(상세 왼쪽) */}
       <HotDealBid
         open={bidOpen}
         item={bidItem}
         onClose={() => setBidOpen(false)}
         onSubmit={handleSubmitBid}
         detailWidth={DETAIL_WIDTH}
+      />
+
+      <AuthCancelModal
+        open={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onOpenForm={() => window.open(GOOGLE_FORM_URL, "_blank", "noopener,noreferrer")}
       />
     </div>
   );

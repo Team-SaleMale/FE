@@ -1,75 +1,107 @@
+// src/pages/HotDeal/MapView.js
 import { useEffect, useRef } from "react";
 import styles from "../../styles/HotDeal/MapView.module.css";
+import { loadKakao } from "../../utils/kakao";
 
-/* 카테고리 → 아이콘 매핑 */
-const CATEGORIES = [
-  { key:"home-appliance", icon:"solar:washing-machine-minimalistic-linear" },
-  { key:"health-food",   icon:"solar:dumbbell-large-minimalistic-linear" },
-  { key:"beauty",        icon:"solar:magic-stick-3-linear" },
-  { key:"food-processed",icon:"solar:chef-hat-linear" },
-  { key:"pet",           icon:"solar:cat-linear" },
-  { key:"digital",       icon:"solar:laptop-minimalistic-linear" },
-  { key:"living-kitchen",icon:"solar:whisk-linear" },
-  { key:"women-acc",     icon:"solar:bag-smile-outline" },
-  { key:"sports",        icon:"solar:balls-linear" },
-  { key:"plant",         icon:"solar:waterdrop-linear" },
-  { key:"game-hobby",    icon:"solar:reel-2-broken" },
-  { key:"ticket",        icon:"solar:ticket-sale-linear" },
-  { key:"furniture",     icon:"solar:armchair-2-linear" },
-  { key:"book",          icon:"solar:notebook-broken" },
-  { key:"kids",          icon:"solar:smile-circle-linear" },
-  { key:"clothes",       icon:"solar:hanger-broken" },
-  { key:"etc",           icon:"solar:add-square-broken" },
-];
-
-const KAKAO_JS_KEY = "92886e35b812725980119b7c621cbbc1";
-const iconUrl = (icon) => `https://api.iconify.design/${icon}.svg?width=24&height=24&color=white`;
-
-/** Kakao SDK autoload=false 로더 */
-function loadKakao() {
-  return new Promise((resolve, reject) => {
-    if (window.kakao?.maps?.LatLng) return resolve();
-    let s = document.querySelector('script[data-kakao="maps"]');
-    if (!s) {
-      s = document.createElement("script");
-      s.async = true; s.defer = true;
-      s.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_JS_KEY}&libraries=clusterer,services&autoload=false`;
-      s.setAttribute("data-kakao", "maps");
-      s.onerror = () => reject(new Error("kakao sdk load error"));
-      document.head.appendChild(s);
-    }
-    s.onload = () => window.kakao.maps.load(resolve);
-  });
+/* 줌 레벨별 마커 사이즈 */
+function sizeForLevel(level){
+  if (level <= 3) return { w: 92, h: 72, r: 14 };
+  if (level <= 5) return { w: 84, h: 64, r: 12 };
+  if (level <= 7) return { w: 72, h: 56, r: 12 };
+  if (level <= 9) return { w: 60, h: 48, r: 10 };
+  return { w: 50, h: 40, r: 10 };
 }
 
-/* 마커 이미지 캐시 (카테고리별 캔버스 렌더) */
-const markerCache = new Map();
-function loadImg(url) {
+/* 이미지 로더 + 라운드 직사각형 캔버스 마커 */
+const imgCache = new Map();
+function loadImg(url){
   return new Promise((res, rej) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => res(img);
-    img.onerror = rej;
-    img.src = url;
+    const i = new Image();
+    i.crossOrigin = "anonymous";
+    i.onload = () => res(i);
+    i.onerror = rej;
+    i.src = url;
   });
 }
-async function markerImageByCategory(catKey) {
-  if (markerCache.has(catKey)) return markerCache.get(catKey);
-  const kakao = window.kakao;
-  const cat = CATEGORIES.find((c) => c.key === catKey) || CATEGORIES[CATEGORIES.length - 1];
-  const W = 48, H = 48, cx = 24, cy = 24;
-  const icon = await loadImg(iconUrl(cat.icon));
-  const cvs = document.createElement("canvas");
-  cvs.width = W; cvs.height = H;
-  const ctx = cvs.getContext("2d");
-  ctx.beginPath(); ctx.arc(cx, cy, 22, 0, Math.PI*2); ctx.fillStyle = "#fff"; ctx.fill();
-  ctx.beginPath(); ctx.arc(cx, cy, 20, 0, Math.PI*2); ctx.fillStyle = "#111827"; ctx.fill();
-  ctx.drawImage(icon, cx-12, cy-12, 24, 24);
-  const image = new kakao.maps.MarkerImage(cvs.toDataURL("image/png"), new kakao.maps.Size(W,H), {
-    offset: new kakao.maps.Point(cx, H),
-  });
-  markerCache.set(catKey, image);
-  return image;
+function defaultDotImage(){
+  const { kakao } = window;
+  const c = document.createElement("canvas"); c.width = 24; c.height = 24;
+  const ctx = c.getContext("2d");
+  ctx.beginPath(); ctx.arc(12,12,6,0,Math.PI*2); ctx.fillStyle="#2563eb"; ctx.fill();
+  return new kakao.maps.MarkerImage(
+    c.toDataURL("image/png"),
+    new kakao.maps.Size(12,12),
+    { offset: new kakao.maps.Point(6,12) }
+  );
+}
+async function roundedRectMarkerImage(url, level=5){
+  const { kakao } = window;
+  if (!url) return defaultDotImage();
+  const { w, h, r } = sizeForLevel(level);
+  const key = `${url}|${w}x${h}|${r}`;
+  if (imgCache.has(key)) return imgCache.get(key);
+
+  try {
+    const img = await loadImg(url);
+    const cvs = document.createElement("canvas");
+    cvs.width = w; cvs.height = h;
+    const ctx = cvs.getContext("2d");
+
+    // mask
+    ctx.beginPath();
+    ctx.moveTo(r, 0); ctx.lineTo(w - r, 0); ctx.quadraticCurveTo(w, 0, w, r);
+    ctx.lineTo(w, h - r); ctx.quadraticCurveTo(w, h, w - r, h);
+    ctx.lineTo(r, h); ctx.quadraticCurveTo(0, h, 0, h - r);
+    ctx.lineTo(0, r); ctx.quadraticCurveTo(0, 0, r, 0); ctx.closePath();
+    ctx.save(); ctx.clip();
+
+    // cover-fit
+    const rectRatio = w / h, imgRatio = img.width / img.height;
+    let sx, sy, sw, sh;
+    if (imgRatio > rectRatio) { sh = img.height; sw = sh * rectRatio; sx = (img.width - sw)/2; sy = 0; }
+    else { sw = img.width; sh = sw / rectRatio; sx = 0; sy = (img.height - sh)/2; }
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+    ctx.restore();
+
+    // border
+    ctx.lineWidth = 1.4; ctx.strokeStyle = "rgba(0,0,0,.18)"; ctx.stroke();
+
+    const image = new kakao.maps.MarkerImage(
+      cvs.toDataURL("image/png"),
+      new kakao.maps.Size(w, h),
+      { offset: new kakao.maps.Point(Math.round(w/2), h) }
+    );
+    imgCache.set(key, image);
+    return image;
+  } catch (e) {
+    console.warn("[MapView] image load failed → fallback dot:", url, e);
+    return defaultDotImage();
+  }
+}
+
+/* Hover 카드 */
+function buildHoverCard(item){
+  const el = document.createElement("div");
+  el.className = `${styles.card}`;
+  const price = `₩${(Number(item.currentPrice||0)).toLocaleString()}`;
+  const bids  = `${Number(item.bidCount||0)}명`;
+  const thumb = item.coverImg || item.images?.[0] || "";
+
+  el.innerHTML = `
+    <div class="${styles.cardHead}">
+      <div class="${styles.cardTitle}">${item.storeName ?? ""}</div>
+      <div class="${styles.cardChev}">›</div>
+    </div>
+    <div class="${styles.cardBody}">
+      <div class="${styles.cardThumb}" style="background-image:url('${thumb}')"></div>
+      <div class="${styles.cardText}">
+        <div class="${styles.cardLine}"><b>${item.title || ""}</b></div>
+        <div class="${styles.cardMeta}"><b>${price}</b><span class="${styles.sep}">·</span>입찰 ${bids}</div>
+      </div>
+    </div>
+    <div class="${styles.cardPin}"></div>
+  `;
+  return el;
 }
 
 export default function MapView({ center, radiusKm, items = [], onSelect }) {
@@ -77,8 +109,13 @@ export default function MapView({ center, radiusKm, items = [], onSelect }) {
   const circleRef = useRef(null);
   const clustererRef = useRef(null);
   const markersRef = useRef([]);
+  const overlaysRef = useRef([]);
+  const hideTimers = useRef(new Map());
+  const itemsRef = useRef([]);        // 최신 items 보관
   const divRef = useRef(null);
   const initedRef = useRef(false);
+
+  useEffect(() => { itemsRef.current = Array.isArray(items) ? items : []; }, [items]);
 
   useEffect(() => {
     if (initedRef.current) return;
@@ -88,31 +125,35 @@ export default function MapView({ center, radiusKm, items = [], onSelect }) {
       await loadKakao();
       const kakao = window.kakao;
 
-      // 지도 생성
       const map = new kakao.maps.Map(divRef.current, {
         center: new kakao.maps.LatLng(center.lat, center.lng),
         level: 5,
       });
       mapRef.current = map;
 
-      // 반경 원 + 내 위치
       const pos = new kakao.maps.LatLng(center.lat, center.lng);
       const circle = new kakao.maps.Circle({
-        center: pos, radius: radiusKm*1000,
+        center: pos, radius: radiusKm * 1000,
         strokeWeight: 1, strokeColor:"#111827", strokeOpacity:.5, strokeStyle:"shortdash",
         fillColor:"#93c5fd", fillOpacity:.15,
       });
       circle.setMap(map);
       circleRef.current = circle;
-      new kakao.maps.Marker({ position: pos, map }); // 내 위치
+
+      // 내 위치
+      new kakao.maps.Marker({ position: pos, map });
 
       // 클러스터러
       clustererRef.current = new kakao.maps.MarkerClusterer({
         map, averageCenter: true, minLevel: 6,
       });
 
-      // 최초 렌더
-      await renderMarkers(items);
+      await renderMarkers(itemsRef.current);
+
+      kakao.maps.event.addListener(mapRef.current, "zoom_changed", () => {
+        renderMarkers(itemsRef.current);
+      });
+
       setTimeout(() => mapRef.current?.relayout(), 0);
       const onResize = () => setTimeout(() => mapRef.current?.relayout(), 0);
       window.addEventListener("resize", onResize);
@@ -120,45 +161,98 @@ export default function MapView({ center, radiusKm, items = [], onSelect }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // center/radius 변경 시 반경 원만 동기화(데이터 필터링은 부모가 해줌)
+  // center/radius 변경
   useEffect(() => {
     if (!window.kakao || !mapRef.current) return;
     const kakao = window.kakao;
     const pos = new kakao.maps.LatLng(center.lat, center.lng);
     mapRef.current.setCenter(pos);
     circleRef.current?.setPosition(pos);
-    circleRef.current?.setRadius(radiusKm*1000);
+    circleRef.current?.setRadius(radiusKm * 1000);
   }, [center.lat, center.lng, radiusKm]);
 
-  // ✅ items 변경 시 마커 재구성
+  // 데이터 변경 시 재렌더
   useEffect(() => {
     if (!window.kakao || !mapRef.current) return;
     renderMarkers(items);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items]);
 
-  function clearMarkers() {
+  function clearAll(){
     markersRef.current.forEach(m => m.setMap(null));
     clustererRef.current?.clear();
     markersRef.current = [];
+    overlaysRef.current.forEach(o => o.setMap(null));
+    overlaysRef.current = [];
+    hideTimers.current.forEach(t => clearTimeout(t));
+    hideTimers.current.clear();
   }
 
-  async function renderMarkers(data) {
+  async function renderMarkers(data){
     const kakao = window.kakao;
-    clearMarkers();
+    clearAll();
+
+    if (!Array.isArray(data) || data.length === 0) {
+      console.log("[MapView] no items to render");
+      return;
+    }
+
+    const level = mapRef.current.getLevel();
+
     const markers = await Promise.all(
-      (data || []).map(async it => {
+      data.map(async (it) => {
+        const pos = new kakao.maps.LatLng(it.lat, it.lng);
+        const image = await roundedRectMarkerImage(it.coverImg || it.images?.[0], level);
+
         const marker = new kakao.maps.Marker({
-          position: new kakao.maps.LatLng(it.lat, it.lng),
-          image: await markerImageByCategory(it.categoryKey),
+          position: pos,
+          image,
           clickable: true,
         });
+        marker.setMap(mapRef.current);
+
+        const cardEl = buildHoverCard(it);
+        const overlay = new kakao.maps.CustomOverlay({
+          position: pos,
+          content: cardEl,
+          xAnchor: 0.5,
+          yAnchor: 1.18,
+          zIndex: 10,
+          clickable: true,
+        });
+
+        cardEl.addEventListener("mouseenter", () => {
+          const t = hideTimers.current.get(marker);
+          if (t){ clearTimeout(t); hideTimers.current.delete(marker); }
+        });
+        cardEl.addEventListener("mouseleave", () => scheduleHide(marker, overlay));
+        kakao.maps.event.addListener(marker, "mouseover", () => {
+          const t = hideTimers.current.get(marker);
+          if (t){ clearTimeout(t); hideTimers.current.delete(marker); }
+          overlay.setMap(mapRef.current);
+        });
+        kakao.maps.event.addListener(marker, "mouseout", () => {
+          scheduleHide(marker, overlay);
+        });
+
         kakao.maps.event.addListener(marker, "click", () => onSelect?.(it));
+
+        overlaysRef.current.push(overlay);
         return marker;
       })
     );
+
     markersRef.current = markers;
-    clustererRef.current?.addMarkers(markers);
+    try {
+      clustererRef.current?.addMarkers(markers);
+    } catch (e) {
+      console.warn("[MapView] clusterer addMarkers error:", e);
+    }
+  }
+
+  function scheduleHide(marker, overlay){
+    const t = setTimeout(() => overlay.setMap(null), 120);
+    hideTimers.current.set(marker, t);
   }
 
   return <div ref={divRef} className={styles.map} />;
