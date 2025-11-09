@@ -10,7 +10,7 @@ export default function Vertical({ items = [] }) {
         <div
           key={it.id}
           className={styles.col}
-          onClick={() => navigate(`/auctions/${it.id}`)} // ★ 상세 이동
+          onClick={() => navigate(`/auctions/${it.id}`)}
           role="button"
           tabIndex={0}
           onKeyDown={(e) => { if (e.key === "Enter") navigate(`/auctions/${it.id}`); }}

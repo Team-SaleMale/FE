@@ -5,7 +5,7 @@ import mapPng from "../../assets/img/AuctionList/map.png";
 
 /** 정렬 옵션 */
 const SORTS = [
-  { key: "",          label: "최신순" },          // 서버 기본 CREATED_DESC
+  { key: "",          label: "최신순" },
   { key: "bids",      label: "입찰 많은 순" },
   { key: "priceLow",  label: "가격 낮은 순" },
   { key: "priceHigh", label: "가격 높은 순" },
@@ -23,16 +23,27 @@ const ORDER_KEYS = [
 const onlyDigits = (s) => (s || "").replace(/[^\d]/g, "");
 const fmt = (s) => (s ? Number(s).toLocaleString("ko-KR") : "");
 
+/** 활동 반경(5단계) — ALL의 short는 ‘전체’ */
+const RANGES = [
+  { key: "VERY_NEAR", km: 2,      short: "2km",   caption: "동네",  icon: "solar:home-2-linear" },
+  { key: "NEAR",      km: 5,      short: "5km",   caption: "근처",  icon: "solar:buildings-2-linear" },
+  { key: "MEDIUM",    km: 20,     short: "20km",  caption: "중간",  icon: "solar:map-point-wave-linear" },
+  { key: "FAR",       km: 50,     short: "50km",  caption: "멀리",  icon: "solar:plain-linear" },
+  { key: "ALL",       km: 20000,  short: "전체",  caption: "전국",  icon: "solar:planet-linear" },
+];
+
 export default function FilterSidebar({
   categories = [],
-  activeCategories = [],      // ★ 배열
+  activeCategories = [],
   price = { min: 0, max: 0 },
   sort = "",
   query = "",
+  range = "NEAR",
   onChangeCategories,
   onChangePrice,
   onChangeSort,
   onChangeQuery,
+  onChangeRange,
   onClear,
 }) {
   const [minStr, setMinStr] = useState("");
@@ -44,6 +55,7 @@ export default function FilterSidebar({
   const [openPrice, setOpenPrice] = useState(true);
   const [openSort, setOpenSort] = useState(true);
   const [openCats, setOpenCats] = useState(true);
+  const [openRange, setOpenRange] = useState(true);
 
   useEffect(() => {
     const toStr = (v) => (v && Number(v) > 0 ? Number(v).toLocaleString("ko-KR") : "");
@@ -76,7 +88,7 @@ export default function FilterSidebar({
     if (e.key === "Enter") { e.currentTarget.blur(); emitPrice(); }
   };
 
-  // 정렬 (토글, 빈 문자열은 최신순)
+  // 정렬 (토글)
   const handleSort = (key) => {
     setSortKey((prev) => {
       const next = prev === key ? "" : key;
@@ -92,7 +104,7 @@ export default function FilterSidebar({
     onChangeQuery?.(v);
   };
 
-  // 카테고리(다중 토글)
+  // 카테고리(다중)
   const toggleCategory = (key) => {
     onChangeCategories?.((prev) => {
       const set = new Set(prev || []);
@@ -102,15 +114,22 @@ export default function FilterSidebar({
   };
 
   const handleClear = () => {
-    setMinStr("");
-    setMaxStr("");
-    setSortKey("");
-    setQStr("");
+    setMinStr(""); setMaxStr(""); setSortKey(""); setQStr("");
     onChangeQuery?.("");
     onChangePrice?.({ min: 0, max: 0 });
     onChangeSort?.("");
     onChangeCategories?.([]);
+    onChangeRange?.("NEAR");
     onClear?.();
+  };
+
+  // ---- 활동 반경 (슬라이더) ----
+  const curIdx = Math.max(0, RANGES.findIndex((r) => r.key === range));
+  const pct = (curIdx / (RANGES.length - 1)) * 100;
+  const cur = RANGES[curIdx] ?? RANGES[1];
+  const setByIndex = (i) => {
+    const next = RANGES[Math.min(Math.max(i, 0), RANGES.length - 1)];
+    if (next && next.key !== range) onChangeRange?.(next.key);
   };
 
   return (
@@ -127,6 +146,55 @@ export default function FilterSidebar({
             Clear
           </button>
         </header>
+
+        {/* 활동 반경 */}
+        <div className={styles.group}>
+          <button
+            type="button"
+            className={styles.groupHead}
+            aria-expanded={openRange}
+            onClick={() => setOpenRange((v) => !v)}
+          >
+            <span>활동 반경</span>
+            <Icon icon="solar:alt-arrow-down-linear" className={`${styles.chev} ${openRange ? styles.chevOpen : ""}`} />
+          </button>
+
+          {openRange && (
+            <div className={styles.rateCard}>
+              <div className={styles.rateRow}>
+                {/* 좌측: 아이콘 + 캡션 */}
+                <div className={styles.rateIconCol}>
+                  <div className={styles.rateIconBadge} aria-hidden="true">
+                    <Icon icon={cur.icon} className={styles.rateIcon} />
+                  </div>
+                  <div className={styles.rateCaption}>
+                    <span className={styles.rateCaptionTop}>{cur.caption}</span>
+                    <span className={styles.rateCaptionSub}>{cur.short}</span>
+                  </div>
+                </div>
+
+                {/* 중앙: 길어진 슬라이더 */}
+                <div className={styles.rateSliderCol}>
+                  <div className={styles.rateBar} role="group" aria-label="활동 반경 선택">
+                    <div className={styles.rateTrack} />
+                    <div className={styles.rateFill} style={{ width: `${pct}%` }} />
+                    <div className={styles.rateKnob} style={{ left: `${pct}%` }} />
+                    {RANGES.map((_, i) => (
+                      <button
+                        key={`hit-${i}`}
+                        type="button"
+                        className={styles.rateHit}
+                        style={{ left: `${(i / (RANGES.length - 1)) * 100}%` }}
+                        aria-label={`${RANGES[i].short}`}
+                        onClick={() => setByIndex(i)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* 검색 */}
         <div className={styles.group}>
@@ -276,6 +344,9 @@ export default function FilterSidebar({
           )}
         </div>
       </section>
+
+      {/* 패널 바깥쪽 하단 여백 */}
+      <div className={styles.outsideSpacer} />
     </div>
   );
 }

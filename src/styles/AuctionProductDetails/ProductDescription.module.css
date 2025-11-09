@@ -20,7 +20,7 @@
   padding: 16px 16px 10px;
   font-family: "Pretendard","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
   margin-top: 20px;
-  box-shadow: var(--shadow-card);
+
 }
 
 /* 헤더 영역: 제목 + 액션(수정일, 신고) */

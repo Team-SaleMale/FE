@@ -1,7 +1,10 @@
 :root{
+  --ink:#111111;
   --ink-121:#121316;
   --ink-900:#1F2226;
   --muted:#8B94A4;
+  --line:#E5E7EB;
+  --track:#ECEFF3;
   --card-border: rgba(5,11,32,.08);
   --white:#FFFFFF;
 }
@@ -11,7 +14,7 @@
   display: grid;
   gap: 12px;
   font-family: "Pretendard","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
-  min-height: 100%;          /* 부모 높이 채우기 */
+  min-height: 100%;
 }
 
 /* 지도 카드 */
@@ -50,10 +53,18 @@
 /* 그룹 */
 .group{ padding:0; }
 
+/* 토글 헤드 */
+.groupHead{
+  width:100%; border:none; display:flex; align-items:center; justify-content:space-between; gap:8px;
+  padding:16px; background:transparent; font-weight:800; color:#111827;
+}
+.chev{ font-size:18px; color:#748093; transition:transform .18s ease; }
+.chevOpen{ transform:rotate(180deg); }
+
 /* 검색 */
 .searchWrap{
   position:relative; margin:0 16px 16px; height:46px;
-  border:1px solid #E5E7EB; border-radius:16px; background:#fff;
+  border:1px solid var(--line); border-radius:16px; background:#fff;
   display:flex; align-items:center; padding:0 42px 0 38px;
 }
 .searchIcon{ position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:18px; color:#748093; }
@@ -65,18 +76,10 @@
 }
 .searchClear:hover{ color:#5F6977; }
 
-/* 토글 헤드 */
-.groupHead{
-  width:100%; border:none; display:flex; align-items:center; justify-content:space-between; gap:8px;
-  padding:16px; background:transparent; font-weight:800; color:#111827;
-}
-.chev{ font-size:18px; color:#748093; transition:transform .18s ease; }
-.chevOpen{ transform:rotate(180deg); }
-
 /* 가격 입력 */
 .priceGrid{ display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; padding:0 16px 16px; }
 .subLabel{ font-size:12px; color:#8B94A4; align-self:end; }
-.inputPillWrap{ position:relative; height:46px; border:1px solid #E5E7EB; border-radius:16px; background:#fff; display:flex; align-items:center; padding-left:30px; }
+.inputPillWrap{ position:relative; height:46px; border:1px solid var(--line); border-radius:16px; background:#fff; display:flex; align-items:center; padding-left:30px; }
 .won{ position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:14px; color:#616A77; }
 .inputPill{ width:100%; height:100%; border:0; outline:0; background:transparent; padding:0 14px 0 0; font-size:18px; color:#1F2226; }
 
@@ -88,7 +91,7 @@
 /* 카테고리 칩 */
 .chipWrap{ display:flex; flex-wrap:wrap; gap:12px; padding:0 16px 16px; }
 .chip{
-  height:44px; padding:0 14px; border-radius:12px; border:1px solid #E5E7EB;
+  height:44px; padding:0 14px; border-radius:12px; border:1px solid var(--line);
   background:#F8FAFC; color:#2B3037; display:inline-flex; align-items:center; gap:10px;
   cursor:pointer; transition:background .15s ease, color .15s ease, border-color .15s ease;
   width:fit-content; max-width:100%;
@@ -98,3 +101,59 @@
 .chipLabel{ font-size:14px; font-weight:700; letter-spacing:-.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .isActive{ background:var(--ink-121); border-color:var(--ink-121); color:#fff; }
 .isActive .chipIcon{ color:#fff; }
+
+/* ===== 활동 반경 : 슬라이더 (아이콘 → 긴 트랙, 점 없음) ===== */
+.rateCard{ padding: 8px 14px 14px; }
+.rateRow{ display:flex; align-items:center; gap:12px; }
+
+.rateIconCol{
+  width: 54px; min-width:54px;
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+}
+.rateIconBadge{
+  width: 46px; height: 46px; border-radius: 50%;
+  background: #fff; border: 1px solid #DBE1EA;
+  display:flex; align-items:center; justify-content:center;
+  color: var(--ink);
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+.rateIcon{ font-size: 26px; }
+.rateCaption{ display:flex; flex-direction:column; align-items:center; gap:2px; text-align:center; }
+.rateCaptionTop{ font-size: 12.5px; font-weight: 800; color: var(--ink); line-height: 16px; }
+.rateCaptionSub{ font-size: 12px; font-weight: 600; color: #6B7280; line-height: 16px; }
+
+/* 길어진 슬라이더 */
+.rateSliderCol{ flex: 1 1 auto; padding: 2px 0; }
+.rateBar{ position:relative; height: 40px; }
+.rateTrack{
+  position:absolute; left:0; right:0; top:50%;
+  transform: translateY(-50%);
+  height: 10px; border-radius: 999px; background: var(--track);
+}
+.rateFill{
+  position:absolute; left:0; top:50%; transform:translateY(-50%);
+  height: 10px; border-radius: 999px; background: var(--ink);
+}
+/* 슬라이더 노브(선택 점) — 더 작게 */
+.rateKnob{
+  position:absolute; top:50%; transform: translate(-50%, -50%);
+  width: 18px;              /* 22px → 18px */
+  height: 18px;             /* 22px → 18px */
+  border-radius:50%;
+  background:#fff;
+  border: 2px solid var(--ink);
+  box-shadow: 0 1px 4px rgba(0,0,0,.18), 0 0 0 1px rgba(0,0,0,.06); /* 살짝 가벼운 그림자 */
+}
+/* 눌렀을 때 살짝 작아 보이는 효과 */
+.rateKnob:active,
+.rateKnob:focus-visible{
+  transform: translate(-50%, -50%) scale(.92);
+}
+/* 점(눈금) 제거 → 클릭 히트존만 투명 유지 */
+.rateHit{
+  position:absolute; top:0; transform:translateX(-50%);
+  width: 20%; height:100%; background:transparent; border:0; cursor:pointer;
+}
+
+/* 패널 바깥쪽 하단 여백(스크롤 여유) */
+.outsideSpacer{ height: 160px; }

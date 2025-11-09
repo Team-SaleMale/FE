@@ -1,4 +1,4 @@
-// src/pages/AuctionProductDetails/AuctionProductDetails.js
+// src/pages/AuctionProductDetails/AuctionProductDetails.jsx
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import styles from "../../styles/AuctionProductDetails/AuctionProductDetails.module.css";
@@ -26,7 +26,7 @@ const TRADE_METHOD_LABELS = {
   OTHER: "기타",
 };
 
-/** ISO 문자열 → 한국 표기(yyyy. m. d. 오전/오후 hh:mm:ss) */
+/** ISO → 한국 표기 */
 function formatKST(iso) {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "";
@@ -41,7 +41,7 @@ function formatKST(iso) {
   }).format(d);
 }
 
-/** util: ISO → {date:'YYYY-MM-DD', time:'HH:mm'} */
+/** ISO → {date:'YYYY-MM-DD', time:'HH:mm'} */
 function splitISO(iso) {
   if (!iso) return { date: "", time: "" };
   const d = new Date(iso);
@@ -53,7 +53,36 @@ function splitISO(iso) {
   };
 }
 
-/** API → 화면용 뷰모델 매핑 */
+function splitDate(d) {
+  if (!(d instanceof Date)) return { date: "", time: "" };
+  const pad = (n) => String(n).padStart(2, "0");
+  return {
+    date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+    time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
+  };
+}
+
+/** 현재 로그인 사용자의 닉네임을 가능한 범위에서 추출 */
+function getCurrentNickname() {
+  try {
+    // 앱 전역에 주입된 경우
+    if (window.__APP_USER?.nickname) return window.__APP_USER.nickname;
+  } catch {}
+  try {
+    // 흔한 로컬스토리지 키 시도
+    const direct = localStorage.getItem("nickname") || localStorage.getItem("userNickname");
+    if (direct) return direct;
+    const raw = localStorage.getItem("user") || localStorage.getItem("profile");
+    if (raw) {
+      const u = JSON.parse(raw);
+      if (u?.nickname) return u.nickname;
+      if (u?.name) return u.name;
+    }
+  } catch {}
+  return "나";
+}
+
+/** ✅ API → 화면용 뷰모델 */
 function toViewModel(api) {
   const r = api?.result;
   if (!r) return null;
@@ -65,27 +94,21 @@ function toViewModel(api) {
       }))
     : [];
 
+  // mannerScore → auctionScore(0~5, 0.5단위)
+  const ms = r.sellerInfo?.mannerScore ?? 0;
+  const score5 = Math.round(((ms / 100) * 5) * 2) / 2;
+
   const seller = {
     id: r.sellerInfo?.sellerId ?? "",
     name: r.sellerInfo?.nickname ?? "",
-    rating: (r.sellerInfo?.mannerScore ?? 0) / 20,
-    reviews: 0,
-    transactions: 0,
-    auctionIndex: ((r.sellerInfo?.mannerScore ?? 0) / 20).toFixed(1),
-    profileImage: r.sellerInfo?.profileImage || "",
-    updatedAt: r.createdAt || "",
+    avatarUrl: r.sellerInfo?.profileImage || "",
+    tradesCount: r.sellerInfo?.tradesCount ?? r.sellerInfo?.tradeCount ?? 0,
+    auctionScore: Number.isFinite(score5) ? score5 : 0,
   };
 
-  // 거래 방식 한글 변환 & 기타 설명
-  const tradeMethodsRaw = Array.isArray(r.tradeInfo?.tradeMethods)
-    ? r.tradeInfo.tradeMethods
-    : [];
-  const tradeMethodsUpper = tradeMethodsRaw.map((m) =>
-    String(m || "").trim().toUpperCase()
-  );
-  const tradeMethodKoList = tradeMethodsUpper
-    .map((m) => TRADE_METHOD_LABELS[m] || m)
-    .filter(Boolean);
+  const tradeMethodsRaw = Array.isArray(r.tradeInfo?.tradeMethods) ? r.tradeInfo.tradeMethods : [];
+  const tradeMethodsUpper = tradeMethodsRaw.map((m) => String(m || "").trim().toUpperCase());
+  const tradeMethodKoList = tradeMethodsUpper.map((m) => TRADE_METHOD_LABELS[m] || m).filter(Boolean);
   const tradeMethodText = tradeMethodKoList.join(", ");
   const hasOther = tradeMethodsUpper.includes("OTHER");
   const tradeOtherText = hasOther
@@ -97,7 +120,7 @@ function toViewModel(api) {
 
   const metrics = {
     views: 0,
-    watchers: r.userInteraction?.likeCount ?? 0,   // 찜 수
+    watchers: r.userInteraction?.likeCount ?? 0,
     userLiked: r.userInteraction?.isLiked ?? false,
     bids: r.auctionInfo?.bidCount ?? 0,
     tradeMethod: tradeMethodText,
@@ -108,10 +131,9 @@ function toViewModel(api) {
   const price = {
     current: r.auctionInfo?.currentPrice ?? 0,
     unitStep: r.auctionInfo?.bidIncrement ?? 0,
-    startPrice: r.auctionInfo?.startPrice ?? 0, // ← 시작가(고정 표기용)
+    startPrice: r.auctionInfo?.startPrice ?? 0,
   };
 
-  // ----- 입찰 내역: 최신 내림차순 정렬 + 배지(Recent/Min/Max) 부여 -----
   const sorted = Array.isArray(r.bidHistory)
     ? [...r.bidHistory].sort((a, b) => new Date(b.bidTime) - new Date(a.bidTime))
     : [];
@@ -127,9 +149,11 @@ function toViewModel(api) {
     if (maxPrice !== null && h.bidPrice === maxPrice) tag = "max";
     return {
       id: String(h.transactionId),
+      // 닉네임 필드 추가 (BidHistory가 우선 사용)
+      nickname: h.bidder?.nickname ?? "익명",
       user: h.bidder?.nickname ?? "익명",
       price: h.bidPrice,
-      timeText: formatKST(h.bidTime),      // ← 통일된 한국형 시간
+      timeText: formatKST(h.bidTime),
       tag,
       avatarUrl: h.bidder?.profileImage || "",
     };
@@ -140,7 +164,6 @@ function toViewModel(api) {
     title: r.title || r.name || "",
     exactModelName: r.name || "",
     category: r.category || "",
-    aiResult: undefined,
     images,
     seller,
     description: r.description || "",
@@ -198,50 +221,102 @@ export default function AuctionProductDetails() {
   if (error) return <div className={styles.loading}>오류가 발생했습니다: {String(error.message || error)}</div>;
   if (!auction) return <div className={styles.loading}>데이터가 없습니다.</div>;
 
+  /** ✅ 입찰 처리: 서버 규칙(현재가 + 최소호가)과 동일하게 프런트에서 선검증 */
   const handleBid = async (bidPrice) => {
-    // 낙관적 반영
-    setAuction((prev) => {
-      if (!prev) return prev;
-      const nowText = new Intl.DateTimeFormat("ko-KR", {
-        year: "numeric", month: "numeric", day: "numeric",
-        hour: "numeric", minute: "numeric", second: "numeric", hour12: true
-      }).format(new Date());
-      const nextHistory = [
-        {
-          id: `local-${Date.now()}`,
-          user: "you***",
-          price: bidPrice,
-          timeText: nowText,
-          tag: "recent",
-          avatarUrl: "",
-        },
-        ...(prev.bidHistory || []),
-      ];
+    const start = Number(auction.price?.startPrice ?? 0);
+    const current = Number(auction.price?.current ?? 0);
+    const step = Number(auction.price?.unitStep ?? 0);
+    const base = Math.max(current, start);
+    const minAllowed = base + (step > 0 ? step : 0); // 서버 규칙과 동일
 
-      // Min/Max 재계산
-      const prices = nextHistory.map(h => h.price).filter(n => Number.isFinite(n));
-      const minP = Math.min(...prices);
-      const maxP = Math.max(...prices);
-      const reTagged = nextHistory.map((h, idx) => ({
-        ...h,
-        tag: idx === 0 ? "recent" : (h.price === minP ? "min" : (h.price === maxP ? "max" : undefined))
-      }));
-
-      return {
-        ...prev,
-        price: { ...prev.price, current: Math.max(prev.price.current ?? 0, bidPrice) },
-        metrics: { ...prev.metrics, bids: (prev.metrics?.bids ?? 0) + 1 },
-        bidHistory: reTagged,
-      };
-    });
+    if (bidPrice < minAllowed) {
+      alert(
+        `최소 ${minAllowed.toLocaleString("ko-KR")}원 이상 입력해 주세요. (현재가 ${base.toLocaleString(
+          "ko-KR"
+        )}원, 최소호가 ${step.toLocaleString("ko-KR")}원)`
+      );
+      return;
+    }
 
     try {
-      await placeBid(auction.id, bidPrice);
+      const res = await placeBid(auction.id, bidPrice);
+
+      if (res?.isSuccess === false) {
+        const cur = res?.result?.currentPrice;
+        if (Number.isFinite(cur)) {
+          setAuction((prev) => (prev ? { ...prev, price: { ...prev.price, current: cur } } : prev));
+        }
+        alert(res?.message || "입찰에 실패했습니다.");
+        return;
+      }
+
+      const r = res?.result || {};
+      setAuction((prev) => {
+        if (!prev) return prev;
+
+        const nowISO = r.bidTime ?? new Date().toISOString();
+        const nickname = r.bidder?.nickname ?? getCurrentNickname();
+
+        // BidHistory가 nickname을 우선 사용하도록 필드 포함
+        const newItem = {
+          id: String(r.transactionId ?? `local-${Date.now()}`),
+          nickname,
+          user: nickname,
+          price: r.bidPrice ?? bidPrice,
+          timeText: formatKST(nowISO),
+          tag: "recent",
+          avatarUrl: r.bidder?.profileImage || "",
+        };
+
+        const nextHistory = [newItem, ...(prev.bidHistory || [])];
+
+        const prices = nextHistory.map((h) => h.price).filter((n) => Number.isFinite(n));
+        const minP = Math.min(...prices);
+        const maxP = Math.max(...prices);
+        const reTagged = nextHistory.map((h, idx) => ({
+          ...h,
+          tag: idx === 0 ? "recent" : h.price === minP ? "min" : h.price === maxP ? "max" : undefined,
+        }));
+
+        let calendar = prev.calendar;
+        if (Number.isFinite(r.remainingTimeInSeconds)) {
+          const endDateObj = new Date(Date.now() + r.remainingTimeInSeconds * 1000);
+          const { date, time } = splitDate(endDateObj);
+          calendar = { ...prev.calendar, endDate: date, endTime: time };
+        }
+
+        const newCurrent = Number.isFinite(r.currentHighestPrice)
+          ? r.currentHighestPrice
+          : Math.max(prev.price.current ?? 0, bidPrice);
+
+        return {
+          ...prev,
+          calendar,
+          price: { ...prev.price, current: newCurrent },
+          metrics: {
+            ...prev.metrics,
+            bids: Number.isFinite(r.bidCount) ? r.bidCount : (prev.metrics?.bids ?? 0) + 1,
+          },
+          bidHistory: reTagged,
+        };
+      });
     } catch (e) {
-      const latest = await fetchAuctionDetail(auction.id, { bidHistoryLimit: 10 });
-      setAuction(toViewModel(latest));
-      console.error(e);
-      alert("입찰에 실패했습니다. 다시 시도해 주세요.");
+      const d = e?.response?.data;
+      if (d?.isSuccess === false) {
+        const cur = d?.result?.currentPrice;
+        const min = d?.result?.minimumBidPrice;
+        if (Number.isFinite(cur)) {
+          setAuction((prev) => (prev ? { ...prev, price: { ...prev.price, current: cur } } : prev));
+        }
+        alert(
+          d?.message ||
+            (Number.isFinite(min)
+              ? `최소 ${Number(min).toLocaleString("ko-KR")}원 이상부터 입찰 가능합니다.`
+              : "입찰에 실패했습니다.")
+        );
+      } else {
+        alert("입찰에 실패했습니다. 다시 시도해 주세요.");
+      }
     }
   };
 
