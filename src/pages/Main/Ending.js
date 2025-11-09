@@ -1,41 +1,19 @@
-// src/pages/Main/Ending.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/Main/Ending.module.css";
-import { fetchEndingTodayAuctions } from "../../api/auctions/service";
-
-import nintendoImg from "../../assets/img/Main/Trending/nintendo.png";
+import { fetchEndingSoonAuctions } from "../../api/auctions/service";
 
 /* ===== 시간 유틸 ===== */
-const to2 = (n) => String(n).padStart(2, "0");
-
-/** HH:MM:SS 형태(오늘 마감만 다룬다고 가정) */
-function timeLeftHMS(endAtISO, nowMs = Date.now()) {
-  if (!endAtISO) return "00:00:00";
-  const diff = new Date(endAtISO).getTime() - nowMs;
-  if (diff <= 0) return "00:00:00";
-  let sec = Math.floor(diff / 1000);
-  const h = Math.floor(sec / 3600);
-  sec -= h * 3600;
-  const m = Math.floor(sec / 60);
-  sec -= m * 60;
-  return `${to2(h)}:${to2(m)}:${to2(sec)}`;
-}
-
-function ymdKST(dateLike) {
-  const d = typeof dateLike === "string" ? new Date(dateLike) : dateLike;
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(d);
-}
-
-function isEndingTodayKST(endISO, now = Date.now()) {
-  if (!endISO) return false;
-  return ymdKST(endISO) === ymdKST(now);
+const pad2 = (n) => String(n).padStart(2, "0");
+function toDHMS(diffMs) {
+  if (!Number.isFinite(diffMs) || diffMs <= 0) return "0일 00시간 00분 00초";
+  const totalSec = Math.floor(diffMs / 1000);
+  const d = Math.floor(totalSec / 86400);
+  const h = Math.floor((totalSec % 86400) / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  return `${d}일 ${pad2(h)}시간 ${pad2(m)}분 ${pad2(s)}초`;
 }
 
 function useNowTick() {
@@ -48,43 +26,20 @@ function useNowTick() {
 }
 
 /**
- * 오늘 마감 경매 섹션
- * - API 결과가 없으면 더미 사용
- * - 오늘(KST) 마감만 필터, 마감 임박(H<=1) 뱃지
- * - 페이지네이션: 4개
- * - 남은 시간 HH:MM:SS로 1초 업데이트
+ * 마감 임박 경매
+ * - /auctions?status=BIDDING&sort=END_TIME_ASC&page=0&size=12
+ * - 더미(기본값) 없음
+ * - 슬라이드 페이지는 pageSize(기본 4) 기준
  */
 export default function Ending({ pageSize = 4, onCardClick }) {
   const navigate = useNavigate();
   const nowTick = useNowTick();
 
-  const [items, setItems] = useState([]);  // [{ id,title,imageUrl,currentBid,views,endAtISO }]
+  const [items, setItems] = useState([]);      // [{ id,title,imageUrl,currentBid,views,endAtISO }]
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
-
-  // 더미 데이터(마운트 시각 기준 상대시간으로 endAtISO 생성)
-  const fallback = useMemo(() => {
-    const base = Date.now();
-    const mk = (id, title, plusMin, bid, views) => ({
-      id,
-      title,
-      imageUrl: nintendoImg,
-      currentBid: bid,
-      views,
-      endAtISO: new Date(base + plusMin * 60 * 1000).toISOString(),
-    });
-    return [
-      mk(101, "닌텐도 스위치 OLED (블루/레드)", 50, 420000, 160),
-      mk(102, "닌텐도 스위치 OLED (화이트)",     80, 398000, 214),
-      mk(103, "닌텐도 스위치 OLED (특전 포함)",   35, 452000, 131),
-      mk(104, "닌텐도 스위치 OLED (미개봉)",     125, 485000, 187),
-      mk(105, "닌텐도 OLED + 젤다 티어즈",       115, 512000, 221),
-      mk(106, "닌텐도 OLED + 마리오카트",         45, 468000, 172),
-      mk(107, "닌텐도 OLED 한정판",              190, 540000, 143),
-      mk(108, "닌텐도 OLED (거치대 세트)",        25, 435000, 199),
-    ];
-  }, []);
+  const [fetchedAt, setFetchedAt] = useState(Date.now());
 
   useEffect(() => {
     let alive = true;
@@ -93,8 +48,8 @@ export default function Ending({ pageSize = 4, onCardClick }) {
         setLoading(true);
         setError(null);
 
-        // 진행중 목록을 받아서 '오늘 마감'만 필터링
-        const res = await fetchEndingTodayAuctions({ size: 60 });
+        // 마감 임박: 서버 정렬 END_TIME_ASC, 12개
+        const res = await fetchEndingSoonAuctions({ size: 12 });
         const rows = Array.isArray(res?.result?.items) ? res.result.items : [];
 
         const mapped = rows
@@ -108,51 +63,46 @@ export default function Ending({ pageSize = 4, onCardClick }) {
               currentBid: it.currentPrice ?? it.currentBid ?? it.price ?? 0,
               views: it.viewCount ?? it.views ?? 0,
               endAtISO: it.endTime ?? it.endAt ?? null,
+              timeLeftMs:
+                (typeof it.timeLeftMs === "number" && it.timeLeftMs >= 0 && it.timeLeftMs) ||
+                (typeof it.remainingMs === "number" && it.remainingMs >= 0 && it.remainingMs) ||
+                null,
             };
           })
-          .filter((x) => x && x.id != null && x.endAtISO);
-
-        let todayEnding = mapped
-          .filter((x) => isEndingTodayKST(x.endAtISO))
-          .sort((a, b) => new Date(a.endAtISO) - new Date(b.endAtISO));
-
-        // API가 비어있거나 오늘 마감 항목이 없으면 더미 사용
-        if (!todayEnding.length) {
-          todayEnding = fallback
-            .filter((x) => isEndingTodayKST(x.endAtISO))
-            .sort((a, b) => new Date(a.endAtISO) - new Date(b.endAtISO));
-        }
+          .filter((x) => x && x.id != null);
 
         if (!alive) return;
-        setItems(todayEnding);
+        setItems(mapped);
+        setFetchedAt(Date.now());
       } catch (e) {
         if (!alive) return;
         setError(e);
-        // 오류 시에도 더미로 보여준다
-        setItems(
-          fallback
-            .filter((x) => isEndingTodayKST(x.endAtISO))
-            .sort((a, b) => new Date(a.endAtISO) - new Date(b.endAtISO))
-        );
+        setItems([]); // 기본값 없음
       } finally {
         if (!alive) return;
         setLoading(false);
       }
     })();
     return () => { alive = false; };
-  }, [fallback]);
+  }, []);
 
-  // 남은 시간 실시간 갱신(HH:MM:SS)
+  // 남은 시간 (1초 갱신)
   const withLeft = useMemo(
     () =>
-      items.map((it) => ({
-        ...it,
-        timeLeft: timeLeftHMS(it.endAtISO, nowTick),
-      })),
-    [items, nowTick]
+      items.map((it) => {
+        let diffMs = null;
+        if (typeof it.timeLeftMs === "number") {
+          diffMs = it.timeLeftMs - (nowTick - fetchedAt);
+        } else if (it.endAtISO) {
+          const endMs = new Date(it.endAtISO).getTime();
+          if (Number.isFinite(endMs)) diffMs = endMs - nowTick;
+        }
+        return { ...it, timeLeft: toDHMS(diffMs ?? -1) };
+      }),
+    [items, nowTick, fetchedAt]
   );
 
-  // 페이지네이션
+  // 페이지네이션(슬라이드)
   const totalPages = Math.max(1, Math.ceil(withLeft.length / pageSize));
   const start = page * pageSize;
   const visible = withLeft.slice(start, start + pageSize);
@@ -173,35 +123,35 @@ export default function Ending({ pageSize = 4, onCardClick }) {
   };
 
   return (
-    <section className={styles.endingSec} aria-label="오늘 마감 경매">
+    <section className={styles.endingSec} aria-label="마감 임박 경매">
       <div className={styles.container}>
         <div className={styles.head}>
-          <h2 className={styles.title}>오늘 마감 경매</h2>
+          <h2 className={styles.title}>마감 임박 경매</h2>
 
-        {withLeft.length > 0 && (
-          <div className={styles.navBtns}>
-            <button
-              className={styles.navBtn}
-              onClick={toPrev}
-              aria-label="이전 페이지"
-              aria-disabled={page === 0}
-              disabled={page === 0}
-              tabIndex={page === 0 ? -1 : 0}
-            >
-              <Icon icon="solar:alt-arrow-left-linear" />
-            </button>
-            <button
-              className={styles.navBtn}
-              onClick={toNext}
-              aria-label="다음 페이지"
-              aria-disabled={page >= totalPages - 1}
-              disabled={page >= totalPages - 1}
-              tabIndex={page >= totalPages - 1 ? -1 : 0}
-            >
-              <Icon icon="solar:alt-arrow-right-linear" />
-            </button>
-          </div>
-        )}
+          {withLeft.length > 0 && (
+            <div className={styles.navBtns}>
+              <button
+                className={styles.navBtn}
+                onClick={toPrev}
+                aria-label="이전 페이지"
+                aria-disabled={page === 0}
+                disabled={page === 0}
+                tabIndex={page === 0 ? -1 : 0}
+              >
+                <Icon icon="solar:alt-arrow-left-linear" />
+              </button>
+              <button
+                className={styles.navBtn}
+                onClick={toNext}
+                aria-label="다음 페이지"
+                aria-disabled={page >= totalPages - 1}
+                disabled={page >= totalPages - 1}
+                tabIndex={page >= totalPages - 1 ? -1 : 0}
+              >
+                <Icon icon="solar:alt-arrow-right-linear" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* 상태 표시 */}
@@ -210,7 +160,7 @@ export default function Ending({ pageSize = 4, onCardClick }) {
           <div className={styles.state}>오류가 발생했습니다. 잠시 후 다시 시도해 주세요.</div>
         )}
         {!loading && !error && withLeft.length === 0 && (
-          <div className={styles.state}>오늘 마감되는 경매가 없습니다.</div>
+          <div className={styles.state}>표시할 마감 임박 경매가 없습니다.</div>
         )}
 
         {!loading && withLeft.length > 0 && (

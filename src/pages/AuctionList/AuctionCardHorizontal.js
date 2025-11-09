@@ -1,4 +1,3 @@
-// src/pages/AuctionList/AuctionCardHorizontal.jsx
 /* eslint-disable jsx-a11y/role-supports-aria-props */
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
