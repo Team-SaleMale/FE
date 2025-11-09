@@ -36,6 +36,32 @@ export const mypageService = {
   getLikedAuctions: (params = { page: 0, size: 20 }) => {
     return apiClient.get('/mypage/auctions/liked', { params });
   },
+
+  /**
+   * 선호 카테고리 조회
+   * GET /mypage/auctions/category
+   *
+   * 사용자가 설정한 선호 카테고리 목록을 조회합니다.
+   *
+   * @returns {Promise} 선호 카테고리 응답 { isSuccess, code, message, result: { categories, count } }
+   */
+  getPreferredCategories: () => {
+    return apiClient.get('/mypage/auctions/category');
+  },
+
+  /**
+   * 선호 카테고리 설정
+   * POST /mypage/auctions/category
+   *
+   * 사용자의 선호 카테고리를 설정합니다. 기존 설정은 모두 삭제되고 새로운 카테고리로 대체됩니다.
+   *
+   * @param {Object} data - 카테고리 설정 데이터
+   * @param {Array<string>} data.categories - 카테고리 목록 (예: ["SPORTS", "PLANT", "TICKET"])
+   * @returns {Promise} 선호 카테고리 설정 응답 { isSuccess, code, message, result: { categories, count } }
+   */
+  setPreferredCategories: (categories) => {
+    return apiClient.post('/mypage/auctions/category', { categories });
+  },
 };
 
 export default mypageService;

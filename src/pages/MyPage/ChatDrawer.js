@@ -1,34 +1,102 @@
 import { Icon } from "@iconify/react";
 import { useEffect, useState } from "react";
 import styles from "../../styles/MyPage/ChatDrawer.module.css";
+import { chatService } from "../../api/chat/service";
 
-export default function ChatDrawer({ open, onClose, onBack, item }) {
+export default function ChatDrawer({ open, onClose, onBack, item, userId }) {
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      sender: "other",
-      text: "안녕하세요! 상품 문의드립니다.",
-      time: "오후 2:30",
-    },
-    {
-      id: 2,
-      sender: "me",
-      text: "네, 말씀하세요!",
-      time: "오후 2:31",
-    },
-  ]);
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [canSend, setCanSend] = useState(true);
+  const [chatInfo, setChatInfo] = useState(null);
 
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
+      // chatId가 있으면 채팅방 입장
+      if (item?.chatId && userId) {
+        enterChat();
+      }
     } else {
       document.body.style.overflow = "";
+      // 채팅방을 나갈 때 exit API 호출
+      if (chatInfo?.chatId && userId) {
+        exitChat();
+      }
     }
     return () => {
       document.body.style.overflow = "";
     };
-  }, [open]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, item?.chatId, userId]);
+
+  const enterChat = async () => {
+    if (!item?.chatId || !userId) {
+      console.error('chatId 또는 userId가 없습니다.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await chatService.enterChatRoom(item.chatId, userId, { page: 0, size: 50 });
+      console.log('채팅방 입장 응답:', response);
+
+      const data = response?.data || response;
+
+      // 채팅방 정보 저장
+      setChatInfo({
+        chatId: data.chatId,
+        readerId: data.readerId,
+        unreadCountAfter: data.unreadCountAfter,
+      });
+
+      // 메시지 변환 (API 형식 -> UI 형식)
+      const formattedMessages = (data.messages || []).map((msg) => ({
+        id: msg.messageId,
+        sender: msg.senderId === userId ? "me" : "other",
+        text: msg.content,
+        time: new Date(msg.sentAt).toLocaleTimeString("ko-KR", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }),
+        read: msg.read,
+        type: msg.type,
+      }));
+
+      setMessages(formattedMessages);
+      setCanSend(data.canSend !== false);
+
+      // 읽음 처리된 메시지 개수 로그
+      if (data.updatedCount > 0) {
+        console.log(`${data.updatedCount}개의 메시지를 읽음 처리했습니다.`);
+      }
+    } catch (error) {
+      console.error('채팅방 입장 실패:', error);
+      setMessages([]);
+      setCanSend(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const exitChat = async () => {
+    if (!chatInfo?.chatId || !userId) {
+      return;
+    }
+
+    try {
+      await chatService.exitChatRoom(chatInfo.chatId, userId);
+      console.log('채팅방 나가기 완료:', chatInfo.chatId);
+
+      // 채팅방 정보 초기화
+      setChatInfo(null);
+      setMessages([]);
+    } catch (error) {
+      console.error('채팅방 나가기 실패:', error);
+      // 실패해도 UI는 정상적으로 닫기
+    }
+  };
 
   const handleSend = () => {
     if (!message.trim()) return;
@@ -97,27 +165,39 @@ export default function ChatDrawer({ open, onClose, onBack, item }) {
 
         {/* 채팅 메시지 영역 */}
         <div className={styles.messagesContainer}>
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`${styles.messageWrapper} ${
-                msg.sender === "me" ? styles.myMessage : styles.otherMessage
-              }`}
-            >
-              {msg.sender === "other" && (
-                <div className={styles.messageAvatar}>
-                  <img
-                    src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop"
-                    alt="판매자"
-                  />
-                </div>
-              )}
-              <div className={styles.messageBubble}>
-                <p className={styles.messageText}>{msg.text}</p>
-                <span className={styles.messageTime}>{msg.time}</span>
-              </div>
+          {loading ? (
+            <div className={styles.loadingContainer}>
+              <div className={styles.loadingSpinner}></div>
+              <p>메시지를 불러오는 중...</p>
             </div>
-          ))}
+          ) : messages.length === 0 ? (
+            <div className={styles.emptyContainer}>
+              <Icon icon="solar:chat-line-linear" className={styles.emptyIcon} />
+              <p className={styles.emptyText}>아직 메시지가 없습니다.</p>
+            </div>
+          ) : (
+            messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`${styles.messageWrapper} ${
+                  msg.sender === "me" ? styles.myMessage : styles.otherMessage
+                }`}
+              >
+                {msg.sender === "other" && (
+                  <div className={styles.messageAvatar}>
+                    <img
+                      src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop"
+                      alt="판매자"
+                    />
+                  </div>
+                )}
+                <div className={styles.messageBubble}>
+                  <p className={styles.messageText}>{msg.text}</p>
+                  <span className={styles.messageTime}>{msg.time}</span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* 입력 영역 */}
@@ -136,7 +216,7 @@ export default function ChatDrawer({ open, onClose, onBack, item }) {
           <button
             className={styles.sendButton}
             onClick={handleSend}
-            disabled={!message.trim()}
+            disabled={!message.trim() || !canSend}
             aria-label="전송"
           >
             <Icon icon="solar:plain-3-linear" />
