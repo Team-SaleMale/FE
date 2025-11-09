@@ -1,5 +1,5 @@
 // src/pages/Auth/Signup.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 import "../../styles/Auth/Signup.css";
@@ -14,6 +14,8 @@ import {
   register,
   completeSocialSignup,
 } from "../../api/auth/service";
+
+import { getNoAuth } from "../../api/client";            // ✅ 지역 검색 무인증 호출
 import endpoints from "../../api/endpoints";
 import config from "../../config";
 
@@ -44,14 +46,78 @@ function Signup() {
   const [nickname, setNickname] = useState("");
   const [nicknameAvailable, setNicknameAvailable] = useState(null);
 
-  // 소셜 회원가입 전용
-  const [regionId, setRegionId] = useState("");
+  // ✅ 지역 선택 상태 (서버 전송용 id + 화면 표시용 이름)
+  const [regionId, setRegionId] = useState("");            // 서버에 보낼 값
+  const [regionName, setRegionName] = useState("");        // 화면 표시용
 
+  // ✅ 지역 검색 입력/결과
+  const [regionQuery, setRegionQuery] = useState("");
+  const [regionResults, setRegionResults] = useState([]);
+  const [regionLoading, setRegionLoading] = useState(false);
+  const [regionError, setRegionError] = useState("");
+  const [showRegionList, setShowRegionList] = useState(false);
+  const regionBoxRef = useRef(null);
+  const debounceRef = useRef(null);
+
+  // ===== 비밀번호(일반 가입 전용) =====
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
 
   const [loading, setLoading] = useState(false);
   const disabled = loading;
+
+  // ▼▼▼ 지역 검색 API 호출 ▼▼▼
+  const searchRegions = async (q, page = 0, size = 10) => {
+    if (!q || !q.trim()) {
+      setRegionResults([]);
+      setRegionError("");
+      return;
+    }
+    try {
+      setRegionLoading(true);
+      setRegionError("");
+      const res = await getNoAuth(endpoints.AUTH.REGION_SEARCH, { q: q.trim(), page, size });
+      const list = res?.result ?? [];
+      setRegionResults(Array.isArray(list) ? list : []);
+    } catch (e) {
+      setRegionResults([]);
+      setRegionError(e?.friendlyMessage || "지역 검색 실패");
+    } finally {
+      setRegionLoading(false);
+    }
+  };
+
+  // 입력 디바운스 검색
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    // 지역 선택이 된 상태에서 입력 변경 시, 선택 해제
+    if (regionQuery && regionName && showRegionList) {
+      // 입력을 수정하면 선택을 암묵적으로 풀고 새로 검색
+      setRegionId("");
+      setRegionName("");
+    }
+    debounceRef.current = setTimeout(() => {
+      if (regionQuery) {
+        searchRegions(regionQuery, 0, 10);
+      } else {
+        setRegionResults([]);
+      }
+    }, 300);
+    return () => clearTimeout(debounceRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [regionQuery]);
+
+  // 드롭다운 외부 클릭 시 닫기
+  useEffect(() => {
+    const onDocClick = (e) => {
+      if (!regionBoxRef.current) return;
+      if (!regionBoxRef.current.contains(e.target)) {
+        setShowRegionList(false);
+      }
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
 
   // ===== Step1 (일반 회원가입 전용) =====
   const onCheckEmail = async () => {
@@ -106,15 +172,12 @@ function Signup() {
     }
   };
 
-
   const goNextFromEmail = () => {
     if (!emailVerified) return alert("이메일 인증을 완료해주세요.");
     setStep(2);
   };
 
   // ===== Step2 (공통 / 소셜 회원가입은 여기서만 진행) =====
-  console.log("[complete] signupToken=", signupToken, "nickname=", nickname, "regionId=", regionId);
-
   const onCheckNickname = async () => {
     if (!nickname) return alert("닉네임을 입력하세요");
     try {
@@ -129,13 +192,28 @@ function Signup() {
     }
   };
 
+  const handlePickRegion = (r) => {
+    setRegionId(String(r.regionId));
+    setRegionName(r.displayName || "");
+    setRegionQuery(r.displayName || "");
+    setShowRegionList(false);
+  };
+
+  const clearPickedRegion = () => {
+    setRegionId("");
+    setRegionName("");
+    setRegionQuery("");
+    setRegionResults([]);
+  };
+
   const goNextFromNickname = async () => {
     if (nicknameAvailable !== true) return alert("닉네임 중복 확인을 완료하세요.");
 
-    // 공통: 지역 ID 검증
+    // ✅ 공통: 지역 ID 검증
     if (!regionId || Number.isNaN(Number(regionId))) {
-      return alert("지역을 선택하세요 (숫자 ID)");
-    }  
+      return alert("지역을 선택하세요. (지역명을 검색 후 목록에서 선택)");
+    }
+
     // 소셜 회원가입: 여기서 최종 완료 처리
     if (isSocial) {
       if (!signupToken) return alert("소셜 회원가입 토큰(signupToken)이 없습니다.");
@@ -150,10 +228,8 @@ function Signup() {
         alert("소셜 회원가입이 완료되었습니다.");
         navigate("/", { replace: true });
       } catch (err) {
-        // 백엔드 표준 에러 형태 대응
         const code = err?.code || err?.response?.data?.code;
         if (code === "USER4003") {
-          // 이미 가입된 이메일 → 로그인 화면으로 유도
           sessionStorage.removeItem("signupToken");
           alert("이미 가입된 계정입니다. 로그인 화면으로 이동합니다.");
           navigate("/login", { replace: true });
@@ -176,19 +252,24 @@ function Signup() {
     if (!emailVerified || !verifySessionToken) {
       return alert("이메일 인증을 먼저 완료해주세요.");
     }
-    if (!regionId || Number.isNaN(Number(regionId))) return alert("지역을 선택하세요 (숫자 ID)");
+    if (!regionId || Number.isNaN(Number(regionId))) {
+      return alert("지역을 선택하세요. (지역명을 검색 후 목록에서 선택)");
+    }
     if (!pw) return alert("비밀번호를 입력하세요");
     if (pw.length < 8) return alert("비밀번호는 8자 이상이어야 합니다");
     if (pw !== pw2) return alert("비밀번호가 일치하지 않습니다");
     try {
       setLoading(true);
-      await register({
-        email,
-        nickname,
-        password: pw,
-        regionId: Number(regionId),
-        sessionToken: verifySessionToken,
-      }, verifySessionToken);
+      await register(
+        {
+          email,
+          nickname,
+          password: pw,
+          regionId: Number(regionId),
+          sessionToken: verifySessionToken,
+        },
+        verifySessionToken
+      );
       alert("회원가입이 완료되었습니다.");
       navigate("/login");
     } catch (err) {
@@ -199,7 +280,8 @@ function Signup() {
   };
 
   // ===== 소셜 로그인 버튼 클릭 (백엔드 OAuth2 엔드포인트로 이동) =====
-  const apiBase = (config && config.API_URL) || process.env.REACT_APP_API_URL || "";
+  const apiBase =
+    (config && config.API_URL) || process.env.REACT_APP_API_URL || "";
   const goNaver = () => {
     window.location.href = `${apiBase}${endpoints.AUTH.OAUTH2_NAVER}`;
   };
@@ -303,11 +385,12 @@ function Signup() {
           </>
         )}
 
-        {/* ===== Step 2: 닉네임 설정 (소셜/일반 공통) ===== */}
+        {/* ===== Step 2: 닉네임 + 지역 선택 (소셜/일반 공통) ===== */}
         {step === 2 && (
           <>
             <p className="auth-sub">닉네임 설정{isSocial && " (소셜 회원가입)"}</p>
             <form className="auth-form" onSubmit={(e) => e.preventDefault()}>
+              {/* 닉네임 */}
               <input
                 type="text"
                 className="auth-input"
@@ -323,15 +406,65 @@ function Signup() {
                 닉네임 중복 확인
               </button>
 
-              {/* 지역 입력: 소셜/로컬 공통 */}
-              <input
-                type="number"
-                className="auth-input"
-                placeholder="지역 ID 입력 (예: 1)"
-                value={regionId}
-                onChange={(e) => setRegionId(e.target.value)}
-                disabled={disabled}
-              />
+              {/* ✅ 지역 검색 + 선택 */}
+              <div className="region-box" ref={regionBoxRef}>
+                <label className="region-title">내 동네 설정</label>
+                <input
+                  type="text"
+                  className="auth-input"
+                  placeholder='지역명 검색 (예: "역삼", "강남", "서울")'
+                  value={regionQuery}
+                  onChange={(e) => {
+                    setRegionQuery(e.target.value);
+                    setShowRegionList(true);
+                  }}
+                  onFocus={() => setShowRegionList(true)}
+                  disabled={disabled}
+                />
+
+                {/* 선택됨 표시 */}
+                {regionId && regionName && (
+                  <div className="hint">
+                    <span className="ok">선택한 지역: {regionName} (ID: {regionId})</span>
+                    <button
+                      type="button"
+                      className="btn-link"
+                      onClick={clearPickedRegion}
+                      disabled={disabled}
+                      style={{ marginLeft: 8 }}
+                    >
+                      변경
+                    </button>
+                  </div>
+                )}
+
+                {/* 검색 결과 드롭다운 */}
+                {showRegionList && (
+                  <div className="region-dropdown">
+                    {regionLoading && <div className="region-item">검색 중…</div>}
+                    {!regionLoading && regionError && (
+                      <div className="region-item warn">{regionError}</div>
+                    )}
+                    {!regionLoading && !regionError && regionResults.length === 0 && regionQuery && (
+                      <div className="region-item">검색 결과가 없습니다.</div>
+                    )}
+                    {!regionLoading &&
+                      !regionError &&
+                      regionResults.map((r) => (
+                        <button
+                          key={r.regionId}
+                          type="button"
+                          className="region-item"
+                          onClick={() => handlePickRegion(r)}
+                          disabled={disabled}
+                        >
+                          {r.displayName}
+                        </button>
+                      ))}
+                  </div>
+                )}
+              </div>
+
               {isSocial && !signupToken && (
                 <div className="hint">
                   <span className="warn">signupToken이 없습니다. 콜백 경로를 확인하세요.</span>

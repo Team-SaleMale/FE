@@ -264,3 +264,96 @@
 .row-2 .btn-outline:hover {
   background: var(--primary-hover);
 }
+
+/* 예: src/styles/Auth/Signup.css 하단 */
+.region-box { position: relative; }
+.region-dropdown {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px);
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+  max-height: 240px; overflow: auto; z-index: 20; box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+.region-item {
+  display: block; width: 100%; text-align: left; padding: 10px 12px;
+  background: transparent; border: 0; cursor: pointer; font-size: 14px;
+}
+.region-item:hover { background: #f5f6ff; }
+.region-item.warn { color: #d14343; cursor: default; }
+.btn-link {
+  background: none; border: none; padding: 0; color: #5b6ef5; cursor: pointer; font-size: 13px;
+}
+/* 지역 검색 간격 및 정렬 */
+.region-label {
+  display: block;
+  margin-top: 10px; /* '내 동네 설정'과 입력창 사이 여백 */
+  margin-bottom: 5px; /* 텍스트 아래 여백 */
+  font-size: 15px;
+  color: #333;
+}
+
+/* 지역 검색 입력창 */
+.region-search {
+  width: calc(100% - 2px); /* 양쪽 간격 통일 (다른 입력창과 동일) */
+  box-sizing: border-box;
+  margin-top: 5px; /* 입력창과 라벨 사이 간격 */
+}
+
+/* 드롭다운 */
+.region-dropdown {
+  width: 100%;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-top: 4px;
+  box-sizing: border-box;
+}
+.region-option {
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.region-option:hover {
+  background-color: #f0f0ff;
+}
+
+/* 라벨과 입력창 사이 '조금의 간격'(≈5px) */
+.region-title {
+  display: block;
+  margin-bottom: 6px; /* 요청: 5px 정도 간격 */
+  font-size: 15px;
+  color: #333;
+}
+
+/* 지역 검색 입력 박스 폭을 다른 입력들과 '오른쪽 기준'으로 동일하게 */
+.auth-input.region-search {
+  width: 100%;
+  display: block;
+  margin: 0;              /* 가운데 정렬/가로축 여백 제거 */
+  box-sizing: border-box; /* 컨테이너 안에서 꽉 차게 */
+}
+
+/* 드롭다운은 입력 폭에 맞춰 100%로 */
+.region-dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;               /* 입력 오른쪽과 딱 맞춤 */
+  top: calc(100% + 6px);
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  max-height: 240px;
+  overflow: auto;
+  z-index: 20;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.region-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 14px;
+}
+.region-item:hover { background: #f5f6ff; }
+.region-item.warn  { color: #d14343; cursor: default; }
