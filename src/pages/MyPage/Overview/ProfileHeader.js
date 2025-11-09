@@ -2,7 +2,7 @@ import styles from "../../../styles/MyPage/Overview/ProfileHeader.module.css";
 import { Icon } from "@iconify/react";
 import { useRef, useState, useEffect } from "react";
 
-export default function ProfileHeader({ selectedCategories = [], userLocation = "서울 강서구 가양제3동", userProfile = null }) {
+export default function ProfileHeader({ selectedCategories = [], userLocation = "서울 강서구 가양제3동", userProfile = null, onPasswordChange, onNicknameChange }) {
   const [profileImage, setProfileImage] = useState(userProfile?.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=400&auto=format&fit=crop");
   const fileInputRef = useRef(null);
 
@@ -69,6 +69,14 @@ export default function ProfileHeader({ selectedCategories = [], userLocation = 
         />
         <div className={styles.userBlock}>
           <div className={styles.userName}>{userProfile?.nickname || "사용자"}</div>
+          <div className={styles.buttonGroup}>
+            <button className={styles.changeBtn} onClick={onNicknameChange}>
+              닉네임 변경
+            </button>
+            <button className={styles.changeBtn} onClick={onPasswordChange}>
+              비밀번호 변경
+            </button>
+          </div>
         </div>
       </div>
 

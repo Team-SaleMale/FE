@@ -15,11 +15,15 @@ import ChatListDrawer from "./ChatListDrawer";
 import ReviewDrawer from "./ReviewDrawer";
 import CategoryDrawer from "./CategoryDrawer";
 import LocationDrawer from "./LocationDrawer";
+import NicknameChangeDrawer from "./NicknameChangeDrawer";
+import PasswordChangeDrawer from "./PasswordChangeDrawer";
 import WithdrawalDrawer from "./WithdrawalDrawer";
 import WishlistDrawer from "./WishlistDrawer";
 import WishlistList from "./Wishlist/WishlistList";
-import { userService } from "../../api/users/service";
+import { setRegion } from "../../api/users/service";
 import { mypageService } from "../../api/mypage/service";
+import { chatService } from "../../api/chat/service";
+import { myProfile } from "../../api/auth/service";
 
 export default function MyPage() {
   const navigate = useNavigate();
@@ -32,11 +36,13 @@ export default function MyPage() {
   const [isReviewDrawerOpen, setReviewDrawerOpen] = useState(false);
   const [isCategoryDrawerOpen, setCategoryDrawerOpen] = useState(false);
   const [isLocationDrawerOpen, setLocationDrawerOpen] = useState(false);
+  const [isNicknameChangeDrawerOpen, setNicknameChangeDrawerOpen] = useState(false);
+  const [isPasswordChangeDrawerOpen, setPasswordChangeDrawerOpen] = useState(false);
   const [isWithdrawalDrawerOpen, setWithdrawalDrawerOpen] = useState(false);
   const [isWishlistDrawerOpen, setWishlistDrawerOpen] = useState(false);
   const [wishlistSortValue, setWishlistSortValue] = useState("deadline");
   const [selectedChatItem, setSelectedChatItem] = useState(null);
-  const [selectedCategories, setSelectedCategories] = useState(["book", "digital", "home-appliance", "beauty"]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const [userLocation, setUserLocation] = useState("서울 강서구 가양제3동");
   const [wishlistItems, setWishlistItems] = useState([]);
   const [auctionItems, setAuctionItems] = useState([]);
@@ -49,9 +55,14 @@ export default function MyPage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await userService.getProfile();
-        if (response.data.isSuccess) {
-          setUserProfile(response.data.result);
+        const response = await myProfile();
+        console.log('프로필 응답:', response);
+        if (response.isSuccess) {
+          setUserProfile(response.result);
+          // 프로필에 지역 정보가 있으면 설정
+          if (response.result?.region?.displayName) {
+            setUserLocation(response.result.region.displayName);
+          }
         }
       } catch (err) {
         console.error('프로필 조회 실패:', err);
@@ -59,6 +70,47 @@ export default function MyPage() {
     };
 
     fetchProfile();
+  }, []);
+
+  // 선호 카테고리 조회
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await mypageService.getPreferredCategories();
+        console.log('선호 카테고리 응답:', response);
+
+        const result = response?.data || response;
+        if (result?.isSuccess && result?.result?.categories) {
+          // API는 대문자로 반환 (예: "SPORTS"), UI는 소문자+하이픈 (예: "sports")
+          // 변환 필요
+          const categoryMap = {
+            'WOMEN_ACC': 'women-acc',
+            'FOOD_PROCESSED': 'food-processed',
+            'SPORTS': 'sports',
+            'PLANT': 'plant',
+            'GAME_HOBBY': 'game-hobby',
+            'TICKET': 'ticket',
+            'FURNITURE': 'furniture',
+            'BEAUTY': 'beauty',
+            'CLOTHES': 'clothes',
+            'HEALTH_FOOD': 'health-food',
+            'BOOK': 'book',
+            'KIDS': 'kids',
+            'DIGITAL': 'digital',
+            'LIVING_KITCHEN': 'living-kitchen',
+            'HOME_APPLIANCE': 'home-appliance',
+            'ETC': 'etc'
+          };
+
+          const categories = result.result.categories.map(cat => categoryMap[cat] || cat.toLowerCase());
+          setSelectedCategories(categories);
+        }
+      } catch (err) {
+        console.error('선호 카테고리 조회 실패:', err);
+      }
+    };
+
+    fetchCategories();
   }, []);
 
   // 탭 이름을 API type으로 변환
@@ -166,11 +218,44 @@ export default function MyPage() {
   const openPurchaseDrawer = () => setPurchaseDrawerOpen(true);
   const closePurchaseDrawer = () => setPurchaseDrawerOpen(false);
 
-  // 채팅 버튼 클릭 -> ChatDrawer 열림
-  const openChatDrawer = (item) => {
-    setSelectedChatItem(item);
-    setChatDrawerOpen(true);
-    setChatListDrawerOpen(false);
+  // 채팅 버튼 클릭 -> 채팅방 생성 후 ChatDrawer 열림
+  const openChatDrawer = async (item) => {
+    try {
+      // 낙찰된 상품인 경우 채팅방 자동 생성
+      if (item?.isClosed && item?.id && userProfile?.id) {
+        console.log('채팅방 생성 시도:', { itemId: item.id, userId: userProfile.id });
+
+        const response = await chatService.createChatRoom(item.id, userProfile.id);
+        console.log('채팅방 생성 응답:', response);
+
+        const chatId = response?.data?.chatId || response?.chatId;
+
+        if (chatId) {
+          // chatId를 포함한 item으로 업데이트
+          setSelectedChatItem({ ...item, chatId });
+        } else {
+          // chatId가 없어도 기존 로직대로 진행
+          setSelectedChatItem(item);
+        }
+      } else {
+        setSelectedChatItem(item);
+      }
+
+      setChatDrawerOpen(true);
+      setChatListDrawerOpen(false);
+    } catch (error) {
+      console.error('채팅방 생성 실패:', error);
+
+      // 채팅방 생성 실패해도 일단 drawer는 열기 (기존 채팅방이 있을 수 있음)
+      setSelectedChatItem(item);
+      setChatDrawerOpen(true);
+      setChatListDrawerOpen(false);
+
+      // 에러 메시지 표시 (선택적)
+      if (error.response?.status !== 409) { // 409는 이미 존재하는 채팅방일 수 있음
+        console.warn('채팅방 생성 중 오류가 발생했지만 진행합니다.');
+      }
+    }
   };
 
   // ChatDrawer 뒤로 가기 -> ChatListDrawer 열림
@@ -208,13 +293,62 @@ export default function MyPage() {
   const openCategoryDrawer = () => setCategoryDrawerOpen(true);
   const closeCategoryDrawer = () => setCategoryDrawerOpen(false);
 
+  // UI 카테고리 ID를 API 형식으로 변환
+  const uiToApiCategory = (uiId) => {
+    const map = {
+      'women-acc': 'WOMEN_ACC',
+      'food-processed': 'FOOD_PROCESSED',
+      'sports': 'SPORTS',
+      'plant': 'PLANT',
+      'game-hobby': 'GAME_HOBBY',
+      'ticket': 'TICKET',
+      'furniture': 'FURNITURE',
+      'beauty': 'BEAUTY',
+      'clothes': 'CLOTHES',
+      'health-food': 'HEALTH_FOOD',
+      'book': 'BOOK',
+      'kids': 'KIDS',
+      'digital': 'DIGITAL',
+      'living-kitchen': 'LIVING_KITCHEN',
+      'home-appliance': 'HOME_APPLIANCE',
+      'etc': 'ETC'
+    };
+    return map[uiId] || uiId.toUpperCase();
+  };
+
   // 카테고리 토글
   const handleToggleCategory = (categoryId) => {
-    setSelectedCategories((prev) =>
-      prev.includes(categoryId)
-        ? prev.filter((id) => id !== categoryId)
-        : [...prev, categoryId]
-    );
+    // 로컬 상태 업데이트
+    const newCategories = selectedCategories.includes(categoryId)
+      ? selectedCategories.filter((id) => id !== categoryId)
+      : [...selectedCategories, categoryId];
+
+    setSelectedCategories(newCategories);
+
+    // TODO: 백엔드 버그 수정 후 활성화 필요
+    // 현재 백엔드 문제:
+    // 1. 기존 카테고리를 삭제하지 않고 추가하려고 해서 duplicate key constraint 에러 발생
+    // 2. 빈 배열 []로 삭제 요청 시 400 에러 발생
+    //
+    // 백엔드 수정 후 아래 코드 활성화:
+    /*
+    const previousCategories = [...selectedCategories];
+
+    try {
+      const apiCategories = newCategories.map(uiToApiCategory);
+
+      // 방법 1: 백엔드가 제대로 구현되면 한 번만 호출
+      const response = await mypageService.setPreferredCategories(apiCategories);
+
+      const result = response?.data || response;
+      if (!result?.isSuccess) {
+        setSelectedCategories(previousCategories);
+      }
+    } catch (error) {
+      console.error('카테고리 저장 중 오류:', error);
+      setSelectedCategories(previousCategories);
+    }
+    */
   };
 
   // 동네 설정 드로어 열기/닫기
@@ -222,11 +356,49 @@ export default function MyPage() {
   const closeLocationDrawer = () => setLocationDrawerOpen(false);
 
   // 동네 저장
-  const handleSaveLocation = (newLocation) => {
-    setUserLocation(newLocation);
-    // localStorage에 저장 (백엔드 연결 전까지 임시)
-    localStorage.setItem("userLocation", newLocation);
+  const handleSaveLocation = async (region) => {
+    console.log('handleSaveLocation 호출됨, region:', region);
+
+    try {
+      console.log('setRegion API 호출:', { regionId: region.regionId, primary: true });
+      const response = await setRegion({
+        regionId: region.regionId,
+        primary: true
+      });
+      console.log('setRegion API 응답:', response);
+
+      if (response.data && response.data.isSuccess) {
+        setUserLocation(region.displayName);
+        // 프로필 다시 조회하여 최신 정보 반영
+        const profileResponse = await myProfile();
+        if (profileResponse.isSuccess) {
+          setUserProfile(profileResponse.result);
+        }
+        alert("동네가 설정되었습니다!");
+        closeLocationDrawer();
+      } else {
+        console.error('동네 설정 실패, 응답:', response);
+        alert(`동네 설정에 실패했습니다: ${response.data?.message || '알 수 없는 오류'}`);
+      }
+    } catch (error) {
+      console.error("동네 설정 실패:", error);
+      console.error("에러 상세:", error.response?.data);
+      alert("동네 설정 중 오류가 발생했습니다.");
+    }
   };
+
+  // 닉네임 변경 드로어 열기/닫기
+  const openNicknameChangeDrawer = () => setNicknameChangeDrawerOpen(true);
+  const closeNicknameChangeDrawer = () => setNicknameChangeDrawerOpen(false);
+
+  // 닉네임 변경 성공 시
+  const handleNicknameChangeSuccess = (updatedProfile) => {
+    setUserProfile(updatedProfile);
+  };
+
+  // 비밀번호 변경 드로어 열기/닫기
+  const openPasswordChangeDrawer = () => setPasswordChangeDrawerOpen(true);
+  const closePasswordChangeDrawer = () => setPasswordChangeDrawerOpen(false);
 
   // 탈퇴 드로어 열기/닫기
   const openWithdrawalDrawer = () => setWithdrawalDrawerOpen(true);
@@ -298,11 +470,13 @@ export default function MyPage() {
           onClose={closeAll}
           onBack={handleBackFromChat}
           item={selectedChatItem}
+          userId={userProfile?.id}
         />
         <ChatListDrawer
           open={isChatListDrawerOpen}
           onClose={closeAll}
           onSelectChat={handleSelectChatFromList}
+          userId={userProfile?.id}
         />
         <ReviewDrawer open={isReviewDrawerOpen} onClose={closeReviewDrawer} />
         <CategoryDrawer
@@ -315,7 +489,19 @@ export default function MyPage() {
           open={isLocationDrawerOpen}
           onClose={closeLocationDrawer}
           currentLocation={userLocation}
+          currentRange={userProfile?.rangeSetting}
+          currentRegion={userProfile?.region}
           onSave={handleSaveLocation}
+        />
+        <NicknameChangeDrawer
+          open={isNicknameChangeDrawerOpen}
+          onClose={closeNicknameChangeDrawer}
+          currentNickname={userProfile?.nickname}
+          onSuccess={handleNicknameChangeSuccess}
+        />
+        <PasswordChangeDrawer
+          open={isPasswordChangeDrawerOpen}
+          onClose={closePasswordChangeDrawer}
         />
         <WithdrawalDrawer
           open={isWithdrawalDrawerOpen}
@@ -360,12 +546,27 @@ export default function MyPage() {
         <main className={styles.main}>
           {/* 프로필 섹션 */}
           <section className={styles.sectionBox}>
-            <ProfileHeader selectedCategories={selectedCategories} userLocation={userLocation} userProfile={userProfile} />
+            <ProfileHeader
+              selectedCategories={selectedCategories}
+              userLocation={userLocation}
+              userProfile={userProfile}
+              onNicknameChange={openNicknameChangeDrawer}
+              onPasswordChange={openPasswordChangeDrawer}
+            />
           </section>
 
           {/* 통계 섹션 */}
           <section className={styles.sectionBox}>
-            <UserStats mannerScore={userProfile?.mannerScore || 0} />
+            <UserStats
+              mannerScore={userProfile?.mannerScore || 0}
+              userId={userProfile?.id}
+              onChatClick={(chat) => {
+                if (chat && chat.chatId) {
+                  openChatDrawer({ chatId: chat.chatId, ...chat });
+                }
+              }}
+              onViewAllChats={openChatList}
+            />
           </section>
 
           <div className={styles.sectionDivider} />
