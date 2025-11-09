@@ -317,7 +317,10 @@ export default function MyPage() {
   };
 
   // 카테고리 토글
-  const handleToggleCategory = (categoryId) => {
+  const handleToggleCategory = async (categoryId) => {
+    // 이전 상태 저장 (에러 발생 시 복구용)
+    const previousCategories = [...selectedCategories];
+
     // 로컬 상태 업데이트
     const newCategories = selectedCategories.includes(categoryId)
       ? selectedCategories.filter((id) => id !== categoryId)
@@ -325,30 +328,27 @@ export default function MyPage() {
 
     setSelectedCategories(newCategories);
 
-    // TODO: 백엔드 버그 수정 후 활성화 필요
-    // 현재 백엔드 문제:
-    // 1. 기존 카테고리를 삭제하지 않고 추가하려고 해서 duplicate key constraint 에러 발생
-    // 2. 빈 배열 []로 삭제 요청 시 400 에러 발생
-    //
-    // 백엔드 수정 후 아래 코드 활성화:
-    /*
-    const previousCategories = [...selectedCategories];
-
+    // 서버에 저장
     try {
       const apiCategories = newCategories.map(uiToApiCategory);
+      console.log('전송할 카테고리 데이터:', apiCategories);
+      console.log('UI 카테고리:', newCategories);
 
-      // 방법 1: 백엔드가 제대로 구현되면 한 번만 호출
       const response = await mypageService.setPreferredCategories(apiCategories);
+      console.log('카테고리 저장 응답:', response);
 
       const result = response?.data || response;
       if (!result?.isSuccess) {
+        console.error('카테고리 저장 실패:', result?.message);
         setSelectedCategories(previousCategories);
+      } else {
+        console.log('카테고리 저장 성공!');
       }
     } catch (error) {
       console.error('카테고리 저장 중 오류:', error);
+      console.error('에러 응답:', error.response?.data);
       setSelectedCategories(previousCategories);
     }
-    */
   };
 
   // 동네 설정 드로어 열기/닫기
