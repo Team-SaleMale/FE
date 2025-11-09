@@ -12,7 +12,9 @@
 .block { border: 1px solid #EEF1F6; border-radius: 12px; padding: 12px; }
 .label { font-size: 12px; color: #8B94A4; margin-bottom: 6px; font-weight: 500; }
 .value { font-weight: 600; }
-.time { margin-top: 2px; font-size: 12px; color: #4060F2; font-weight: 500; } /* ← 추가 */
+
+/* ▼ 변경: 시간 색 조금 연한 검은색 */
+.time { margin-top: 2px; font-size: 12px; color: #2A2F3A; font-weight: 500; }
 
 .countdown {
   margin: 14px 0 18px;

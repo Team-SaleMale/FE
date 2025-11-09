@@ -36,7 +36,7 @@ const CATEGORIES = [
 /* UI key → 서버 enum */
 const CAT_TO_ENUM = {
   digital: "DIGITAL",
-  clothes: "CLOTHES" || "FASHION",       // 서버 enum 이름이 CLOTHES라면 그대로, FASHION이면 위를 FASHION으로 교체
+  clothes: "CLOTHES",
   beauty: "BEAUTY",
   "health-food": "HEALTH_FOOD",
   "home-appliance": "HOME_APPLIANCE",
@@ -53,8 +53,9 @@ const CAT_TO_ENUM = {
   "food-processed": "FOOD_PROCESSED",
   etc: "ETC",
 };
+const ENUM_TO_CAT = Object.fromEntries(Object.entries(CAT_TO_ENUM).map(([k, v]) => [v, k]));
 
-/* 탭 → status (명세 준수) */
+/* 탭 → status */
 const STATUS_MAP = {
   ongoing: "BIDDING",
   done: "COMPLETED",
@@ -62,7 +63,7 @@ const STATUS_MAP = {
   rec: "RECOMMENDED",
 };
 
-/* 정렬키 → sort 파라미터 */
+/* 정렬키 ↔ sort 파라미터 */
 const SORT_MAP = {
   "": "CREATED_DESC",
   views: "VIEW_COUNT_DESC",
@@ -70,6 +71,10 @@ const SORT_MAP = {
   priceHigh: "PRICE_DESC",
   bids: "BID_COUNT_DESC",
 };
+const REVERSE_SORT_MAP = Object.fromEntries(Object.entries(SORT_MAP).map(([k, v]) => [v, k]));
+
+/* range → km 매핑(ALL은 전국) */
+const RANGE_TO_KM = { VERY_NEAR: 2, NEAR: 5, MEDIUM: 20, FAR: 50, ALL: null };
 
 const to2 = (n) => String(n).padStart(2, "0");
 const timeLeftFrom = (endAtISO, nowMs) => {
@@ -84,16 +89,14 @@ const timeLeftFrom = (endAtISO, nowMs) => {
 };
 const ymdTZ = (dateLike, timeZone = "Asia/Seoul") => {
   const d = typeof dateLike === "string" ? new Date(dateLike) : dateLike;
-  const fmt = new Intl.DateTimeFormat("en-CA", {
-    timeZone, year: "numeric", month: "2-digit", day: "2-digit",
-  });
+  const fmt = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" });
   return fmt.format(d).replaceAll("-", "/");
 };
 const isEndingTodayKST = (endAtISO, nowMs) =>
   ymdTZ(new Date(nowMs), "Asia/Seoul") === ymdTZ(endAtISO, "Asia/Seoul");
 const isClosed = (endAtISO, nowMs) => new Date(endAtISO).getTime() <= nowMs;
 
-const ITEMS_PER_PAGE = 6; // 요구: 6개씩
+const ITEMS_PER_PAGE = 12;
 
 export default function AuctionList() {
   const location = useLocation();
@@ -101,17 +104,17 @@ export default function AuctionList() {
   const navigate = useNavigate();
 
   const [layout, setLayout] = useState("horizontal");
-  const [page, setPage] = useState(1); // UI용 1-based
+  const [page, setPage] = useState(1);
 
   // 툴바 탭
   const [tab, setTab] = useState("ongoing");
 
   // 사이드바 필터
-  const [categories, setCategories] = useState([]); // 다중 선택
+  const [categories, setCategories] = useState([]);
   const [price, setPrice] = useState({ min: 0, max: 0 });
-  const [sort, setSort] = useState(""); // 기본 최신순은 서버 기본값 CREATED_DESC
-  const [dateFilter, setDateFilter] = useState({ start: "", end: "" });
+  const [sort, setSort] = useState("");
   const [query, setQuery] = useState("");
+  const [range, setRange] = useState("NEAR"); // VERY_NEAR|NEAR|MEDIUM|FAR|ALL
 
   // 서버 응답
   const [server, setServer] = useState({
@@ -123,48 +126,79 @@ export default function AuctionList() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  /* URL → 초기 필터 (선택) */
+  /* URL → 초기 필터 */
   useEffect(() => {
     const qs = new URLSearchParams(search);
+
     const tabQ = qs.get("tab") || "ongoing";
     setTab(["ongoing", "done", "hot", "rec"].includes(tabQ) ? tabQ : "ongoing");
+
+    const q = qs.get("q") || qs.get("query") || "";
+    setQuery(q);
+
+    const uiCat = qs.get("cat");
+    const enums = (qs.get("categories") || "").split(",").map((s) => s.trim()).filter(Boolean);
+    const uiCatsFromEnum = enums.map((e) => ENUM_TO_CAT[e]).filter(Boolean);
+    const nextCats = [];
+    if (uiCat && uiCat !== "all") nextCats.push(uiCat);
+    uiCatsFromEnum.forEach((c) => { if (!nextCats.includes(c)) nextCats.push(c); });
+    setCategories(nextCats);
+
+    const min = Number(qs.get("min") || qs.get("minPrice") || 0);
+    const max = Number(qs.get("max") || qs.get("maxPrice") || 0);
+    setPrice({
+      min: Number.isFinite(min) && min > 0 ? Math.trunc(min) : 0,
+      max: Number.isFinite(max) && max > 0 ? Math.trunc(max) : 0,
+    });
+
+    const sortQ = qs.get("sort");
+    if (sortQ) {
+      const ui = SORT_MAP.hasOwnProperty(sortQ) ? sortQ : (REVERSE_SORT_MAP[sortQ] ?? "");
+      setSort(ui);
+    } else {
+      setSort("");
+    }
+
+    const r = qs.get("range");
+    if (r) setRange(r);
   }, [search]);
 
-  /* 남은 시간 1초 주기 갱신 */
+  /* 1초 주기 타이머 */
   const [nowTick, setNowTick] = useState(Date.now());
   useEffect(() => {
     const t = setInterval(() => setNowTick(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
 
-  /* ===== 서버 요청 파라미터 =====
-     - status: 탭과 연동
-     - categories: 다중 배열 (UI → enum)
-     - minPrice/maxPrice: 0이면 미전송
-     - sort: 미선택 시 기본 CREATED_DESC
-     - page: 서버 0-based로 변환
-     - size: 6
-  */
+  /* 서버 요청 파라미터 (⚠ page는 1-based로 유지) */
   const serverParams = useMemo(() => {
+    const q = (query || "").trim();
     const p = {
       status: STATUS_MAP[tab] || "BIDDING",
-      page: Math.max(0, page - 1),
+      page,                    // ← 여기! 1-based로 전달. service에서 0-based로 변환함
       size: ITEMS_PER_PAGE,
       sort: SORT_MAP[sort] ?? SORT_MAP[""],
+      q,
+      range,
     };
 
-    if (categories?.length) {
-      const enums = categories
-        .map((k) => CAT_TO_ENUM[k])
-        .filter(Boolean);
-      if (enums.length) p.categories = enums;
+    if (range === "ALL") {
+      p.includeOutside = true;
+    } else if (range && range !== "NEAR") {
+      p.includeOutside = false;
+      const km = RANGE_TO_KM[range] ?? RANGE_TO_KM.NEAR;
+      p.distanceKm = km;
     }
 
+    if (categories?.length) {
+      const enums = categories.map((k) => CAT_TO_ENUM[k]).filter(Boolean);
+      if (enums.length) p.categories = enums;
+    }
     if (Number.isFinite(price.min) && price.min > 0) p.minPrice = Math.trunc(price.min);
     if (Number.isFinite(price.max) && price.max > 0) p.maxPrice = Math.trunc(price.max);
 
     return p;
-  }, [tab, categories, price.min, price.max, sort, page]);
+  }, [tab, categories, price.min, price.max, sort, page, query, range]);
 
   /* 목록 API */
   useEffect(() => {
@@ -175,14 +209,13 @@ export default function AuctionList() {
         setError(null);
         const res = await fetchAuctionList(serverParams);
         if (!alive) return;
-
         if (res?.isSuccess) {
           const r = res.result || {};
           setServer({
             items: Array.isArray(r.items) ? r.items : [],
             totalPages: r.totalPages ?? 1,
             size: r.size ?? ITEMS_PER_PAGE,
-            currentPage: (r.currentPage ?? 0),
+            currentPage: r.currentPage ?? 0,
           });
         } else {
           throw new Error(res?.message || "API error");
@@ -198,7 +231,7 @@ export default function AuctionList() {
     return () => { alive = false; };
   }, [serverParams]);
 
-  /* 서버 → 카드 VM */
+  /* 카드 VM */
   const VM = useMemo(() => {
     const now = nowTick;
     return (server.items || []).map((it) => {
@@ -206,10 +239,8 @@ export default function AuctionList() {
       const imgs = Array.isArray(it.imageUrls) ? it.imageUrls.filter(Boolean) : [];
       const images = Array.from(new Set(imgs));
       const cover = images[0] || it.thumbnailUrl || it.imageUrl || "";
-
       const closed = isClosed(endISO, now);
       const endsTodayOpen = !closed && isEndingTodayKST(endISO, now);
-
       return {
         id: it.itemId,
         title: it.title ?? "",
@@ -231,11 +262,15 @@ export default function AuctionList() {
     });
   }, [server.items, nowTick]);
 
-  /* 탭/필터 바뀌면 1페이지로 */
-  useEffect(() => { setPage(1); }, [tab, categories, price.min, price.max, sort]);
+  /* 탭/필터 변경 → 1페이지 */
+  useEffect(() => { setPage(1); }, [tab, categories, price.min, price.max, sort, query, range]);
 
-  /* 전체 페이지 계산은 서버 응답 사용 */
   const totalPages = server.totalPages || 1;
+
+  /* 총 페이지 감소 시 현재 페이지 보정(안전장치) */
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages || 1);
+  }, [totalPages, page]);
 
   return (
     <div className={styles.page}>
@@ -249,8 +284,10 @@ export default function AuctionList() {
               price={price}
               sort={sort}
               query={query}
-              onChangeQuery={setQuery}           // (검색은 프론트 필터 — 필요 시 서버 검색 연동)
-              onChangeCategories={setCategories} // ★ 다중 카테고리
+              range={range}
+              onChangeRange={setRange}
+              onChangeQuery={setQuery}
+              onChangeCategories={setCategories}
               onChangePrice={setPrice}
               onChangeSort={setSort}
               onClear={() => {
@@ -258,6 +295,8 @@ export default function AuctionList() {
                 setPrice({ min: 0, max: 0 });
                 setSort("");
                 setTab("ongoing");
+                setRange("NEAR");
+                setQuery("");
                 setPage(1);
                 navigate({ pathname: location.pathname }, { replace: true });
               }}

@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useMemo } from "react";
 import styles from "../../styles/AuctionRegistration/BasicInfoForm.module.css";
 
 /**
@@ -6,8 +6,17 @@ import styles from "../../styles/AuctionRegistration/BasicInfoForm.module.css";
  * - 제목/내용 입력
  * - 제목은 상위 상태로 올려 PreviewCard에 즉시 반영됨
  */
+const MAX_TITLE = 30;
+const countChars = (s = "") => Array.from(s).length;
+
 function BasicInfoForm({ title = "", description = "", onChange }) {
-  const handleTitle = (e) => onChange?.("title", e.target.value);
+  const titleLen = useMemo(() => countChars(title), [title]);
+  const atLimit = titleLen >= MAX_TITLE;
+
+  const handleTitle = (e) => {
+    const v = e.target.value;
+    onChange?.("title", v);
+  };
   const handleDesc = (e) => onChange?.("description", e.target.value);
 
   return (
@@ -22,15 +31,33 @@ function BasicInfoForm({ title = "", description = "", onChange }) {
         <label className={styles.label} htmlFor="ar-title">
           제목 <span className={styles.required}>*</span>
         </label>
+
         <input
           id="ar-title"
           type="text"
-          className={styles.input}
+          className={`${styles.input} ${atLimit ? styles.inputError : ""}`}
           placeholder="제목을 입력하세요."
           value={title}
           onChange={handleTitle}
           autoComplete="off"
+          maxLength={MAX_TITLE}                 /* 30자 제한 */
+          aria-invalid={atLimit ? "true" : "false"}
+          aria-describedby="ar-title-help"
         />
+
+        <div className={styles.counterRow}>
+          <span
+            id="ar-title-help"
+            className={`${styles.counter} ${atLimit ? styles.counterDanger : ""}`}
+          >
+            {titleLen}/{MAX_TITLE}
+          </span>
+          {atLimit && (
+            <span className={styles.limitHelp}>
+              최대 30자까지 입력 가능합니다.
+            </span>
+          )}
+        </div>
       </div>
 
       {/* 내용 - 고정 높이 + 내부 스크롤 */}

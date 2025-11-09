@@ -1,4 +1,3 @@
-// src/pages/AuctionList/AuctionCardVertical.jsx
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/AuctionList/AuctionCardVertical.module.css";

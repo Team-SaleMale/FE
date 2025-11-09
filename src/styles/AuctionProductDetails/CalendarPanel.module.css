@@ -1,41 +1,143 @@
-.card { background:#fff; border:1px solid rgba(5,11,32,.08); border-radius:16px; padding:16px; font-family:"Pretendard","Malgun Gothic","Noto Sans KR",system-ui,sans-serif; }
-.title { font-size:20px; font-weight:700; margin-bottom:18px; }
+:root{
+  --cal-gap: 8px;            /* 캡슐 연결 간격 */
+  --range-bg: #F1F2F5;       /* 진행 구간 바탕색 */
+}
+
+/* 카드 */
+.card{
+  background:#fff;
+  border:1px solid rgba(5,11,32,.08);
+  border-radius:16px;
+  padding:16px;
+  font-family:"Pretendard","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+}
+.title{ font-size:20px; font-weight:700; margin-bottom:18px; }
 
 /* 상단 텍스트 */
-.row { display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom: 12px; }
-.item { border:1px dashed #E2E6EE; border-radius:12px; padding:12px; }
-.label { color:#8B94A4; font-size:12px; margin-bottom:6px; }
-.value { font-weight:600; }
-.time  { margin-top:2px; font-size:12px; color:#4060F2; font-weight:500; }  /* ← 추가 */
+.row{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:12px; }
+.item{ border:1px dashed #E2E6EE; border-radius:12px; padding:12px; }
+.label{ color:#8B94A4; font-size:12px; margin-bottom:6px; }
+.value{ font-weight:600; }
 
-/* 달력 */
-.calendarWrap { margin-top: 8px; }
-.months { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.month { border:1px solid rgba(5,11,32,.06); border-radius:12px; padding:12px; }
+/* ▶ 시간 색상 한 톤 연하게 */
+.time{
+  margin-top:2px;
+  font-size:12px;
+  color:#2A2F3A;  /* 기존 #1F2430 대비 살짝 연함 */
+  font-weight:500;
+}
 
-.monthHeaderRow { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
-.monthTitleWrap { display:flex; align-items:center; gap:8px; }
-.monthTitle { font-weight:700; font-size:14px; }
-.yearNum { font-size:14px; color:#2F3541; }
-.navBtn { width:28px; height:28px; border:none; border-radius:999px; background:#F3F5FA; cursor:pointer; font-size:18px; line-height:28px; }
-.navDisabled { opacity:.25; pointer-events:none; }
+/* 달력 래퍼 */
+.calendarWrap{ margin-top:8px; }
+.months{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 
-.weekdays { display:grid; grid-template-columns: repeat(7, 1fr); gap: 6px; color:#8B94A4; font-size:11px; text-align:center; margin-bottom:6px; }
-.grid { display:grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-.day { position: relative; min-height: 36px; border-radius:10px; background: #F7F8FA; display:grid; place-items:center; font-size:13px; }
-.dayNum { pointer-events:none; }
-.outside { opacity: .45; }
+/* Month 카드 */
+.month{
+  background:#fff;
+  border:1px solid rgba(5,11,32,.06);
+  border-radius:20px;
+  padding:14px 14px 16px;
+}
 
-.inRange { background: #E8EFFC; }
-.start, .end { background: #CFE0FF; border: 1px solid #0057FF; }
-.start::before, .end::before { content:""; position:absolute; inset: -2px; border: 2px solid #0057FF; border-radius:12px; pointer-events:none; }
-.today { box-shadow: inset 0 0 0 2px #4060F2; }
+/* 헤더 */
+.monthHeaderRow{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.monthTitleWrap{ display:flex; align-items:center; gap:8px; }
+.monthTitle{ font-weight:700; font-size:16px; letter-spacing:.2px; }
+.yearNum{ font-size:16px; color:#2F3541; opacity:.7; }
+.navBtn{ width:32px; height:32px; border:none; border-radius:999px; background:#F2F3F7; cursor:pointer; font-size:18px; line-height:32px; }
+.navDisabled{ opacity:.25; pointer-events:none; }
 
-.legend { display:flex; align-items:center; gap: 12px; margin-top: 12px; font-size:12px; color:#384153; }
-.legendBox { display:inline-block; width:14px; height:14px; border-radius:4px; margin-right:4px; vertical-align:middle; }
-.legendRange { background:#E8EFFC; }
-.legendStart { background:#CFE0FF; border:1px solid #0057FF; }
-.legendToday { background:#fff; box-shadow: inset 0 0 0 2px #4060F2; }
+/* 요일 */
+.weekdays{
+  display:grid; grid-template-columns:repeat(7,1fr); gap:8px;
+  color:#99A0AE; font-size:12px; text-align:center; margin-bottom:8px; letter-spacing:.2px;
+}
 
-@media (max-width: 920px){ .months { grid-template-columns: 1fr; } }
-@media (max-width: 720px){ .row{ grid-template-columns:1fr; } }
+/* 날짜 그리드 */
+.grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:var(--cal-gap); }
+
+/* 날짜 셀 */
+.day{
+  position:relative;
+  min-height:44px;
+  border-radius:12px;
+  background:transparent;
+  display:grid; place-items:center;
+  font-size:14px;
+}
+.dayNum{ position:relative; z-index:1; }
+.outside{ opacity:.45; }
+
+/* ===== 주(week) 단위 캡슐 ===== */
+.inRange::before{
+  content:"";
+  position:absolute; top:0; bottom:0;
+  left: calc(-0.5 * var(--cal-gap));
+  right: calc(-0.5 * var(--cal-gap));
+  background:var(--range-bg);
+  border-radius:0;
+  z-index:0;
+}
+.inRange:nth-child(7n+1)::before{ left:0;  border-top-left-radius:999px;  border-bottom-left-radius:999px; }
+.inRange:nth-child(7n)::before  { right:0; border-top-right-radius:999px; border-bottom-right-radius:999px; }
+
+.start.inRange::before{
+  left:0 !important;
+  border-top-left-radius:999px !important;
+  border-bottom-left-radius:999px !important;
+}
+.end.inRange::before{
+  right:0 !important;
+  border-top-right-radius:999px !important;
+  border-bottom-right-radius:999px !important;
+}
+
+/* ===== 시작/종료/오늘 ===== */
+.start, .end{ background:transparent !important; border:none !important; box-shadow:none !important; }
+
+/* 시작/끝 도트(검은 원형) */
+.start .dayNum, .end .dayNum{
+  background:#111; color:#fff;
+  width:32px; height:32px; border-radius:999px;
+  display:inline-grid; place-items:center;
+  box-shadow:0 0 0 2px #fff;
+}
+
+/* ▶ 오늘 = 검은색 얇은(1px) 테두리, 채우지 않은 원 */
+.today:not(.start):not(.end) .dayNum{
+  width:32px; height:32px;
+  display:inline-grid; place-items:center;
+  border-radius:999px;
+  background:transparent;
+  color:#111;
+  box-shadow: inset 0 0 0 1px #111;  /* 2px → 1px */
+}
+
+/* 오늘이 시작/끝과 겹치는 경우: 검은 도트 + 바깥 검은 링 */
+.today.start .dayNum, .today.end .dayNum{
+  box-shadow:0 0 0 2px #fff, 0 0 0 4px #111;
+}
+
+/* 호버 */
+.day:hover .dayNum{ background:rgba(0,0,0,.04); border-radius:999px; }
+
+/* 범례 */
+.legend{ display:flex; align-items:center; gap:12px; margin-top:12px; font-size:12px; color:#384153; }
+.legendBox{ display:inline-block; width:14px; height:14px; border-radius:999px; margin-right:4px; vertical-align:middle; }
+.legendRange{ background:var(--range-bg); }
+.legendStart{ background:#111; }
+
+/* ▶ 범례의 '오늘'도 얇은(1px) 빈 원으로 */
+.legendToday{
+  background:#fff;
+  box-shadow: inset 0 0 0 1px #111; /* 2px → 1px */
+  border-radius:999px;
+}
+
+/* 반응형 */
+@media (max-width:920px){ .months{ grid-template-columns:1fr; } }
+@media (max-width:720px){
+  .row{ grid-template-columns:1fr; }
+  :root{ --cal-gap:6px; }
+  .day{ min-height:40px; }
+}

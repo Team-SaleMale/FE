@@ -25,19 +25,23 @@ export default function Main() {
         onRegisterClick={() => navigate("/auctions/new")}
       />
 
-      {/* 실시간 인기 경매 (API 연동) */}
+      {/* 실시간 인기 경매 (status=POPULAR) */}
       <Trending />
 
-      {/* 오늘 마감 경매 (API 연동) */}
+      {/* 마감 임박 경매 (sort=END_TIME_ASC) */}
       <Ending />
 
-      {/* 카테고리별 인기 상품 (API 연동) */}
+      {/* 카테고리별 인기 상품 (status=POPULAR + categories) */}
       <CategoryPopular />
+
 
       {/* 이하 섹션 */}
       <Featured />
       <AuctionVideos />
-      <Completed />
+
+      {/* 입찰 완료된 상품 (status=COMPLETED) */}
+      <Completed pageSize={4} size={12} />
+      
       <CompanyIntro />
     </main>
   );

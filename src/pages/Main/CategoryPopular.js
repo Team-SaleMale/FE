@@ -35,7 +35,7 @@ export default function CategoryPopular({ initialCategory = "home-appliance" }) 
   // 데이터 상태
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [items, setItems] = useState([]); // 서버 아이템 그대로(정규화 X)
+  const [items, setItems] = useState([]);
 
   // 탭 페이징
   const tabsPage = CATEGORIES.slice(tabStart, Math.min(tabStart + 7, CATEGORIES.length));
@@ -46,7 +46,7 @@ export default function CategoryPopular({ initialCategory = "home-appliance" }) 
   const gotoNext = () => !atLast && setTabStart((s) => Math.min(CATEGORIES.length - 1, s + 7));
   const goDetail = (id) => navigate(`/auctions/${id}`);
 
-  // 서버 호출: 카테고리별 인기 상품
+  // 서버 호출: 카테고리별 인기 상품 (status=POPULAR, categories=선택된 카테고리)
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -56,16 +56,13 @@ export default function CategoryPopular({ initialCategory = "home-appliance" }) 
         setItems([]);
 
         const res = await fetchCategoryPopular({
-          categoryKey: activeKey, // UI key 그대로 넘겨도 서비스에서 매핑 처리
+          categoryKey: activeKey, // UI key 그대로 넘기면 service에서 enum으로 직렬화
           page: 1,
           size: 12,
         });
 
         if (!alive) return;
-
-        if (!res?.isSuccess) {
-          throw new Error(res?.message || "API error");
-        }
+        if (!res?.isSuccess) throw new Error(res?.message || "API error");
 
         const list = Array.isArray(res.result?.items) ? res.result.items : [];
         setItems(list);
@@ -86,7 +83,7 @@ export default function CategoryPopular({ initialCategory = "home-appliance" }) 
     return arr[0] || it?.thumbnailUrl || it?.imageUrl || "";
   };
 
-  // 화면에 6개만 노출
+  // 화면에 6개만 노출(디자인 기준)
   const top6 = useMemo(() => (items || []).slice(0, 6), [items]);
 
   return (
@@ -115,7 +112,6 @@ export default function CategoryPopular({ initialCategory = "home-appliance" }) 
             })}
           </ul>
 
-          {/* 화살표는 맨 오른쪽 고정 */}
           <div className={styles.tabNav}>
             <button
               type="button"
