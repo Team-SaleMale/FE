@@ -19,8 +19,6 @@ export default function UserStats({ mannerScore = 0, userId, onChatClick, onView
     setLoading(true);
     try {
       const response = await chatService.getChatList(userId, { page: 0, size: 2 });
-      console.log('최근 채팅 조회:', response);
-
       const chatData = response?.data || response || [];
       setRecentChats(chatData);
     } catch (error) {

@@ -67,8 +67,8 @@ export default function LocationDrawer({ open, onClose, currentLocation, current
       const response = await nearbyRegionIds();
       console.log('근처 지역 조회:', response);
 
-      if (response?.data?.isSuccess) {
-        const regionIds = response.data.result || [];
+      if (response?.isSuccess) {
+        const regionIds = response.result || [];
         setNearbyCount(regionIds.length);
       } else {
         setNearbyCount(0);
@@ -288,7 +288,19 @@ export default function LocationDrawer({ open, onClose, currentLocation, current
         (error) => {
           setIsLoading(false);
           console.error("위치 정보 가져오기 실패:", error);
-          alert("위치 정보를 가져올 수 없습니다. 위치 권한을 확인해주세요.");
+          console.error("에러 코드:", error.code);
+          console.error("에러 메시지:", error.message);
+
+          let errorMsg = "위치 정보를 가져올 수 없습니다. ";
+          if (error.code === 1) {
+            errorMsg += "위치 권한이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해주세요.";
+          } else if (error.code === 2) {
+            errorMsg += "위치 정보를 사용할 수 없습니다.";
+          } else if (error.code === 3) {
+            errorMsg += "위치 정보 요청 시간이 초과되었습니다.";
+          }
+
+          alert(errorMsg);
         },
         {
           enableHighAccuracy: true, // 높은 정확도 사용
@@ -484,10 +496,9 @@ export default function LocationDrawer({ open, onClose, currentLocation, current
 
       // 2. 동네 설정
       console.log('onSave 호출, region 전달:', selectedRegion);
-      onSave(selectedRegion);
+      await onSave(selectedRegion);
 
-      alert('동네와 활동 반경이 설정되었습니다!');
-      onClose();
+      // MyPage에서 성공 메시지와 drawer 닫기를 처리
     } catch (error) {
       console.error('저장 실패:', error);
       alert('설정 저장 중 오류가 발생했습니다.');
@@ -513,12 +524,6 @@ export default function LocationDrawer({ open, onClose, currentLocation, current
         <div className={styles.rangeSection}>
           <div className={styles.rangeSectionHeader}>
             <h4 className={styles.rangeSectionTitle}>활동 반경</h4>
-            {nearbyCount !== null && !loadingNearby && (
-              <span className={styles.nearbyCount}>근처 지역 {nearbyCount}개</span>
-            )}
-            {loadingNearby && (
-              <span className={styles.nearbyCount}>조회 중...</span>
-            )}
           </div>
           <div className={styles.rangeButtonsGrid}>
             <button

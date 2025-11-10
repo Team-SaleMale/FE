@@ -58,11 +58,18 @@ export default function MyPage() {
         const response = await myProfile();
         console.log('프로필 응답:', response);
         if (response.isSuccess) {
-          setUserProfile(response.result);
-          // 프로필에 지역 정보가 있으면 설정
-          if (response.result?.region?.displayName) {
-            setUserLocation(response.result.region.displayName);
+          // regions 배열에 displayName 추가
+          if (response.result?.regions && response.result.regions.length > 0) {
+            response.result.regions = response.result.regions.map(region => ({
+              ...region,
+              displayName: `${region.sido} ${region.sigungu} ${region.eupmyeondong}`
+            }));
+
+            // 첫 번째 지역을 주 활동 지역으로 설정
+            setUserLocation(response.result.regions[0].displayName);
           }
+
+          setUserProfile(response.result);
         }
       } catch (err) {
         console.error('프로필 조회 실패:', err);
@@ -372,6 +379,13 @@ export default function MyPage() {
         // 프로필 다시 조회하여 최신 정보 반영
         const profileResponse = await myProfile();
         if (profileResponse.isSuccess) {
+          // regions 배열에 displayName 추가
+          if (profileResponse.result?.regions && profileResponse.result.regions.length > 0) {
+            profileResponse.result.regions = profileResponse.result.regions.map(r => ({
+              ...r,
+              displayName: `${r.sido} ${r.sigungu} ${r.eupmyeondong}`
+            }));
+          }
           setUserProfile(profileResponse.result);
         }
         alert("동네가 설정되었습니다!");
@@ -490,7 +504,7 @@ export default function MyPage() {
           onClose={closeLocationDrawer}
           currentLocation={userLocation}
           currentRange={userProfile?.rangeSetting}
-          currentRegion={userProfile?.region}
+          currentRegion={userProfile?.regions?.[0]}
           onSave={handleSaveLocation}
         />
         <NicknameChangeDrawer
