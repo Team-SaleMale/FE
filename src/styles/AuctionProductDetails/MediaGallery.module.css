@@ -1,193 +1,174 @@
-:root {
-  --line: rgba(5, 11, 32, .08);
+:root{
   --panel-grad: linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,.95));
-  --bg-soft: #0b0f20;
-  --thumb-bg: #EEF1F6;
-  --white: #fff;
-  --brand: #405FF2;
+  --bg-soft:#0b0f20;
+  --white:#fff;
+  --brand:#405FF2;
+  --shadow-sm:0 6px 16px rgba(5,11,32,.08);
+  --shadow-md:0 10px 28px rgba(5,11,32,.10), 0 22px 44px rgba(5,11,32,.14);
+  --r-xl:24px;
 
-  --r-xl: 24px;
-  --r-lg: 18px;
-  --shadow-sm: 0 6px 16px rgba(5,11,32,.08);
-  --shadow-md: 0 10px 28px rgba(5,11,32,.10), 0 22px 44px rgba(5,11,32,.14);
+  /* Lightbox layout vars */
+  --lb-vpad:48px;         /* 상하 패딩 */
+  --lb-hpad:72px;         /* 좌우 패딩 */
+  --lb-gap:16px;          /* 이미지-썸네일 사이 간격 */
+  --lb-thumb-h:96px;      /* 썸네일 높이 */
 }
 
-/* 카드 톤 */
-.gallery {
-  background: var(--panel-grad);
-  border-radius: var(--r-xl);
-  box-shadow: var(--shadow-md);
-  padding: 18px;
-  border: 1px solid rgba(12,16,34,.06);
-  backdrop-filter: saturate(1.2) blur(2px);
+/* 카드 */
+.gallery{
+  background:var(--panel-grad);
+  border-radius:var(--r-xl);
+  box-shadow:var(--shadow-md);
+  padding:18px;
+  border:1px solid rgba(12,16,34,.06);
+  backdrop-filter:saturate(1.2) blur(2px);
 }
 
-/* ===== 메인 뷰 – 프레임 고정(크롭 허용) ===== */
-.mainShot {
-  position: relative;
-  overflow: hidden;
-  border-radius: 18px;
-  box-shadow: var(--shadow-md);
-  background: var(--bg-soft);
-
-  height: clamp(300px, 48vh, 520px);  /* 고정 프레임 느낌 */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: zoom-in;
+/* 메인 프리뷰 */
+.mainShot{
+  position:relative;
+  overflow:hidden;
+  border-radius:18px;
+  box-shadow:var(--shadow-md);
+  background:var(--bg-soft);
+  height:clamp(300px,48vh,520px);
+  display:flex; align-items:center; justify-content:center;
+  cursor:zoom-in;
+}
+.mainMedia{
+  width:100%; height:100%;
+  object-fit:cover; object-position:center;
+  user-select:none; -webkit-user-drag:none;
+  background:var(--bg-soft);
+}
+.mainOverlay{
+  position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(180deg, rgba(0,0,0,.12), rgba(0,0,0,0) 35%);
+}
+.badge{
+  position:absolute; right:12px; bottom:12px;
+  font-size:12px; color:var(--white);
+  background:rgba(0,0,0,.45); padding:4px 8px; border-radius:999px;
 }
 
-.mainMedia {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;        /* 프레임에 예쁘게 채움 (잘려도 OK) */
-  object-position: center;
-  user-select: none;
-  -webkit-user-drag: none;
-  background: var(--bg-soft);
+/* 본문 썸네일 */
+.thumbRow{
+  margin:14px 0 0; padding:0; list-style:none;
+  display:grid; grid-template-columns:repeat(6, minmax(0,1fr)); gap:10px;
+}
+.thumb{
+  width:100%; aspect-ratio:1.4/1;
+  border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,.6);
+  background:var(--panel-grad); box-shadow:var(--shadow-sm);
+  cursor:pointer; padding:0; display:grid; place-items:center;
+  transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+.thumb:hover{ transform:translateY(-2px); box-shadow:var(--shadow-md); }
+.active{ outline:2.5px solid rgba(64,95,242,.45); outline-offset:0; }
+.videoThumb{
+  width:100%; height:100%; display:grid; place-items:center;
+  background:linear-gradient(180deg,#E9ECF4 0%,#DDE2EE 100%);
 }
 
-/* 살짝 그라디언트 오버레이 */
-.mainOverlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(180deg, rgba(0,0,0,.12), rgba(0,0,0,0) 35%);
+/* ================= 라이트박스(Portal) ================= */
+@keyframes lbFade{ from{opacity:0} to{opacity:1} }
+
+.lbBackdrop{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.92);
+  z-index:99999;
+  display:flex; align-items:center; justify-content:center;
+  animation:lbFade .15s ease-out;
 }
 
-/* 인덱스 배지 */
-.badge {
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
-  font-size: 12px;
-  color: var(--white);
-  background: rgba(0,0,0,.45);
-  padding: 4px 8px;
-  border-radius: 999px;
+/* 스테이지를 2행 그리드(이미지 1fr, 썸네일 auto)로 구성 */
+.lbStage{
+  position:relative;
+  width:100%; height:100%;
+  display:grid;
+  grid-template-rows: 1fr auto;
+  align-items:center; justify-items:center;
+  padding:var(--lb-vpad) var(--lb-hpad);
+  row-gap:var(--lb-gap);
+  box-sizing:border-box;
 }
 
-/* 썸네일 그리드 */
-.thumbRow {
-  margin: 14px 0 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 10px;
+/* 이미지: 그리드 1행을 꽉 채움 + 썸네일 영역을 제외한 뷰포트 내에서 최대화 */
+.lbMedia{
+  max-width: min(1680px, calc(100vw - (2 * var(--lb-hpad))));
+  max-height: calc(100vh - (2 * var(--lb-vpad)) - var(--lb-thumb-h) - var(--lb-gap));
+  width:auto; height:auto;
+  object-fit:contain; background:#000; border-radius:12px;
+  box-shadow:0 20px 60px rgba(0,0,0,.4);
+  justify-self:center; align-self:center;
 }
 
-.thumb {
-  width: 100%;
-  aspect-ratio: 1.4 / 1;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid rgba(255,255,255,.6);
-  background: var(--panel-grad);
-  box-shadow: var(--shadow-sm);
-  cursor: pointer;
-  padding: 0;
-  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
-  display: grid;
-  place-items: center;
+/* 원형 화살표(세로 중앙 고정) */
+.lbArrow{
+  position:absolute; top:50%; transform:translateY(-50%);
+  width:56px; height:56px; border-radius:999px;
+  background:#fff; color:#111; border:1px solid rgba(0,0,0,.25);
+  box-shadow:0 6px 18px rgba(0,0,0,.25);
+  font-size:30px; line-height:54px; text-align:center;
+  cursor:pointer; user-select:none;
 }
-.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.thumb:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-.active { outline: 2.5px solid rgba(64,95,242,.45); outline-offset: 0; }
+.lbArrow:hover{ background:#f7f7f7; }
+.left{ left:60px; }
+.right{ right:60px; }
 
-.videoThumb {
-  width: 100%;
-  height: 100%;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(180deg,#E9ECF4 0%,#DDE2EE 100%);
+/* 닫기/카운터 */
+.lbClose{
+  position:absolute; top:28px; right:28px;
+  padding:8px 14px; border-radius:10px;
+  border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.12); color:#fff;
+  font-size:14px; cursor:pointer; backdrop-filter:blur(6px);
 }
+.lbClose:hover{ background:rgba(255,255,255,.18); }
 
-/* =============== 좌측 도킹 확대 뷰 =============== */
-/* 오른쪽 입찰패널 폭을 --aside-w 로 비워둔다(기본 460px). */
-.dock {
-  --aside-w: 460px;
-  position: fixed;
-  top: 24px;
-  left: 24px;
-  right: calc(var(--aside-w) + 24px);
-  bottom: 24px;
-  z-index: 9998; /* 페이지 위로, 오른쪽 패널은 비워둠 */
-  pointer-events: none; /* 내부만 클릭 가능하도록 */
+/* 카운터는 이미지 영역 안쪽 우하단에 고정(썸네일 영역을 피해 계산) */
+.lbCounter{
+  position:absolute;
+  right:28px;
+  bottom: calc(var(--lb-thumb-h) + var(--lb-gap) + 24px);
+  font-size:12px; color:#fff; background:rgba(0,0,0,.55);
+  padding:6px 10px; border-radius:999px;
 }
 
-.dockInner {
-  position: relative;
-  height: 100%;
-  width: 100%;
-  background: rgba(10,12,20,.82);
-  border-radius: 20px;
-  box-shadow: 0 24px 64px rgba(0,0,0,.35);
-  display: grid;
-  place-items: center;
-  padding: 14px;
-  pointer-events: auto; /* 내부는 클릭 가능 */
+/* 하단 썸네일 스트립: 이제 '정상 흐름'(static)으로 배치되어 겹치지 않음 */
+.lbThumbs{
+  width:100%;
+  height:var(--lb-thumb-h);
+  display:flex; gap:10px; padding:10px;
+  background:rgba(0,0,0,.35); border-radius:12px;
+  overflow:auto hidden;
+  align-items:center;
 }
-
-/* X 버튼 (우상단, 박스 안쪽) */
-.dockClose {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.16);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,.28);
-  font-size: 24px;
-  line-height: 40px;
-  text-align: center;
-  cursor: pointer;
-  backdrop-filter: blur(6px);
-  z-index: 2;
+.lbThumb{
+  width:128px; height:calc(var(--lb-thumb-h) - 20px);
+  border-radius:10px; overflow:hidden;
+  border:1px solid rgba(255,255,255,.25); background:#111; padding:0; cursor:pointer;
+  flex:0 0 auto;
 }
-.dockClose:hover { background: rgba(255,255,255,.22); }
+.lbThumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+.lbThumb.active{ outline:2px solid rgba(255,255,255,.9); outline-offset:0; }
+.videoPill{ display:inline-block; color:#fff; font-size:12px; padding:6px 10px; }
 
-.dockStage {
-  width: 100%;
-  height: 100%;
-  display: grid;
-  place-items: center;
-}
-
-/* 확대 미디어: 도킹 영역을 꽉 채우되 노크롭 */
-.dockMedia {
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  background: #000;
-  border-radius: 12px;
-}
-
-/* 카운터 */
-.dockCounter {
-  position: absolute;
-  right: 16px;
-  bottom: 12px;
-  font-size: 12px;
-  color: #fff;
-  background: rgba(0,0,0,.55);
-  padding: 5px 10px;
-  border-radius: 999px;
-  z-index: 2;
+/* 대화면 보정 */
+@media (min-width:1600px){
+  .lbMedia{ max-width: min(1800px, calc(100vw - (2 * var(--lb-hpad)))); }
 }
 
 /* 반응형 */
-@media (max-width: 1080px) {
-  .mainShot { height: clamp(260px, 44vh, 480px); }
-  /* 화면이 좁으면 도킹도 여백을 조금 축소 */
-  .dock { right: calc(var(--aside-w) + 16px); left: 16px; top: 16px; bottom: 16px; }
+@media (max-width:1080px){
+  .mainShot{ height:clamp(260px,44vh,480px); }
+  .left{ left:32px; } .right{ right:32px; }
+  :root{ --lb-hpad:56px; }
 }
-@media (max-width: 640px) {
-  .mainShot { height: 320px; }
-  .thumbRow { grid-template-columns: repeat(4, minmax(0,1fr)); }
-  .dock { right: 16px; left: 16px; } /* 모바일에선 입찰패널이 아래로 내려가므로 전체 폭 사용 */
+@media (max-width:640px){
+  .mainShot{ height:320px; }
+  .thumbRow{ grid-template-columns:repeat(4, minmax(0,1fr)); }
+  :root{ --lb-vpad:36px; --lb-hpad:44px; --lb-thumb-h:72px; }
+  .left{ left:22px; } .right{ right:22px; }
 }

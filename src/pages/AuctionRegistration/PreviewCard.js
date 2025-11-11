@@ -57,7 +57,7 @@ export default function PreviewCard({
 
   return (
     <article className={styles.card} tabIndex={-1} aria-label="preview card">
-      {/* 썸네일 (고정 높이 내) */}
+      {/* 썸네일 */}
       <div className={styles.thumb}>
         {images.length ? (
           <div
@@ -79,9 +79,6 @@ export default function PreviewCard({
         ) : (
           <div className={styles.empty} />
         )}
-
-        {/* 오늘 마감 배지(필요 시 프롭으로 제어 가능) */}
-        {/* <span className={styles.badge}>오늘 마감 경매</span> */}
 
         {/* 슬라이더 컨트롤 */}
         {hasMulti && (
@@ -119,7 +116,7 @@ export default function PreviewCard({
         )}
       </div>
 
-      {/* 본문: 내용 필드 그대로 */}
+      {/* 본문 */}
       <div className={styles.body}>
         <h3 className={styles.title} title={title}>{title}</h3>
 

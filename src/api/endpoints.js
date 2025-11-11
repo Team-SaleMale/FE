@@ -19,6 +19,7 @@ const endpoints = {
     OAUTH2_KAKAO: "/oauth2/authorization/kakao",
     OAUTH2_NAVER: "/oauth2/authorization/naver",
     OAUTH2_COMPLETE: "/auth/social/complete",
+    REGION_SEARCH: "/search/regions",
   },
 
   USERS: {

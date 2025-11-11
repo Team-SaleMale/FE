@@ -1,4 +1,3 @@
-// src/pages/AuctionProductDetails/BidPanel.js
 import { useEffect, useMemo, useState } from "react";
 import styles from "../../styles/AuctionProductDetails/BidPanel.module.css";
 
@@ -46,11 +45,13 @@ export default function BidPanel({
 
   const fmtKRW = (n) => (typeof n === "number" ? `₩${n.toLocaleString("ko-KR")}` : "-");
 
-  const unit = price?.unitStep ?? 1000;
-  // UI 표기는 시작가(고정)
-  const startMin = price?.startPrice ?? 0;
-  // 실제 검증용(현재가 기준 다음 최소 허용가)
-  const nextAllowed = Math.max((price?.current ?? 0) + unit, startMin);
+  const startPrice = Number(price?.startPrice ?? 0);
+  const current    = Number(price?.current ?? 0);
+  const step       = Number(price?.unitStep ?? 0);
+
+  // 서버 규칙: 최소 입찰가 = max(현재가, 시작가) + 최소호가
+  const effectiveCurrent = Math.max(current, startPrice);
+  const minAllowed = effectiveCurrent + (step > 0 ? step : 0);
 
   const participantsCount = useMemo(() => {
     if (Array.isArray(bidItems)) return bidItems.length;
@@ -64,7 +65,7 @@ export default function BidPanel({
     setRaw(digits);
   };
   const numeric = raw ? Number(raw) : 0;
-  const canBid = raw !== "" && numeric >= nextAllowed;
+  const canBid = raw !== "" && numeric >= minAllowed;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -103,16 +104,10 @@ export default function BidPanel({
         </div>
       </div>
 
-      {/* 시작가(고정) */}
+      {/* 시작가 */}
       <div className={styles.section}>
         <div className={styles.h2}>시작가</div>
-        <div className={styles.kpi}>{fmtKRW(startMin)}</div>
-      </div>
-
-      {/* 다음 최소 입찰가(검증 기준) */}
-      <div className={styles.section}>
-        <div className={styles.h2}>다음 최소 입찰가</div>
-        <div className={styles.kpi}>{fmtKRW(nextAllowed)}</div>
+        <div className={styles.kpi}>{fmtKRW(startPrice)}</div>
       </div>
 
       {/* 희망가 입력 */}
@@ -134,8 +129,10 @@ export default function BidPanel({
           <span className={styles.suffix}>원</span>
         </div>
 
-        {raw !== "" && numeric < nextAllowed && (
-          <div className={styles.helper}>{fmtKRW(nextAllowed)} 이상부터 입찰 가능해요.</div>
+        {raw !== "" && numeric < minAllowed && (
+          <div className={styles.helper}>
+            {`${fmtKRW(minAllowed)} 이상부터 입찰 가능해요. (현재가 ${fmtKRW(effectiveCurrent)}, 최소호가 ${fmtKRW(step)})`}
+          </div>
         )}
 
         <button className={styles.btn} type="submit" disabled={!canBid}>

@@ -1,11 +1,11 @@
 /* eslint-disable jsx-a11y/role-supports-aria-props */
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import styles from "../../styles/AuctionProductDetails/MediaGallery.module.css";
 
 /**
  * props.images(optional): [{ id?:string|number, url:string, type?:'image'|'video', alt?:string }]
- * props.asideWidth(optional): 오른쪽 입찰 패널 포함 여백 폭(px). 기본 460
- * - 없는 경우 로컬 더미 5장 사용
+ * - 없는 경우 로컬 더미 사용
  */
 import img1 from "../../assets/img/AuctionProductDetails/ProductImage/ipad-01.png";
 import img2 from "../../assets/img/AuctionProductDetails/ProductImage/ipad-02.png";
@@ -13,7 +13,7 @@ import img3 from "../../assets/img/AuctionProductDetails/ProductImage/ipad-03.pn
 import img4 from "../../assets/img/AuctionProductDetails/ProductImage/ipad-04.png";
 import img5 from "../../assets/img/AuctionProductDetails/ProductImage/ipad-05.png";
 
-export default function MediaGallery({ images, asideWidth = 460 }) {
+export default function MediaGallery({ images }) {
   const fallback = useMemo(
     () => [
       { id: 1, url: img1, type: "image", alt: "상품 이미지 1" },
@@ -25,33 +25,45 @@ export default function MediaGallery({ images, asideWidth = 460 }) {
     []
   );
 
-  const media = (images && images.length ? images : fallback).slice(0, 10);
+  const media = (images && images.length ? images : fallback).slice(0, 20);
   const [index, setIndex] = useState(0);
   const [open, setOpen] = useState(false);
 
   const current = media[index];
   const showThumbs = media.length > 1;
 
-  const openDock = () => setOpen(true);
-  const closeDock = () => setOpen(false);
+  const openLightbox = () => setOpen(true);
+  const closeLightbox = () => setOpen(false);
+  const prev = () => setIndex((i) => (i - 1 + media.length) % media.length);
+  const next = () => setIndex((i) => (i + 1) % media.length);
 
-  // ESC 닫기
+  // ESC / 좌우 키, 바디 스크롤 잠금
   useEffect(() => {
     if (!open) return;
-    const onKey = (e) => e.key === "Escape" && closeDock();
+    const onKey = (e) => {
+      if (e.key === "Escape") closeLightbox();
+      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowRight") next();
+    };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, media.length]);
 
   return (
     <div className={styles.gallery} aria-label="상품 미디어 갤러리">
-      {/* 메인 뷰: 프레임 고정(크롭 허용) */}
+      {/* 메인 뷰 */}
       <div
         className={styles.mainShot}
-        onClick={openDock}
+        onClick={openLightbox}
         role="button"
         tabIndex={0}
-        onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openDock()}
+        onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openLightbox()}
         aria-label="이미지 크게 보기"
       >
         {current?.type !== "video" ? (
@@ -73,7 +85,7 @@ export default function MediaGallery({ images, asideWidth = 460 }) {
         <div className={styles.mainOverlay} />
       </div>
 
-      {/* 썸네일 */}
+      {/* 썸네일(본문) */}
       {showThumbs && (
         <ul className={styles.thumbRow} role="listbox" aria-label="상품 이미지 썸네일">
           {media.map((m, i) => (
@@ -87,7 +99,7 @@ export default function MediaGallery({ images, asideWidth = 460 }) {
                 title={`이미지 ${i + 1}`}
               >
                 {m.type !== "video" ? (
-                  <img src={m.url} alt={m.alt || `썸ने일 ${i + 1}`} />
+                  <img src={m.url} alt={m.alt || `썸네일 ${i + 1}`} />
                 ) : (
                   <div className={styles.videoThumb}>VIDEO</div>
                 )}
@@ -97,46 +109,97 @@ export default function MediaGallery({ images, asideWidth = 460 }) {
         </ul>
       )}
 
-      {/* 좌측 도킹 확대 뷰 (오른쪽 패널 폭만큼 비워둠) */}
-      {open && (
-        <div
-          className={styles.dock}
-          style={{ "--aside-w": `${asideWidth}px` }}
-          role="dialog"
-          aria-modal="true"
-          aria-label="확대 이미지 보기"
-        >
-          <div className={styles.dockInner}>
-            <button
-              type="button"
-              className={styles.dockClose}
-              aria-label="닫기"
-              onClick={closeDock}
+      {/* ===== 전체 화면 라이트박스 (Portal) ===== */}
+      {open &&
+        createPortal(
+          <div
+            className={styles.lbBackdrop}
+            role="dialog"
+            aria-modal="true"
+            aria-label="확대 이미지 보기"
+            onClick={closeLightbox} // 배경 클릭 닫기
+          >
+            {/* 가운데 스테이지 */}
+            <div
+              className={styles.lbStage}
+              onClick={(e) => e.stopPropagation()} // 내부 클릭은 유지
             >
-              ×
-            </button>
+              {/* 왼쪽/오른쪽 원형 화살표 */}
+              {media.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    className={`${styles.lbArrow} ${styles.left}`}
+                    aria-label="이전 이미지"
+                    onClick={prev}
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.lbArrow} ${styles.right}`}
+                    aria-label="다음 이미지"
+                    onClick={next}
+                  >
+                    ›
+                  </button>
+                </>
+              )}
 
-            <div className={styles.dockStage}>
+              {/* 닫기 버튼 */}
+              <button
+                type="button"
+                className={styles.lbClose}
+                aria-label="닫기"
+                onClick={closeLightbox}
+              >
+                닫기
+              </button>
+
+              {/* 실제 이미지/영상 */}
               {current?.type !== "video" ? (
                 <img
                   src={current?.url}
                   alt={current?.alt || "상품 이미지 확대"}
-                  className={styles.dockMedia}
+                  className={styles.lbMedia}
                   draggable="false"
                 />
               ) : (
-                <video className={styles.dockMedia} src={current.url} controls autoPlay />
+                <video className={styles.lbMedia} src={current.url} controls autoPlay />
+              )}
+
+              {/* 카운터 */}
+              {showThumbs && (
+                <div className={styles.lbCounter}>
+                  {index + 1} / {media.length}
+                </div>
+              )}
+
+              {/* 하단 썸네일 스트립 */}
+              {showThumbs && (
+                <div className={styles.lbThumbs}>
+                  {media.map((m, i) => (
+                    <button
+                      key={m.id ?? i}
+                      type="button"
+                      className={`${styles.lbThumb} ${i === index ? styles.active : ""}`}
+                      onClick={() => setIndex(i)}
+                      aria-label={`미리보기 ${i + 1}`}
+                      title={`이미지 ${i + 1}`}
+                    >
+                      {m.type !== "video" ? (
+                        <img src={m.url} alt={m.alt || `미리보기 ${i + 1}`} />
+                      ) : (
+                        <span className={styles.videoPill}>VIDEO</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
-
-            {showThumbs && (
-              <div className={styles.dockCounter}>
-                {index + 1} / {media.length}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

@@ -1,11 +1,7 @@
 /* =========================================
    PreviewCard.module.css
-   - AuctionCardVertical 톤 & 네이티브 스와이프 슬라이더(Scroll-Snap)
-   - 고정 높이 유지 + 가격 영역 잘림 방지
-   - hover 시 다음 이미지 '비침' 현상 제거
    ========================================= */
 
-/* ---------- Design tokens ---------- */
 :root{
   --ink-121:#121316; --ink-900:#1F2226; --ink-700:#383E48;
   --muted:#6B7280; --line:#DDDFE3; --card-border: rgba(5,11,32,.08);
@@ -13,14 +9,20 @@
   --radius:16px;
 }
 
-/* ---------- Card shell (고정 높이) ---------- */
+/* ---------- Card shell ---------- */
 .card{
-  
   box-sizing:border-box;
   width:100%;
-  height:580px;                /* 가격 박스 여유 확보 */
+
+  /* 고정 height 제거 → 자연스런 본문/하단 간격 */
+  height:auto;
+  min-height:540px;
+
   padding:16px;
-  display:flex; flex-direction:column; gap:12px;
+  display:flex; 
+  flex-direction:column; 
+  gap:16px;
+
   background:var(--white);
   border:1px solid var(--card-border);
   border-radius:var(--radius);
@@ -36,15 +38,14 @@
   }
 }
 
-/* ---------- Thumbnail(슬라이더 컨테이너) ---------- */
+/* ---------- Thumbnail ---------- */
 .thumb{
   position:relative;
   flex:0 0 auto;
   border-radius:var(--radius);
-  overflow:hidden;             /* 라운드 마스크 */
+  overflow:hidden;
 }
 
-/* 스크롤 스냅 슬라이더 */
 .slider{
   display:flex;
   width:100%;
@@ -52,39 +53,32 @@
   overscroll-behavior-x:contain;
   -webkit-overflow-scrolling:touch;
   scroll-snap-type:x mandatory;
-  /* 좌측 기준 스냅: '다음 이미지 비침' 예방 */
   scroll-padding-inline:0;
   scroll-behavior:smooth;
-  scrollbar-width:none; /* firefox */
+  scrollbar-width:none;
 }
 .slider::-webkit-scrollbar{ display:none; }
 
 .slide{
   flex:0 0 100%;
-  /* 좌측 기준으로 정확히 맞추기 */
   scroll-snap-align:start;
   scroll-snap-stop:always;
   display:flex; align-items:center; justify-content:center;
-  /* 확대 여백이 오른쪽으로 새지 않게 클리핑 */
   overflow:hidden;
 }
 
-/* 이미지 */
 .thumbImg{
   width:100%;
-  aspect-ratio:1/1;            /* 정사각 비율 고정 */
+  aspect-ratio:1/1;
   object-fit:cover;
   display:block;
   border-radius:var(--radius);
   background:var(--bg-soft);
   border:1px solid #EEF1F6;
-  /* hover 확대 제거: 미세 스크롤/비침 현상 방지 */
   transition:box-shadow .25s ease;
 }
 @media (hover:hover){
-  .card:hover .thumbImg{
-    box-shadow:inset 0 0 0 0 rgba(0,0,0,0); /* 시각 효과 최소화 */
-  }
+  .card:hover .thumbImg{ box-shadow:inset 0 0 0 0 rgba(0,0,0,0); }
 }
 
 .empty{
@@ -102,37 +96,19 @@
   background:#fff; border:1px solid rgba(0,0,0,.06);
   box-shadow:0 2px 6px rgba(0,0,0,.08);
   z-index:2;
-
-  opacity:0;
-  visibility:hidden;
-  pointer-events:none;
+  opacity:0; visibility:hidden; pointer-events:none;
   transition:opacity .15s ease, transform .15s ease, visibility .15s ease;
 }
 .prev{ left:12px; } .next{ right:12px; }
 .nav svg{ width:18px; height:18px; }
 
 @media (hover:hover){
-  .thumb:hover .nav{
-    opacity:.55;
-    visibility:visible;
-    pointer-events:auto;
-  }
-  .thumb:hover .nav:hover{
-    opacity:.9;
-    transform:translateY(-50%) scale(1.03);
-  }
+  .thumb:hover .nav{ opacity:.55; visibility:visible; pointer-events:auto; }
+  .thumb:hover .nav:hover{ opacity:.9; transform:translateY(-50%) scale(1.03); }
 }
-
-/* 키보드 접근성 */
-.thumb:has(.nav:focus-visible) .nav{
-  opacity:.8; visibility:visible; pointer-events:auto;
-}
+.thumb:has(.nav:focus-visible) .nav{ opacity:.8; visibility:visible; pointer-events:auto; }
 .nav:focus-visible{ outline:2px solid rgba(0,70,204,.35); outline-offset:2px; }
-
-/* 터치 기기: 항상 표시(약한 불투명도) */
-@media (hover:none){
-  .nav{ opacity:.34; visibility:visible; pointer-events:auto; }
-}
+@media (hover:none){ .nav{ opacity:.34; visibility:visible; pointer-events:auto; } }
 
 /* ---------- Dots ---------- */
 .dots{
@@ -147,22 +123,13 @@
 }
 .activeDot{ opacity:1; box-shadow:0 0 0 2px rgba(0,0,0,.06); }
 
-/* ---------- 오늘 마감 배지(옵션) ---------- */
-.badge{
-  position:absolute; top:12px; left:12px; z-index:2;
-  display:inline-flex; align-items:center; justify-content:center;
-  padding:7px 12px; border-radius:9999px;
-  font:700 13px/1 system-ui;
-  color:var(--ink-900); background:#f6f8fb91; border:1px solid #e6e9f0d3;
-  box-shadow:inset 0 -1px 0 rgba(0,0,0,.02);
-}
-
 /* ---------- Body ---------- */
 .body{
   min-width:0;
   display:grid;
-  grid-template-rows:auto auto auto 1fr auto; /* title / views / meta / spacer / price */
-  row-gap:10px;
+  /* 1fr 스페이서 제거 → 불필요한 큰 빈 영역 방지 */
+  grid-template-rows:auto auto auto auto; /* title / views / meta / price */
+  row-gap:12px;
   overflow:visible;
 }
 
@@ -190,12 +157,15 @@
 .metaItem svg{ width:18px; height:18px; color:var(--ink-700); opacity:.95; }
 .metaItem span{ display:block; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-/* ---------- Price (항상 보이도록 하단 고정) ---------- */
+/* ---------- Price ---------- */
 .priceBox{
   display:flex; flex-direction:column; gap:8px;
-  padding-top:12px; border-top:1px dashed var(--line);
-  margin-top:auto;
-  min-height:48px;
+  padding-top:12px; 
+  border-top:1px dashed var(--line);
+
+  /* 더 넉넉하지만 과하지 않게 */
+  margin-top:8px;
+  padding-bottom:4px;
 }
 .label{ color:var(--muted); font-size:13px; line-height:1; margin:0; }
 .priceItem{ display:flex; align-items:baseline; gap:8px; min-height:22px; }
@@ -204,24 +174,18 @@
 .current{ color:var(--ink-900); font-weight:700; }
 
 /* ---------- Responsive ---------- */
-@media (max-width:1439px){
-  .card{ height:570px; }
-}
 @media (max-width:1279px){
-  .card{ height:560px; }
   .nav{ width:30px; height:30px; } .nav svg{ width:16px; height:16px; }
 }
 @media (max-width:860px){
   .title{ font-size:clamp(16px,2.2vw,18px); }
   .metaItem{ font-size:14px; line-height:1.32; }
 }
-
-/* ---------- Mobile (≤640px): 프리뷰 영역 고려 ---------- */
 @media (max-width:640px){
   .card{
-    height:auto;               /* 모바일은 화면 폭 대비 가변 */
+    min-height:unset;
     padding:14px;
-    padding-bottom:calc(14px + env(safe-area-inset-bottom, 0));
+    padding-bottom:calc(16px + env(safe-area-inset-bottom, 0));
   }
   .nav{ width:28px; height:28px; } .nav svg{ width:15px; height:15px; }
   .dots{ left:6px; right:6px; bottom:8px; gap:6px; }

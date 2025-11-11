@@ -10,33 +10,33 @@ const formatWon = (n) => "₩" + Number(n ?? 0).toLocaleString("ko-KR");
 
 /** 서버 → 뷰모델 매핑 */
 function mapRow(it) {
-  const imgs = Array.isArray(it.imageUrls) ? it.imageUrls.filter(Boolean) : [];
-  const firstImg = imgs[0] || it.thumbnailUrl || it.imageUrl || "";
+  const imgs = Array.isArray(it?.imageUrls) ? it.imageUrls.filter(Boolean) : [];
+  const firstImg = imgs[0] || it?.thumbnailUrl || it?.imageUrl || "";
   return {
-    id: it.itemId ?? it.id,
-    title: it.title ?? "",
-    category: it.categoryName ?? it.category ?? "",
+    id: it?.itemId ?? it?.id,
+    title: it?.title ?? "",
+    category: it?.categoryName ?? it?.category ?? "",
     imageUrl: firstImg,
-    finalPrice: it.finalPrice ?? it.winningBidPrice ?? it.currentPrice ?? 0,
-    views: it.viewCount ?? it.views ?? 0,
+    finalPrice: it?.finalPrice ?? it?.winningBidPrice ?? it?.currentPrice ?? 0,
+    views: it?.viewCount ?? it?.views ?? 0,
   };
 }
 
 /**
  * 입찰 완료된 상품
- * - 백엔드 /auctions?status=COMPLETED 기반
- * - 내부 슬라이더 페이지네이션(pageSize=4)
- * - 더미 데이터 없음(빈 결과/오류 시 안내)
+ * - /auctions?status=COMPLETED 기반
+ * - 내부 슬라이더(pageSize 개씩)
+ * - 더미 없음(빈 결과/오류 안내)
  */
-export default function Completed({ pageSize = 4, onCardClick, size = 12, sort }) {
+export default function Completed({ pageSize, onCardClick, size, sort }) {
   const navigate = useNavigate();
 
-  const [items, setItems] = useState([]);         // 전체 결과(최대 size개)
+  const [items, setItems] = useState([]);   // 전체 결과(최대 size개)
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [page, setPage] = useState(0);           // 슬라이드 페이지
-  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const [page, setPage] = useState(0);     // 슬라이드 페이지(0-base)
+  const totalPages = Math.max(1, Math.ceil((items.length || 0) / pageSize));
   const start = page * pageSize;
   const visible = items.slice(start, start + pageSize);
 
@@ -58,14 +58,14 @@ export default function Completed({ pageSize = 4, onCardClick, size = 12, sort }
         setLoading(true);
         setError(null);
 
-        // 완료된 경매 최대 size개 요청 (예: 12개)
+        // 완료된 경매 최대 size개
         const res = await fetchCompletedAuctions({ page: 1, size, sort });
         const rows = Array.isArray(res?.result?.items) ? res.result.items : [];
         const mapped = rows.map(mapRow).filter((x) => x && x.id != null);
 
         if (!alive) return;
         setItems(mapped);
-        setPage(0); // 데이터 새로고침 시 첫 페이지로
+        setPage(0); // 새로고침 시 첫 페이지
       } catch (e) {
         if (!alive) return;
         setError(e);
@@ -127,7 +127,6 @@ export default function Completed({ pageSize = 4, onCardClick, size = 12, sort }
                   aria-label={`${it.title} 상세로 이동`}
                 >
                   <div className={styles.thumbWrap}>
-                    {/* alt는 시각장애인 사용자 배려: 제목 사용 */}
                     <img src={it.imageUrl} alt={it.title || "완료된 경매"} className={styles.thumb} />
                   </div>
 

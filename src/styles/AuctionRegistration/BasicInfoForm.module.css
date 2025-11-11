@@ -2,6 +2,7 @@
    BasicInfoForm.module.css (RWD + Fixed Textarea)
    - 클릭/포커스 시 검은색 보더 유지
    - Textarea 고정 높이 + 내부 스크롤
+   - 제목 30자 제한/카운터 UI
    =============================== */
 
 :root {
@@ -83,18 +84,18 @@
   outline: none;
 }
 
+/* 에러 보더(제목 30자 한계 도달 시 강조용) */
+.inputError {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 3px rgba(255, 77, 79, 0.12);
+}
+
 /* 비활성화/읽기전용 */
 .input[disabled],
 .input[readonly] {
   background: #fafbff;
   color: #a0a7b4;
   cursor: not-allowed;
-}
-
-/* 에러 상태(선택) */
-.input.error {
-  border-color: var(--danger);
-  box-shadow: 0 0 0 3px rgba(255, 77, 79, 0.12);
 }
 
 /* ===== 고정 Textarea ===== */
@@ -124,6 +125,26 @@
 /* 유틸(도움문구/에러문구) */
 .helperText { margin-top: 8px; font-size: 12px; color: var(--ink-600); }
 .errorText  { margin-top: 8px; font-size: 12px; color: var(--danger); }
+
+/* ==== 제목 카운터 UI ==== */
+.counterRow{
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.counter{
+  font-size: 12px;
+  color: var(--ink-600);
+}
+.counterDanger{
+  color: var(--danger);
+  font-weight: 700;
+}
+.limitHelp{
+  font-size: 12px;
+  color: var(--danger);
+}
 
 /* ---------- Responsive ---------- */
 

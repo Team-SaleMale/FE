@@ -1,7 +1,4 @@
-// src/pages/AuctionRegistration/AuctionRegistration.js
 // 상품 등록 화면 (JSON POST 버전)
-// - 등록 API: POST /auctions/registration (application/json)
-
 import React, { useMemo, useReducer, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "../../styles/AuctionRegistration/AuctionRegistration.module.css";
@@ -16,34 +13,28 @@ import PreviewCard from "./PreviewCard";
 import SubmitBar from "./SubmitBar";
 
 import { registerAuction } from "../../api/auctions/service";
-// 디버깅용(선택): 전송 직전 payload 확인
 import { buildRegistrationPayload } from "../../api/auctions/buildRegistrationPayload";
 
 /** 중앙 상태 */
 const initialState = {
-  // UploadPanel
-  images: [], // [{ file, url, uploadedUrl? }]
-  modelName: "",
-  aiResult: null, // {marketPrice, suggestedPrice}
+  images: [],
+  aiResult: null,
 
-  // BasicInfoForm
+  // 제목/이름
   title: "",
+  titleEdited: false,     // 사용자가 직접 수정했는지
+  name: "",               // 항상 AI 인식 모델명 유지
   description: "",
 
-  // PriceAndSchedule
-  startPrice: "", // number string
-  startDate: "",  // UI 표시용(서버 전송 안함)
-  endDate: "",    // "YYYY-MM-DDTHH:mm" (분까지)
+  startPrice: "",
+  startDate: "",
+  endDate: "",
 
-  // CategoryChips (단일 선택)
-  categories: [], // e.g., ["home-appliance"]
-
-  // TradeMethod
-  tradeMethod: "",   // 하위호환(단일, "택배"|"직거래"|"기타")
-  tradeMethods: [],  // 신규(다중): ["택배","직거래","기타"]
+  categories: [],
+  tradeMethod: "",
+  tradeMethods: [],
   tradeNote: "",
 
-  // PolicyConsent
   consents: { policy: false, info: false, shipping: false, fees: false },
 };
 
@@ -66,7 +57,7 @@ export default function AuctionRegistration() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  /** 프리뷰 계산: 현재가 = 시작가 × 120% */
+  /* 프리뷰 */
   const previewImages = useMemo(
     () => (state.images || []).map((it) => it?.url).filter(Boolean),
     [state.images]
@@ -79,9 +70,9 @@ export default function AuctionRegistration() {
   }, [state.startPrice]);
 
   const previewData = {
-    imageUrl: previewImage,             // 단일 이미지 호환
-    images: previewImages,              // 다중 이미지(슬라이드) 전달
-    title: state.title || "제목을 입력하면 여기에 표시됩니다",
+    imageUrl: previewImage,
+    images: previewImages,
+    title: state.title || state.name || "제목을 입력하면 여기에 표시됩니다",
     views: 1500,
     bidders: 1260,
     timeLeftLabel: "01:45:20",
@@ -89,20 +80,19 @@ export default function AuctionRegistration() {
     currentPrice: previewCurrent,
   };
 
-  /** 검증 (현재시각을 인자로 받아 종료시간과 비교) */
+  /** 검증 */
   const validate = (nowISO) => {
     if (state.images.length < 1) return "이미지를 1장 이상 업로드해주세요.";
-    if (!state.modelName.trim()) return "상품 모델명을 입력해주세요.";
-    if (!state.title.trim()) return "제목을 입력해주세요.";
+    // ✅ 서버 필수: name은 AI 분석으로만 세팅됨
+    if (!state.name.trim()) return "AI 분석으로 상품명을 먼저 인식하세요.";
 
     const startPriceNum = Number(state.startPrice);
     if (!Number.isFinite(startPriceNum) || startPriceNum <= 0) {
       return "초기 가격을 올바르게 입력해주세요 (0보다 큰 숫자).";
     }
 
-    // 종료시간 형식/미래시점 확인
     if (!state.endDate) return "경매 종료 시간을 설정해주세요.";
-    const endMinute = String(state.endDate).slice(0, 16); // "YYYY-MM-DDTHH:mm"
+    const endMinute = String(state.endDate).slice(0, 16);
     if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(endMinute)) {
       return "종료 시간 형식이 올바르지 않습니다. (YYYY-MM-DDTHH:mm)";
     }
@@ -112,7 +102,6 @@ export default function AuctionRegistration() {
 
     if (state.categories.length !== 1) return "카테고리를 한 개 선택해주세요.";
 
-    // ✅ 거래 방식: 문자열/배열 모두 안전 체크 (trim은 문자열일 때만)
     const hasTrade =
       (Array.isArray(state.tradeMethods) && state.tradeMethods.length > 0) ||
       (typeof state.tradeMethod === "string" && state.tradeMethod.trim() !== "");
@@ -122,7 +111,7 @@ export default function AuctionRegistration() {
     return "";
   };
 
-  /** 제출 (JSON POST) */
+  /** 제출 */
   const handleSubmit = async () => {
     const nowISO = new Date().toISOString();
     const msg = validate(nowISO);
@@ -131,17 +120,12 @@ export default function AuctionRegistration() {
     setError("");
     setSubmitting(true);
     try {
-      // 업로더에서 받은 공개 URL 추출(없으면 빈 배열)
-      const imageUrls =
-        state.images?.map((it) => it.uploadedUrl).filter(Boolean) ?? [];
-
-      // (선택) 전송 전 payload 확인
+      const imageUrls = state.images?.map((it) => it.uploadedUrl).filter(Boolean) ?? [];
       const debugPayload = buildRegistrationPayload(state, { imageUrls });
       console.log("[registerAuction] payload", debugPayload);
 
       const res = await registerAuction(state, { imageUrls });
 
-      // 성공 → 완료/상세 페이지로 이동
       navigate("/auctions/success", {
         state: {
           preview: previewData,
@@ -151,13 +135,8 @@ export default function AuctionRegistration() {
         },
       });
     } catch (e) {
-      // 서버 메시지를 최대한 그대로 표시
       const data = e?.response?.data;
-      const m =
-        data?.message ||
-        data?.result?.message ||
-        e?.message ||
-        "등록 중 오류가 발생했습니다.";
+      const m = data?.message || data?.result?.message || e?.message || "등록 중 오류가 발생했습니다.";
       setError(m);
       console.warn("[registerAuction] error", e?.response || e);
     } finally {
@@ -165,16 +144,29 @@ export default function AuctionRegistration() {
     }
   };
 
+  // 🔧 제목 입력: title만 변경(<=30자), name은 유지
+  const handleBasicChange = (k, v) => {
+    if (k === "title") {
+      const trimmed = String(v ?? "").slice(0, 30);
+      if (!state.titleEdited) {
+        dispatch({ type: "SET_FIELD", key: "titleEdited", value: true });
+      }
+      dispatch({ type: "SET_FIELD", key: "title", value: trimmed });
+      return;
+    }
+    dispatch({ type: "SET_FIELD", key: k, value: v });
+  };
+
   return (
     <div className={styles.pageWrap}>
       <div className={styles.grid}>
-        {/* 좌측: 입력 영역 */}
         <div className={styles.leftCol}>
           <section className={styles.section}>
             <UploadPanel
               images={state.images}
               onChange={(imgs) => dispatch({ type: "SET_IMAGES", value: imgs })}
               onMetaChange={(k, v) => dispatch({ type: "SET_FIELD", key: k, value: v })}
+              shouldAutoFillTitle={!state.titleEdited}   // 사용자가 수정 전이면 AI가 title을 채움
             />
           </section>
 
@@ -182,7 +174,7 @@ export default function AuctionRegistration() {
             <BasicInfoForm
               title={state.title}
               description={state.description}
-              onChange={(k, v) => dispatch({ type: "SET_FIELD", key: k, value: v })}
+              onChange={handleBasicChange}
             />
           </section>
 
@@ -206,8 +198,8 @@ export default function AuctionRegistration() {
 
           <section className={styles.section}>
             <TradeMethod
-              method={state.tradeMethod}       // 하위호환(단일)
-              methods={state.tradeMethods}     // 신규(다중)
+              method={state.tradeMethod}
+              methods={state.tradeMethods}
               note={state.tradeNote}
               onChange={(k, v) => dispatch({ type: "SET_FIELD", key: k, value: v })}
             />
@@ -221,14 +213,11 @@ export default function AuctionRegistration() {
           </section>
         </div>
 
-        {/* 우측: 미리보기 */}
         <aside className={styles.rightCol}>
-          {/* 이미지가 바뀌면 슬라이더 인덱스 초기화를 위해 key 부여 */}
           <PreviewCard key={previewImages.join("|")} {...previewData} />
         </aside>
       </div>
 
-      {/* 하단 고정 등록 버튼 */}
       <SubmitBar onSubmit={handleSubmit} loading={submitting} error={error} />
     </div>
   );

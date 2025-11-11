@@ -10,7 +10,7 @@ export default function Horizontal({ items = [] }) {
         <li
           key={it.id}
           className={styles.item}
-          onClick={() => navigate(`/auctions/${it.id}`)} // ★ 상세로 이동
+          onClick={() => navigate(`/auctions/${it.id}`)}
           role="button"
           tabIndex={0}
           onKeyDown={(e) => { if (e.key === "Enter") navigate(`/auctions/${it.id}`); }}
