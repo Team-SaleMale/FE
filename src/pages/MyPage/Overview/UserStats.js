@@ -7,9 +7,7 @@ export default function UserStats({ mannerScore = 0, userId, onChatClick, onView
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (userId) {
-      fetchRecentChats();
-    }
+    if (userId) fetchRecentChats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
@@ -19,10 +17,32 @@ export default function UserStats({ mannerScore = 0, userId, onChatClick, onView
     setLoading(true);
     try {
       const response = await chatService.getChatList(userId, { page: 0, size: 2 });
-      const chatData = response?.data || response || [];
-      setRecentChats(chatData);
+
+      // 다양한 응답 포맷을 안전하게 처리
+      const raw = response?.data ?? response;
+      let list = [];
+
+      if (Array.isArray(raw)) {
+        list = raw;
+      } else if (Array.isArray(raw?.items)) {
+        list = raw.items;
+      } else if (Array.isArray(raw?.result?.items)) {
+        list = raw.result.items;
+      } else if (Array.isArray(raw?.chats)) {
+        list = raw.chats;
+      } else if (raw && typeof raw === "object") {
+        // 단일 객체만 오는 경우에도 배열로 감싸 처리
+        list = [raw];
+      }
+
+      // 최대 2개까지만 표시
+      setRecentChats(list.slice(0, 2));
+
+      if (process.env.NODE_ENV !== "production") {
+        console.log("최근 채팅 조회(normalized):", list.slice(0, 2));
+      }
     } catch (error) {
-      console.error('최근 채팅 조회 실패:', error);
+      console.error("최근 채팅 조회 실패:", error);
       setRecentChats([]);
     } finally {
       setLoading(false);
@@ -37,9 +57,7 @@ export default function UserStats({ mannerScore = 0, userId, onChatClick, onView
   };
 
   const handleChatClick = (chat) => {
-    if (onChatClick) {
-      onChatClick(chat);
-    }
+    onChatClick?.(chat);
   };
 
   return (
@@ -75,13 +93,15 @@ export default function UserStats({ mannerScore = 0, userId, onChatClick, onView
           ) : (
             recentChats.map((chat) => (
               <div
-                key={chat.chatId}
+                key={chat.chatId ?? chat.id ?? `${chat.otherUserName || chat.otherUser?.name || "chat"}-${Math.random()}`}
                 className={styles.cardLine}
                 onClick={() => handleChatClick(chat)}
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: "pointer" }}
               >
-                💬 {chat.otherUser?.name || chat.otherUserName || `채팅방 #${chat.chatId}`}: "{truncateMessage(chat.lastMessage)}"
-                {chat.unreadCount > 0 && (
+                💬 {chat.otherUser?.name || chat.otherUserName || `채팅방 #${chat.chatId ?? chat.id}`}:
+                {" "}
+                "{truncateMessage(chat.lastMessage || chat.lastMsg || chat.preview)}"
+                {Number(chat.unreadCount) > 0 && (
                   <span className={styles.unreadBadge}>{chat.unreadCount}</span>
                 )}
               </div>
@@ -92,5 +112,3 @@ export default function UserStats({ mannerScore = 0, userId, onChatClick, onView
     </section>
   );
 }
-
-
