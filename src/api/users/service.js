@@ -22,7 +22,9 @@ export const getProfile = () => {
 };
 
 // --- develop 브랜치 확장 API 유지 ---
-export const setRegion       = (payload) => post(endpoints.USERS.SET_REGION, payload);        // { regionId }
+export const setRegion = ({ regionId, primary = true }) => {
+  return api.post(endpoints.USERS.SET_REGION, null, { params: { regionId, primary } });
+};
 export const changeRange     = (payload) => patch(endpoints.USERS.CHANGE_RANGE, payload);     // { rangeKm }
 export const resetPassword   = (payload) => patch(endpoints.USERS.RESET_PASSWORD, payload);   // { currentPassword, newPassword }
 export const changeNickname  = (payload) => patch(endpoints.USERS.CHANGE_NICKNAME, payload);  // { nickname }

@@ -23,16 +23,16 @@ const endpoints = {
   },
 
   USERS: {
-    PROFILE: "/api/users",
-    SET_REGION: "/api/users/region",
-    CHANGE_RANGE: "/api/users/range-setting",
-    RESET_PASSWORD: "/api/users/password",
-    CHANGE_NICKNAME: "/api/users/nickname",
-    NEARBY_REGION_IDS: "/api/users/regions/nearby",
+    PROFILE: "/mypage",  // 내 프로필 조회
+    SET_REGION: "/mypage/region",  // 활동 동네 설정
+    CHANGE_RANGE: "/mypage/range-setting",  // 활동 반경 변경
+    RESET_PASSWORD: "/mypage/password",  // 비밀번호 변경
+    CHANGE_NICKNAME: "/mypage/nickname",  // 닉네임 변경
+    NEARBY_REGION_IDS: "/mypage/regions/nearby",  // 근처 지역 ID 조회
   },
 
   REGIONS: {
-    SEARCH: "/api/search/regions",
+    SEARCH: "/search/regions",
     CREATE: "/api/regions",
     UPDATE: (id) => `/api/regions/${id}`,
     DELETE: (id) => `/api/regions/${id}`,
@@ -51,6 +51,12 @@ const endpoints = {
   },
   SEARCH: {
     ITEMS: "/search/items",   // 시세 둘러보기 검색용
+  },
+  CHAT: {
+    CREATE_ROOM: (itemId) => `/items/${itemId}/chat`,  // 채팅방 생성
+    LIST: "/chats",  // 채팅방 목록 조회
+    ENTER: (chatId) => `/chats/${chatId}/enter`,  // 채팅방 입장
+    EXIT: (chatId) => `/chats/${chatId}/exit`,  // 채팅방 나가기
   },
 };
 
