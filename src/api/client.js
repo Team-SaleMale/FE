@@ -87,10 +87,6 @@ api.interceptors.request.use(
     }
 
     const isNoAuth = NO_AUTH_EXACT.has(path) || NO_AUTH_PREFIX.some((p) => path.startsWith(p));
-    if (!isNoAuth) {
-      const token = cookies.get(ACCESS_TOKEN_KEY) || localStorage.getItem(ACCESS_TOKEN_KEY);
-      if (token) cfg.headers.Authorization = `Bearer ${token}`;
-    }
 
     // 🔴 핵심: FormData면 Content-Type 제거(브라우저가 boundary 포함해서 자동 지정)
     const isFormData = typeof FormData !== "undefined" && cfg.data instanceof FormData;
@@ -98,6 +94,16 @@ api.interceptors.request.use(
       // axios는 method별 헤더와 공통 헤더를 병합하므로 모두 제거
       delete cfg.headers["Content-Type"];
       delete cfg.headers["content-type"];
+    }
+
+    // (feature/10-mypage-purchase-sales) 인증 경로 → Authorization 주입
+    // NOTE: 위 isNoAuth 판단으로 무인증 경로는 제외됨. X-Skip-Auth가 있으면 일찍 반환됨.
+    // cookie/localStorage 모두 체크하여 토큰 설정
+    if (!isNoAuth) {
+      const cookieToken = cookies.get(ACCESS_TOKEN_KEY);
+      const lsToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+      const token = cookieToken || lsToken;
+      if (token) cfg.headers.Authorization = `Bearer ${token}`;
     }
 
     return cfg;
