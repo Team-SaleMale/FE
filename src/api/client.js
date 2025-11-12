@@ -64,7 +64,6 @@ const NO_AUTH_EXACT = new Set([
   "/auth/email/verify/confirm",
 
   // [추가 주석] 공개 검색 엔드포인트는 토큰 미주입(401 방지)
-  "/search/items",
   "/search/price-history",
 ]);
 const NO_AUTH_PREFIX = [];
