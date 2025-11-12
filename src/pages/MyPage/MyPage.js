@@ -2,7 +2,7 @@ import styles from "../../styles/MyPage/MyPage.module.css";
 import ProfileHeader from "./Overview/ProfileHeader";
 import UserStats from "./Overview/UserStats";
 import TabsNav from "./Overview/TabsNav";
-import FiltersBar from "./FiltersBar";
+import FiltersBar from "./Overview/FiltersBar";
 import MyPageVertical from "./MyPageVertical";
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
