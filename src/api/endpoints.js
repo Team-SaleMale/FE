@@ -51,6 +51,7 @@ const endpoints = {
     SUGGEST_TITLE: "/auctions/registration/suggest-title",
   },
   SEARCH: {
+    ITEMS: "/search/items",
     PRICE_HISTORY: "/search/price-history",
   },
   CHAT: {
