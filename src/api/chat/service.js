@@ -19,7 +19,7 @@ export const chatService = {
   createChatRoom: (itemId, userId) => {
     return apiClient.post(endpoints.CHAT.CREATE_ROOM(itemId), null, {
       headers: {
-        'USER_ID': String(userId)
+        'user-id': String(userId)
       }
     });
   },
@@ -40,7 +40,7 @@ export const chatService = {
     return apiClient.get(endpoints.CHAT.LIST, {
       params,
       headers: {
-        'USER_ID': String(userId)
+        'user-id': String(userId)
       }
     });
   },
@@ -62,7 +62,7 @@ export const chatService = {
     return apiClient.post(endpoints.CHAT.ENTER(chatId), null, {
       params,
       headers: {
-        'USER_ID': String(userId)
+        'user-id': String(userId)
       }
     });
   },
@@ -80,7 +80,28 @@ export const chatService = {
   exitChatRoom: (chatId, userId) => {
     return apiClient.patch(endpoints.CHAT.EXIT(chatId), null, {
       headers: {
-        'USER_ID': String(userId)
+        'user-id': String(userId)
+      }
+    });
+  },
+
+  /**
+   * 메시지 보내기
+   * POST /messages
+   *
+   * 채팅방으로 메시지를 보냅니다.
+   *
+   * @param {number} userId - 사용자 ID (헤더에 포함)
+   * @param {Object} messageData - 메시지 데이터
+   * @param {number} messageData.chatId - 채팅방 ID
+   * @param {string} messageData.content - 메시지 내용
+   * @param {string} messageData.type - 메시지 타입 (기본값: TEXT)
+   * @returns {Promise} 메시지 전송 응답 { messageId, chatId, senderId, content, type, read, sentAt }
+   */
+  sendMessage: (userId, messageData) => {
+    return apiClient.post(endpoints.CHAT.SEND_MESSAGE, messageData, {
+      headers: {
+        'user-id': String(userId)
       }
     });
   },
