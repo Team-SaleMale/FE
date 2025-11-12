@@ -22,7 +22,7 @@ export default function RecentChats({ userId, onChatClick, onViewAll }) {
       const response = await chatService.getChatList(userId, { page: 0, size: 2 });
       console.log('최근 채팅 조회:', response);
 
-      const chatData = response?.data || response || [];
+      const chatData = response?.result || [];
       setRecentChats(chatData);
     } catch (error) {
       console.error('최근 채팅 조회 실패:', error);
@@ -90,14 +90,14 @@ export default function RecentChats({ userId, onChatClick, onViewAll }) {
             <div className={styles.chatInfo}>
               <div className={styles.chatHeader}>
                 <span className={styles.userName}>
-                  {chat.otherUser?.name || chat.otherUserName || `채팅방 #${chat.chatId}`}
+                  {chat.partner?.nickname || `채팅방 #${chat.chatId}`}
                 </span>
                 {chat.unreadCount > 0 && (
                   <span className={styles.unreadBadge}>{chat.unreadCount}</span>
                 )}
               </div>
               <p className={styles.lastMessage}>
-                {truncateMessage(chat.lastMessage)}
+                {truncateMessage(chat.lastMessage?.content)}
               </p>
             </div>
             <Icon icon="solar:alt-arrow-right-linear" className={styles.arrowIcon} />

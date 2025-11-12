@@ -57,6 +57,7 @@ const endpoints = {
     LIST: "/chats",  // 채팅방 목록 조회
     ENTER: (chatId) => `/chats/${chatId}/enter`,  // 채팅방 입장
     EXIT: (chatId) => `/chats/${chatId}/exit`,  // 채팅방 나가기
+    SEND_MESSAGE: "/messages",  // 메시지 보내기
   },
 };
 
