@@ -19,6 +19,8 @@ import { getNoAuth } from "../../api/client";            // ✅ 지역 검색 �
 import endpoints from "../../api/endpoints";
 import config from "../../config";
 
+const ONBOARDING_FLAG_KEY = "showCategoryOnboarding"; // [ADD] 최초 가입 온보딩 플래그
+
 function Signup() {
   const navigate = useNavigate();
   const loc = useLocation();
@@ -225,8 +227,10 @@ function Signup() {
           regionId: Number(regionId),
         });
         sessionStorage.removeItem("signupToken");
+        // [ADD] 최초 온보딩 플래그 세팅 → 메인에서 팝업 노출
+        localStorage.setItem(ONBOARDING_FLAG_KEY, "1");
         alert("소셜 회원가입이 완료되었습니다.");
-        navigate("/", { replace: true });
+        navigate("/", { replace: true }); // [CHANGE] 메인으로 이동
       } catch (err) {
         const code = err?.code || err?.response?.data?.code;
         if (code === "USER4003") {
@@ -270,8 +274,10 @@ function Signup() {
         },
         verifySessionToken
       );
+      // [ADD] 최초 온보딩 플래그 세팅 → 메인에서 팝업 노출
+      localStorage.setItem(ONBOARDING_FLAG_KEY, "1");
       alert("회원가입이 완료되었습니다.");
-      navigate("/login");
+      navigate("/", { replace: true }); // [CHANGE] 메인으로 이동
     } catch (err) {
       alert(err?.friendlyMessage || "회원가입 실패");
     } finally {

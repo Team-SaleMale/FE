@@ -22,6 +22,8 @@ import AuthCallback from "pages/Auth/AuthCallback";
 import HotDealPage from "./pages/HotDeal/HotDeal"; 
 import HotDealRegistration from "./pages/HotDealRegistration/HotDealRegistration";
 
+// [ADD] 최초 가입 온보딩 모달 게이트 (전역 1회 렌더)
+import CategoryOnboardingGate from "./components/modals/CategoryOnboardingGate";
 
 console.log({ InquiryList, InquiryWrite, InquiryDetail });
 console.log("[App] mounted path:", window.location.pathname, "hash:", window.location.hash);
@@ -35,6 +37,9 @@ export default function App() {
     <>
       <ScrollToTop behavior="auto" />
       {!hideAuthLayout && <Header />}
+
+      {/* [ADD] 전역 모달: localStorage 'showCategoryOnboarding' === "1" 일 때만 표시됨 */}
+      <CategoryOnboardingGate />
 
       <Routes>
         <Route path="/" element={<Main />} />
@@ -59,10 +64,9 @@ export default function App() {
         {/* 시세 확인 */}
         <Route path="/price-check" element={<PriceCheck />} />
 
-         {/* 핫딜 */}
+        {/* 핫딜 */}
         <Route path="/hotdeal" element={<HotDealPage />} />
         <Route path="/hotdeal/registration" element={<HotDealRegistration />} />
-
 
         {/* 문의 */}
         <Route path="/inquiries" element={<InquiryList />} />
@@ -70,8 +74,6 @@ export default function App() {
         <Route path="/inquiries/:id" element={<InquiryDetail />} />
 
         <Route path="/auth/callback/*" element={<AuthCallback />} />
-
-
       </Routes>
 
       {!hideAuthLayout && <Footer />}
