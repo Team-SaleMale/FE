@@ -9,10 +9,12 @@ import endpoints from "../../api/endpoints";
 
 const SS_KEY = "pricecheck:lastState"; // ← 부모와 같은 키 사용
 
+// [추가 주석] 낙찰(거래 완료) 전용 히스토리 검색: /search/price-history
 function searchUsedItems({ q, page = 1, size = 5 }) {
   const keyword = (q || "").trim();
   const p0 = Math.max(0, Number(page) - 1);
-  return get(endpoints.SEARCH.ITEMS, { q: keyword, page: p0, size });
+  // 날짜 최신순은 서버 기본(또는 createdAt desc)이라 별도 sort 파라미터 없이 호출
+  return get(endpoints.SEARCH.PRICE_HISTORY, { q: keyword, page: p0, size });
 }
 
 const PER_PAGE = 5;
@@ -91,8 +93,10 @@ export default function UsedPriceTab({
         setLoading(true);
         setErrorMsg("");
         const res = await searchUsedItems({ q, page, size: PER_PAGE });
+
+        // 서버 응답 표준화
         const box = res?.result ?? res ?? {};
-        const list = box.content ?? box.items ?? box.list ?? [];
+        const list = box.items ?? box.content ?? box.list ?? [];
         const tp =
           box.totalPages ??
           box.pageInfo?.totalPages ??
@@ -103,7 +107,7 @@ export default function UsedPriceTab({
           box.pageInfo?.totalElements ??
           list.length;
 
-        const mapped = list.map(normalizeItem);
+        const mapped = list.map(normalizeItem); // [추가 주석] price-history 스키마 대응
         setItems(mapped);
         setTotalPages(tp || (tot ? Math.ceil(tot / PER_PAGE) : 0));
         setTotalCount(tot);
@@ -209,17 +213,12 @@ export default function UsedPriceTab({
                           <span className="label">시작가</span>
                           <span className="value">{fmt(it.startPrice)}</span>
                         </div>
-                        {it.status === "경매 진행 중" ? (
-                          <div className="used-price-row strong">
-                            <span className="label">현재 경매가</span>
-                            <span className="value">{fmt(it.currentPrice)}</span>
-                          </div>
-                        ) : (
-                          <div className="used-price-row strong">
-                            <span className="label">최종 낙찰가</span>
-                            <span className="value">{fmt(it.finalPrice)}</span>
-                          </div>
-                        )}
+
+                        {/* [추가 주석] 낙찰 히스토리 화면이므로 최종가 노출 */}
+                        <div className="used-price-row strong">
+                          <span className="label">최종 낙찰가</span>
+                          <span className="value">{fmt(it.finalPrice)}</span>
+                        </div>
                       </div>
                     </div>
                   </article>
@@ -258,10 +257,11 @@ export default function UsedPriceTab({
 }
 
 /** 서버 아이템 → 화면 모델 변환 */
+// [추가 주석] /search/price-history 응답 스키마에 맞는 필드 우선 사용
 function normalizeItem(x) {
   return {
     id: x.id ?? x.itemId ?? x.auctionId ?? cryptoRandomId(),
-    status: mapStatus(x.status, x.finished),
+    status: mapStatus(x.itemStatus ?? x.status, x.finished),
     title: x.title ?? x.name ?? "",
     brand: x.brand ?? "",
     category: x.categoryPath ?? x.category ?? "",
@@ -269,8 +269,9 @@ function normalizeItem(x) {
     image: absolutize(pickImageUrl(x)) || FALLBACK_IMG,
     description: x.description ?? "",
     startPrice: num(x.startPrice ?? x.openingPrice),
+    // price-history 응답에는 최종가 전용 필드가 없을 수 있어 currentPrice로 보정
+    finalPrice: num(x.finalPrice ?? x.winningBid ?? x.currentPrice),
     currentPrice: num(x.currentPrice ?? x.bidPrice),
-    finalPrice: num(x.finalPrice ?? x.winningBid),
   };
 }
 
@@ -289,11 +290,20 @@ function pickImageUrl(x = {}) {
     x.img;
   if (isNonEmptyStr(single)) return single;
 
-  for (const key of ["imageUrls", "images", "photos", "pictures"]) {
+  // [추가 주석] price-history: imageUrls 배열 지원
+  const arrayKeys = ["imageUrls", "images", "photos", "pictures"];
+  for (const key of arrayKeys) {
     const arr = x[key];
-    if (Array.isArray(arr) && arr.every((v) => typeof v !== "object" || v === null || typeof v === "string")) {
-      const u = arr.find(isNonEmptyStr);
-      if (u) return u;
+    if (Array.isArray(arr) && arr.length) {
+      // 문자열 배열 우선
+      const urlCandidate = arr.find(isNonEmptyStr);
+      if (urlCandidate) return urlCandidate;
+      // 객체 배열이면 url 같은 키 탐색
+      for (const it of arr) {
+        if (!it || typeof it !== "object") continue;
+        const u = it.imageUrl || it.url || it.src || it.path || it.fileUrl || it.downloadUrl;
+        if (isNonEmptyStr(u)) return u;
+      }
     }
   }
 
@@ -327,10 +337,11 @@ function absolutize(u) {
   }
 }
 
+// [추가 주석] SUCCESS(낙찰), FINISHED/CLOSED/DONE도 낙찰로 표기
 function mapStatus(status, finished) {
   if (finished === true) return "낙찰 완료";
-  const s = (status || "").toUpperCase();
-  if (s === "FINISHED" || s === "CLOSED" || s === "DONE") return "낙찰 완료";
+  const s = String(status || "").toUpperCase();
+  if (s === "SUCCESS" || s === "FINISHED" || s === "CLOSED" || s === "DONE" || s === "COMPLETED") return "낙찰 완료";
   return "경매 진행 중";
 }
 
