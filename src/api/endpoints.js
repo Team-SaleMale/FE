@@ -50,7 +50,7 @@ const endpoints = {
     SUGGEST_TITLE: "/auctions/registration/suggest-title",
   },
   SEARCH: {
-    ITEMS: "/search/items",   // 시세 둘러보기 검색용
+    PRICE_HISTORY: "/search/price-history",
   },
   CHAT: {
     CREATE_ROOM: (itemId) => `/items/${itemId}/chat`,  // 채팅방 생성
