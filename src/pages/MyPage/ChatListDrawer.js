@@ -31,9 +31,7 @@ export default function ChatListDrawer({ open, onClose, onSelectChat, userId }) 
     setLoading(true);
     try {
       const response = await chatService.getChatList(userId, { page: 0, size: 50 });
-      console.log('채팅방 목록 조회 응답:', response);
-
-      const chatData = response?.data || response || [];
+      const chatData = response?.result || [];
       setChatList(chatData);
     } catch (error) {
       console.error('채팅방 목록 조회 실패:', error);
@@ -101,30 +99,32 @@ export default function ChatListDrawer({ open, onClose, onSelectChat, userId }) 
           ) : (
             chatList.map((chat) => (
               <div
-                key={chat.chatId || chat.id}
+                key={chat.chatId}
                 className={styles.chatItem}
                 onClick={() => onSelectChat(chat)}
               >
                 <div className={styles.productImageWrapper}>
                   <img
-                    src={chat.productImage || "https://via.placeholder.com/150"}
-                    alt={chat.productTitle || "상품"}
+                    src={chat.partner?.profileImage || "https://via.placeholder.com/150"}
+                    alt={chat.partner?.nickname || "사용자"}
                     className={styles.productImage}
                   />
                 </div>
                 <div className={styles.chatInfo}>
                   <div className={styles.chatHeader}>
                     <span className={styles.userName}>
-                      {chat.otherUser?.name || `채팅방 #${chat.chatId}`}
+                      {chat.partner?.nickname || `채팅방 #${chat.chatId}`}
                     </span>
-                    <span className={styles.time}>{chat.time || ""}</span>
+                    <span className={styles.time}>
+                      {chat.lastMessage?.sentAt ? new Date(chat.lastMessage.sentAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : ""}
+                    </span>
                   </div>
                   <p className={styles.productTitle}>
-                    {chat.productTitle || "상품 정보 없음"}
+                    {chat.partner?.nickname || ""}
                   </p>
                   <div className={styles.lastMessageRow}>
                     <p className={styles.lastMessage}>
-                      {chat.lastMessage || "메시지를 확인하세요"}
+                      {chat.lastMessage?.content || "메시지를 확인하세요"}
                     </p>
                     {chat.unreadCount > 0 && (
                       <span className={styles.unreadBadge}>{chat.unreadCount}</span>

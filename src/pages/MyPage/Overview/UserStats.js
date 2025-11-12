@@ -19,7 +19,7 @@ export default function UserStats({ mannerScore = 0, userId, onChatClick, onView
     setLoading(true);
     try {
       const response = await chatService.getChatList(userId, { page: 0, size: 2 });
-      const chatData = response?.data || response || [];
+      const chatData = response?.result || [];
       setRecentChats(chatData);
     } catch (error) {
       console.error('최근 채팅 조회 실패:', error);
@@ -80,7 +80,7 @@ export default function UserStats({ mannerScore = 0, userId, onChatClick, onView
                 onClick={() => handleChatClick(chat)}
                 style={{ cursor: 'pointer' }}
               >
-                💬 {chat.otherUser?.name || chat.otherUserName || `채팅방 #${chat.chatId}`}: "{truncateMessage(chat.lastMessage)}"
+                💬 {chat.partner?.nickname || `채팅방 #${chat.chatId}`}: "{truncateMessage(chat.lastMessage?.content)}"
                 {chat.unreadCount > 0 && (
                   <span className={styles.unreadBadge}>{chat.unreadCount}</span>
                 )}

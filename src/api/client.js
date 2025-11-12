@@ -104,6 +104,7 @@ api.interceptors.request.use(
       const lsToken = localStorage.getItem(ACCESS_TOKEN_KEY);
       const token = cookieToken || lsToken;
       if (token) cfg.headers.Authorization = `Bearer ${token}`;
+      cfg.withCredentials = true;
     }
 
     return cfg;
