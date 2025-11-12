@@ -230,7 +230,7 @@ function Signup() {
         // [ADD] 최초 온보딩 플래그 세팅 → 메인에서 팝업 노출
         localStorage.setItem(ONBOARDING_FLAG_KEY, "1");
         alert("소셜 회원가입이 완료되었습니다.");
-        navigate("/", { replace: true }); // [CHANGE] 메인으로 이동
+        navigate("/login", { replace: true }); // 로그인 화면으로 이동
       } catch (err) {
         const code = err?.code || err?.response?.data?.code;
         if (code === "USER4003") {
@@ -277,7 +277,7 @@ function Signup() {
       // [ADD] 최초 온보딩 플래그 세팅 → 메인에서 팝업 노출
       localStorage.setItem(ONBOARDING_FLAG_KEY, "1");
       alert("회원가입이 완료되었습니다.");
-      navigate("/", { replace: true }); // [CHANGE] 메인으로 이동
+      navigate("/login", { replace: true }); // 로그인 화면으로 이동
     } catch (err) {
       alert(err?.friendlyMessage || "회원가입 실패");
     } finally {
