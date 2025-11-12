@@ -67,8 +67,10 @@ export default function LocationDrawer({ open, onClose, currentLocation, current
       const response = await nearbyRegionIds();
       console.log('근처 지역 조회:', response);
 
-      if (response?.isSuccess) {
-        const regionIds = response.result || [];
+      // 응답이 data로 감싸졌거나 바로 오는 경우 모두 대응
+      const res = response?.data || response;
+      if (res?.isSuccess) {
+        const regionIds = res.result || [];
         setNearbyCount(regionIds.length);
       } else {
         setNearbyCount(0);
@@ -209,81 +211,80 @@ export default function LocationDrawer({ open, onClose, currentLocation, current
 
             console.log('지도 중심 이동 완료:', map.getCenter());
 
-
-          // 2. 카카오 REST API로 좌표 → 동 단위 변환
-          const response = await axios.get(
-            `https://dapi.kakao.com/v2/local/geo/coord2regioncode.json?x=${lng}&y=${lat}`,
-            {
-              headers: {
-                Authorization: `KakaoAK ${process.env.REACT_APP_KAKAO_REST_API_KEY}`
-              }
-            }
-          );
-
-          if (response.data && response.data.documents && response.data.documents.length > 0) {
-            // 법정동 기준으로 행정구역 정보 추출
-            const regionData = response.data.documents[0];
-            const region1 = regionData.region_1depth_name; // 시/도
-            const region2 = regionData.region_2depth_name; // 구/군
-            const region3 = regionData.region_3depth_name; // 동/읍/면
-
-            // 전체 주소 조합
-            const fullAddress = `${region1} ${region2} ${region3}`;
-
-            console.log('좌표 변환 결과:', { region1, region2, region3, fullAddress });
-
-            // addressSection에 전체 주소 표시
-            setAddress(fullAddress);
-
-            // 띄어쓰기 기준으로 분리: "경기도 고양시 덕양구 도내동" -> ["경기도", "고양시", "덕양구", "도내동"]
-            const addressParts = fullAddress.split(' ');
-            const sido = addressParts[0]; // 첫 번째: 시/도 (예: 경기도)
-            const sigungu = addressParts[1]; // 두 번째: 시/군/구 (예: 고양시)
-            const eupmyeondong = addressParts[2]; // 세 번째: 구/읍/면/동 (예: 덕양구)
-
-            console.log('검색어 분리:', { sido, sigungu, eupmyeondong });
-
-            // 시군구로 검색 (handleSearch와 동일한 로직)
-            const searchKeyword = sigungu;
-
-            if (searchKeyword) {
-              // 3. 시군구로 백엔드 API 검색
-              console.log('백엔드 API 검색어:', searchKeyword);
-              setSearchKeyword(searchKeyword);
-              const searchResponse = await searchRegions(searchKeyword, 0, 20);
-              console.log('백엔드 API 응답:', searchResponse);
-
-              if (searchResponse.isSuccess && searchResponse.result && searchResponse.result.length > 0) {
-                // 결과 중에서 시/도, 시/군/구, 읍/면/동이 모두 포함된 것 찾기
-                const matchedRegion = searchResponse.result.find(region => {
-                  const displayName = region.displayName || '';
-                  return displayName.includes(sido) && displayName.includes(sigungu) && displayName.includes(eupmyeondong);
-                });
-
-                if (matchedRegion) {
-                  // 일치하는 지역을 자동 선택
-                  setSelectedRegion(matchedRegion);
-                  setSearchResults([matchedRegion]);
-                  console.log('자동 선택된 지역:', matchedRegion);
-                } else {
-                  // 일치하는 게 없으면 전체 결과 표시
-                  setSearchResults(searchResponse.result);
-                  console.log('검색 결과 개수:', searchResponse.result.length);
-                  console.warn('정확히 일치하는 지역을 찾을 수 없습니다. 유사한 결과를 표시합니다.');
+            // 2. 카카오 REST API로 좌표 → 동 단위 변환
+            const response = await axios.get(
+              `https://dapi.kakao.com/v2/local/geo/coord2regioncode.json?x=${lng}&y=${lat}`,
+              {
+                headers: {
+                  Authorization: `KakaoAK ${process.env.REACT_APP_KAKAO_REST_API_KEY}`
                 }
-              } else {
-                console.warn('백엔드에 해당 지역이 없습니다:', searchKeyword);
               }
+            );
+
+            if (response.data && response.data.documents && response.data.documents.length > 0) {
+              // 법정동 기준으로 행정구역 정보 추출
+              const regionData = response.data.documents[0];
+              const region1 = regionData.region_1depth_name; // 시/도
+              const region2 = regionData.region_2depth_name; // 구/군
+              const region3 = regionData.region_3depth_name; // 동/읍/면
+
+              // 전체 주소 조합
+              const fullAddress = `${region1} ${region2} ${region3}`;
+
+              console.log('좌표 변환 결과:', { region1, region2, region3, fullAddress });
+
+              // addressSection에 전체 주소 표시
+              setAddress(fullAddress);
+
+              // 띄어쓰기 기준으로 분리: "경기도 고양시 덕양구 도내동" -> ["경기도", "고양시", "덕양구", "도내동"]
+              const addressParts = fullAddress.split(' ');
+              const sido = addressParts[0]; // 첫 번째: 시/도 (예: 경기도)
+              const sigungu = addressParts[1]; // 두 번째: 시/군/구 (예: 고양시)
+              const eupmyeondong = addressParts[2]; // 세 번째: 구/읍/면/동 (예: 덕양구)
+
+              console.log('검색어 분리:', { sido, sigungu, eupmyeondong });
+
+              // 시군구로 검색 (handleSearch와 동일한 로직)
+              const searchKeyword = sigungu;
+
+              if (searchKeyword) {
+                // 3. 시군구로 백엔드 API 검색
+                console.log('백엔드 API 검색어:', searchKeyword);
+                setSearchKeyword(searchKeyword);
+                const searchResponse = await searchRegions(searchKeyword, 0, 20);
+                console.log('백엔드 API 응답:', searchResponse);
+
+                if (searchResponse.isSuccess && searchResponse.result && searchResponse.result.length > 0) {
+                  // 결과 중에서 시/도, 시/군/구, 읍/면/동이 모두 포함된 것 찾기
+                  const matchedRegion = searchResponse.result.find(region => {
+                    const displayName = region.displayName || '';
+                    return displayName.includes(sido) && displayName.includes(sigungu) && displayName.includes(eupmyeondong);
+                  });
+
+                  if (matchedRegion) {
+                    // 일치하는 지역을 자동 선택
+                    setSelectedRegion(matchedRegion);
+                    setSearchResults([matchedRegion]);
+                    console.log('자동 선택된 지역:', matchedRegion);
+                  } else {
+                    // 일치하는 게 없으면 전체 결과 표시
+                    setSearchResults(searchResponse.result);
+                    console.log('검색 결과 개수:', searchResponse.result.length);
+                    console.warn('정확히 일치하는 지역을 찾을 수 없습니다. 유사한 결과를 표시합니다.');
+                  }
+                } else {
+                  console.warn('백엔드에 해당 지역이 없습니다:', searchKeyword);
+                }
+              }
+            } else {
+              alert("주소 정보를 가져올 수 없습니다.");
             }
-          } else {
-            alert("주소 정보를 가져올 수 없습니다.");
+          } catch (error) {
+            console.error("위치 정보 변환 실패:", error);
+            alert("위치 정보를 가져오는데 실패했습니다.");
+          } finally {
+            setIsLoading(false);
           }
-        } catch (error) {
-          console.error("위치 정보 변환 실패:", error);
-          alert("위치 정보를 가져오는데 실패했습니다.");
-        } finally {
-          setIsLoading(false);
-        }
         },
         (error) => {
           setIsLoading(false);
@@ -496,9 +497,7 @@ export default function LocationDrawer({ open, onClose, currentLocation, current
 
       // 2. 동네 설정
       console.log('onSave 호출, region 전달:', selectedRegion);
-      await onSave(selectedRegion);
-
-      // MyPage에서 성공 메시지와 drawer 닫기를 처리
+      await onSave(selectedRegion); // 부모(MyPage)에서 성공 메시지/닫기 처리
     } catch (error) {
       console.error('저장 실패:', error);
       alert('설정 저장 중 오류가 발생했습니다.');
@@ -524,6 +523,12 @@ export default function LocationDrawer({ open, onClose, currentLocation, current
         <div className={styles.rangeSection}>
           <div className={styles.rangeSectionHeader}>
             <h4 className={styles.rangeSectionTitle}>활동 반경</h4>
+            {nearbyCount !== null && !loadingNearby && (
+              <span className={styles.nearbyCount}>근처 지역 {nearbyCount}개</span>
+            )}
+            {loadingNearby && (
+              <span className={styles.nearbyCount}>조회 중...</span>
+            )}
           </div>
           <div className={styles.rangeButtonsGrid}>
             <button
