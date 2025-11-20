@@ -1,6 +1,6 @@
 // src/api/auth/service.js
 import endpoints from "../endpoints";
-import { get, post, patch, postNoAuth } from "../client";
+import api, { get, post, patch, postNoAuth } from "../client";
 import { Cookies } from "react-cookie";
 
 const cookies = new Cookies();
@@ -171,3 +171,26 @@ export async function completeSocialSignup({ signupToken, nickname, regionId }) 
   // 서버가 POST 쿼리수신을 기대하므로 유지
   return post(`${endpoints.AUTH.SOCIAL_COMPLETE}?${qs}`);
 }
+
+/**
+ * 계정 탈퇴 (소프트 삭제)
+ * DELETE /auth/me
+ *
+ * @param {string} password - 로컬 계정일 경우 비밀번호 (선택)
+ * @returns {Promise} 탈퇴 결과
+ */
+export const deleteAccount = async (password) => {
+  try {
+    const params = password ? { password } : {};
+    const response = await api.delete(endpoints.AUTH.ME_DELETE, { params });
+
+    // 탈퇴 성공 시 토큰 정리
+    if (response?.data?.isSuccess) {
+      clearToken();
+    }
+
+    return response?.data || response;
+  } catch (error) {
+    throw error;
+  }
+};

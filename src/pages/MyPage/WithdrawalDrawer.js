@@ -1,11 +1,16 @@
 import { Icon } from "@iconify/react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import styles from "../../styles/MyPage/WithdrawalDrawer.module.css";
+import { deleteAccount } from "../../api/auth/service";
 
 export default function WithdrawalDrawer({ open, onClose }) {
+  const navigate = useNavigate();
   const [selectedReason, setSelectedReason] = useState("");
   const [otherReason, setOtherReason] = useState("");
+  const [password, setPassword] = useState("");
   const [agreed, setAgreed] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -26,7 +31,7 @@ export default function WithdrawalDrawer({ open, onClose }) {
     { id: "other", label: "기타" },
   ];
 
-  const handleWithdraw = () => {
+  const handleWithdraw = async () => {
     if (!selectedReason) {
       alert("탈퇴 사유를 선택해주세요.");
       return;
@@ -40,18 +45,36 @@ export default function WithdrawalDrawer({ open, onClose }) {
       return;
     }
 
-    // 실제로는 백엔드 API 호출
     const confirmWithdraw = window.confirm("정말로 탈퇴하시겠습니까?\n탈퇴 후에는 복구할 수 없습니다.");
-    if (confirmWithdraw) {
-      alert("회원 탈퇴가 완료되었습니다.");
-      // 로그아웃 및 메인 페이지로 이동 처리
-      onClose();
+    if (!confirmWithdraw) return;
+
+    setIsLoading(true);
+    try {
+      const response = await deleteAccount(password || undefined);
+
+      if (response?.isSuccess) {
+        alert("회원 탈퇴가 완료되었습니다.");
+        onClose();
+        navigate("/");
+      } else {
+        alert(response?.message || "탈퇴 처리에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("탈퇴 실패:", error);
+      if (error?.response?.status === 401) {
+        alert("비밀번호가 일치하지 않습니다.");
+      } else {
+        alert(error?.response?.data?.message || "탈퇴 처리 중 오류가 발생했습니다.");
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleReset = () => {
     setSelectedReason("");
     setOtherReason("");
+    setPassword("");
     setAgreed(false);
   };
 
@@ -122,6 +145,21 @@ export default function WithdrawalDrawer({ open, onClose }) {
             )}
           </div>
 
+          {/* 비밀번호 입력 */}
+          <div className={styles.section}>
+            <label className={styles.sectionTitle}>비밀번호 확인</label>
+            <input
+              type="password"
+              className={styles.passwordInput}
+              placeholder="비밀번호를 입력해주세요"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <p className={styles.passwordHint}>
+              로컬 계정의 경우 비밀번호 확인이 필요합니다.
+            </p>
+          </div>
+
           {/* 동의 체크박스 */}
           <div className={styles.agreementSection}>
             <label className={styles.agreementLabel}>
@@ -138,15 +176,15 @@ export default function WithdrawalDrawer({ open, onClose }) {
 
         {/* 푸터 */}
         <div className={styles.footer}>
-          <button className={styles.cancelButton} onClick={onClose}>
+          <button className={styles.cancelButton} onClick={onClose} disabled={isLoading}>
             취소
           </button>
           <button
             className={styles.withdrawButton}
             onClick={handleWithdraw}
-            disabled={!selectedReason || !agreed}
+            disabled={!selectedReason || !agreed || !password || isLoading}
           >
-            탈퇴하기
+            {isLoading ? "처리 중..." : "탈퇴하기"}
           </button>
         </div>
       </div>
