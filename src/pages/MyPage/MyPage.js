@@ -189,7 +189,8 @@ export default function MyPage() {
             title: item.title,
             bidders: item.bidderCount,
             timeLeft: calculateTimeLeft(item.endTime),
-            currentPrice: 0,
+            startPrice: item.startPrice,
+            currentPrice: item.currentPrice,
           }));
           setWishlistItems(formattedItems);
         }
