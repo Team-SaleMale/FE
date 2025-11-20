@@ -29,6 +29,7 @@ const endpoints = {
     RESET_PASSWORD: "/mypage/password",  // 비밀번호 변경
     CHANGE_NICKNAME: "/mypage/nickname",  // 닉네임 변경
     NEARBY_REGION_IDS: "/mypage/regions/nearby",  // 근처 지역 ID 조회
+    PROFILE_IMAGE: "/mypage/profile-image",  // 프로필 이미지 변경
   },
 
   REGIONS: {

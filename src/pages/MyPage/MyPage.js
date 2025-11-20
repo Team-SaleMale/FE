@@ -371,6 +371,7 @@ export default function MyPage() {
   const openNicknameChangeDrawer = () => setNicknameChangeDrawerOpen(true);
   const closeNicknameChangeDrawer = () => setNicknameChangeDrawerOpen(false);
   const handleNicknameChangeSuccess = (updatedProfile) => setUserProfile(updatedProfile);
+  const handleProfileImageChange = (updatedProfile) => setUserProfile(updatedProfile);
 
   const openPasswordChangeDrawer = () => setPasswordChangeDrawerOpen(true);
   const closePasswordChangeDrawer = () => setPasswordChangeDrawerOpen(false);
@@ -537,6 +538,7 @@ export default function MyPage() {
               userProfile={userProfile}
               onNicknameChange={openNicknameChangeDrawer}
               onPasswordChange={openPasswordChangeDrawer}
+              onProfileImageChange={handleProfileImageChange}
             />
           </section>
 

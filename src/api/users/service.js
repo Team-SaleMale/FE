@@ -30,6 +30,24 @@ export const resetPassword   = (payload) => patch(endpoints.USERS.RESET_PASSWORD
 export const changeNickname  = (payload) => patch(endpoints.USERS.CHANGE_NICKNAME, payload);  // { nickname }
 export const nearbyRegionIds = (params = {}) => get(endpoints.USERS.NEARBY_REGION_IDS, params); // { lat, lng }
 
+/**
+ * 프로필 이미지 변경
+ * PATCH /mypage/profile-image
+ *
+ * @param {File} file - 업로드할 이미지 파일 (50MB 이하, jpg/jpeg/png/gif/webp)
+ * @returns {Promise} 업데이트된 프로필 정보
+ */
+export const changeProfileImage = (file) => {
+  const formData = new FormData();
+  formData.append('userProfile', file);
+
+  return api.patch(endpoints.USERS.PROFILE_IMAGE, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+
 // --- 과거 코드 호환 (feature 브랜치 스타일) ---
 export const userService = {
   getProfile,

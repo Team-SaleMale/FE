@@ -1,9 +1,11 @@
 import styles from "../../../styles/MyPage/Overview/ProfileHeader.module.css";
 import { Icon } from "@iconify/react";
 import { useRef, useState, useEffect } from "react";
+import { changeProfileImage } from "../../../api/users/service";
 
-export default function ProfileHeader({ selectedCategories = [], userLocation = "서울 강서구 가양제3동", userProfile = null, onPasswordChange, onNicknameChange }) {
+export default function ProfileHeader({ selectedCategories = [], userLocation = "서울 강서구 가양제3동", userProfile = null, onPasswordChange, onNicknameChange, onProfileImageChange }) {
   const [profileImage, setProfileImage] = useState(userProfile?.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=400&auto=format&fit=crop");
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
   // userProfile이 변경되면 profileImage 업데이트
@@ -17,14 +19,60 @@ export default function ProfileHeader({ selectedCategories = [], userLocation = 
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImage(reader.result);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // 파일 확장자 검증
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    const fileExtension = file.name.split('.').pop().toLowerCase();
+    if (!allowedExtensions.includes(fileExtension)) {
+      alert('허용되지 않는 파일 형식입니다. (jpg, jpeg, png, gif, webp만 가능)');
+      return;
+    }
+
+    // 파일 크기 검증 (50MB)
+    const maxSize = 50 * 1024 * 1024;
+    if (file.size > maxSize) {
+      alert('파일 크기는 50MB 이하여야 합니다.');
+      return;
+    }
+
+    // 미리보기 표시
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfileImage(reader.result);
+    };
+    reader.readAsDataURL(file);
+
+    // API 호출
+    setIsUploading(true);
+    try {
+      const response = await changeProfileImage(file);
+      const res = response?.data || response;
+
+      if (res?.isSuccess) {
+        console.log('프로필 이미지 변경 성공:', res.result);
+        // 부모 컴포넌트에 업데이트된 프로필 전달
+        if (onProfileImageChange) {
+          onProfileImageChange(res.result);
+        }
+      } else {
+        alert(res?.message || '프로필 이미지 변경에 실패했습니다.');
+        // 실패 시 이전 이미지로 복원
+        if (userProfile?.profileImage) {
+          setProfileImage(userProfile.profileImage);
+        }
+      }
+    } catch (error) {
+      console.error('프로필 이미지 변경 실패:', error);
+      alert('프로필 이미지 변경 중 오류가 발생했습니다.');
+      // 실패 시 이전 이미지로 복원
+      if (userProfile?.profileImage) {
+        setProfileImage(userProfile.profileImage);
+      }
+    } finally {
+      setIsUploading(false);
     }
   };
   // 카테고리 매핑 (경매 등록과 동일)
