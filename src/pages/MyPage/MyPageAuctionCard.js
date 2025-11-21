@@ -95,13 +95,7 @@ export default function MyPageAuctionCard({ item, onChatClick }) {
           <div className={styles.empty} />
         )}
 
-        {/* ✅ 오늘 마감 배지만 노출 */}
-        {item?.isEndingTodayOpen && <span className={styles.badge}>오늘 마감 경매</span>}
-
-        {/* 낙찰 배지 */}
-        {item?.isClosed && <span className={styles.closedBadge}>낙찰</span>}
-
-        {/* 유찰 배지 */}
+        {/* 유찰 배지만 표시 */}
         {item?.isFailedBid && <span className={styles.failedBadge}>유찰</span>}
 
         {/* 슬라이더 컨트롤 */}
