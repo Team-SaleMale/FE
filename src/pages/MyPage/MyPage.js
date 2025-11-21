@@ -183,16 +183,48 @@ export default function MyPage() {
         const res = response?.data || response;
         if (res?.isSuccess) {
           const likedItems = res.result?.likedItems || [];
-          const formattedItems = likedItems.map((item) => ({
-            id: item.itemId,
-            image: item.thumbnailUrl,
-            title: item.title,
-            bidders: item.bidderCount,
-            timeLeft: calculateTimeLeft(item.endTime),
-            startPrice: item.startPrice,
-            currentPrice: item.currentPrice,
-          }));
-          setWishlistItems(formattedItems);
+
+          // 각 아이템의 상세 정보를 병렬로 조회하여 가격 정보 가져오기
+          const itemsWithDetails = await Promise.all(
+            likedItems.map(async (item) => {
+              try {
+                const detailResponse = await fetch(`${process.env.REACT_APP_API_URL || ''}/auctions/${item.itemId}`, {
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('accessToken') || ''}`,
+                  },
+                });
+                const detailData = await detailResponse.json();
+
+                if (detailData?.isSuccess) {
+                  const detail = detailData.result;
+                  return {
+                    id: item.itemId,
+                    image: item.thumbnailUrl,
+                    title: item.title,
+                    bidders: item.bidderCount,
+                    timeLeft: calculateTimeLeft(item.endTime),
+                    startPrice: detail.startPrice,
+                    currentPrice: detail.currentPrice,
+                  };
+                }
+              } catch (err) {
+                console.error(`아이템 ${item.itemId} 상세 조회 실패:`, err);
+              }
+
+              // 실패 시 기본값
+              return {
+                id: item.itemId,
+                image: item.thumbnailUrl,
+                title: item.title,
+                bidders: item.bidderCount,
+                timeLeft: calculateTimeLeft(item.endTime),
+                startPrice: null,
+                currentPrice: null,
+              };
+            })
+          );
+
+          setWishlistItems(itemsWithDetails);
         }
       } catch (err) {
         console.error("찜한 목록 조회 실패:", err);
@@ -393,24 +425,42 @@ export default function MyPage() {
   };
 
   // API 데이터를 컴포넌트 형식으로 변환
-  const items = useMemo(
-    () =>
-      auctionItems.map((item) => ({
-        id: item.itemId,
-        images: [item.thumbnailUrl],
-        title: item.title,
-        views: item.viewCount,
-        bidders: item.bidderCount,
-        timeLeft: calculateTimeLeft(item.endTime),
-        startPrice: item.startPrice,
-        currentPrice: item.currentPrice,
-        isEndingTodayOpen: activeTab !== "낙찰" && activeTab !== "유찰",
-        isClosed: activeTab === "낙찰" || item.itemStatus === "CLOSED",
-        isFailedBid: activeTab === "유찰" || item.itemStatus === "FAILED",
-        myRole: item.myRole,
-        isHighestBidder: item.isHighestBidder,
-      })),
-    [auctionItems, activeTab]
+  const items = useMemo(() => {
+    const mappedItems = auctionItems.map((item) => ({
+      id: item.itemId,
+      images: [item.thumbnailUrl],
+      title: item.title,
+      views: item.viewCount,
+      bidders: item.bidderCount,
+      timeLeft: calculateTimeLeft(item.endTime),
+      startPrice: item.startPrice,
+      currentPrice: item.currentPrice,
+      isEndingTodayOpen: activeTab !== "낙찰" && activeTab !== "유찰",
+      isClosed: activeTab === "낙찰" || item.itemStatus === "CLOSED",
+      isFailedBid: activeTab === "유찰" || item.itemStatus === "FAILED",
+      myRole: item.myRole,
+      isHighestBidder: item.isHighestBidder,
+      itemStatus: item.itemStatus,
+    }));
+
+    // "판매" 탭에서는 유찰 상품 제외
+    if (activeTab === "판매") {
+      return mappedItems.filter((item) => item.itemStatus !== "FAIL");
+    }
+
+    return mappedItems;
+  }, [auctionItems, activeTab]);
+
+  // 판매내역: myRole이 SELLER이고 유찰되지 않은 항목만
+  const sellingItems = useMemo(
+    () => items.filter((item) => item.myRole === "SELLER" && item.itemStatus !== "FAIL"),
+    [items]
+  );
+
+  // 구매내역: myRole이 BIDDER 또는 WON인 항목만
+  const purchaseItems = useMemo(
+    () => items.filter((item) => item.myRole === "BIDDER" || item.myRole === "WON"),
+    [items]
   );
 
   return (
@@ -418,7 +468,7 @@ export default function MyPage() {
       <div className={styles.container}>
         <SellingDrawer open={isSellingDrawerOpen} onClose={closeSellingDrawer} title="판매내역">
           <SalesHistoryList
-            items={items.map((i) => ({
+            items={sellingItems.map((i) => ({
               id: i.id,
               image: i.images?.[0],
               title: i.title,
@@ -431,7 +481,7 @@ export default function MyPage() {
 
         <PurchaseDrawer open={isPurchaseDrawerOpen} onClose={closePurchaseDrawer} title="구매내역">
           <PurchaseHistoryList
-            items={items.map((i) => ({
+            items={purchaseItems.map((i) => ({
               id: i.id,
               image: i.images?.[0],
               title: i.title,

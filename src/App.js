@@ -43,6 +43,7 @@ export default function App() {
         {/* 경매 */}
         <Route path="/auctions" element={<AuctionList />} />
         <Route path="/auctions/new" element={<AuctionRegistration />} />
+        <Route path="/auctions/register" element={<AuctionRegistration />} />
         <Route path="/auctions/success" element={<AuctionComplete />} />
         {/* ✅ 상세 동적 라우트 */}
         <Route path="/auctions/:id" element={<AuctionProductDetails />} />

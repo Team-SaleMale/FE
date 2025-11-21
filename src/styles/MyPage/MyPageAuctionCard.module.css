@@ -270,6 +270,30 @@
   }
 }
 
+/* 재등록 버튼 */
+.repostButton{
+  display:flex; align-items:center; justify-content:center; gap:4px;
+  padding:6px 12px;
+  border:1px solid #4b5563;
+  background:white;
+  color:#4b5563;
+  border-radius:8px;
+  cursor:pointer;
+  transition:all 0.2s ease;
+  flex-shrink:0;
+  font-size:13px;
+  font-weight:600;
+}
+.repostButton svg{
+  width:16px; height:16px;
+}
+@media (hover:hover){
+  .repostButton:hover{
+    background:#4b5563;
+    color:white;
+  }
+}
+
 /* ============ Responsive ============ */
 
 /* 1280~1439: 노트북 */

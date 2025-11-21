@@ -1,5 +1,6 @@
 /* eslint-disable jsx-a11y/role-supports-aria-props */
 import { useEffect, useMemo, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/MyPage/MyPageAuctionCard.module.css";
 
@@ -26,6 +27,7 @@ function useTimeLeft(endAtISO, disabled) {
 }
 
 export default function MyPageAuctionCard({ item, onChatClick }) {
+  const navigate = useNavigate();
   const images = useMemo(
     () => (item?.images?.length ? item.images : item?.image ? [item.image] : []),
     [item]
@@ -76,6 +78,11 @@ export default function MyPageAuctionCard({ item, onChatClick }) {
   const handleChatClick = (e) => {
     e.stopPropagation();
     onChatClick?.(item);
+  };
+
+  const handleRepost = (e) => {
+    e.stopPropagation();
+    navigate(`/auctions/register?repost=${item?.id}`);
   };
 
   return (
@@ -163,6 +170,12 @@ export default function MyPageAuctionCard({ item, onChatClick }) {
             {item?.isClosed && onChatClick && (
               <button className={styles.chatButtonSmall} onClick={handleChatClick} type="button" aria-label="채팅하기">
                 <Icon icon="solar:chat-round-dots-linear" />
+              </button>
+            )}
+            {item?.isFailedBid && (
+              <button className={styles.repostButton} onClick={handleRepost} type="button" aria-label="재등록하기">
+                <Icon icon="solar:restart-linear" />
+                <span>재등록</span>
               </button>
             )}
           </div>
