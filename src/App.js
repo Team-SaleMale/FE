@@ -19,10 +19,13 @@ import InquiryList from "./pages/Inquiry/InquiryList";
 import InquiryWrite from "./pages/Inquiry/InquiryWrite";
 import InquiryDetail from "./pages/Inquiry/InquiryDetail";
 import AuthCallback from "pages/Auth/AuthCallback";
-import HotDealPage from "./pages/HotDeal/HotDeal"; 
+import HotDealPage from "./pages/HotDeal/HotDeal";
 import HotDealRegistration from "./pages/HotDealRegistration/HotDealRegistration";
 
-// [ADD] 최초 가입 온보딩 모달 게이트 (전역 1회 렌더)
+// 🔥 비밀번호 재설정 페이지 import
+import PasswordReset from "./pages/Auth/PasswordReset";
+
+// 최초 가입 온보딩 모달
 import CategoryOnboardingGate from "./components/modals/CategoryOnboardingGate";
 
 console.log({ InquiryList, InquiryWrite, InquiryDetail });
@@ -38,7 +41,6 @@ export default function App() {
       <ScrollToTop behavior="auto" />
       {!hideAuthLayout && <Header />}
 
-      {/* [ADD] 전역 모달: localStorage 'showCategoryOnboarding' === "1" 일 때만 표시됨 */}
       <CategoryOnboardingGate />
 
       <Routes>
@@ -49,17 +51,19 @@ export default function App() {
         <Route path="/auctions" element={<AuctionList />} />
         <Route path="/auctions/new" element={<AuctionRegistration />} />
         <Route path="/auctions/success" element={<AuctionComplete />} />
-        {/* ✅ 상세 동적 라우트 */}
         <Route path="/auctions/:id" element={<AuctionProductDetails />} />
 
         {/* 동영상 */}
         <Route path="/videos" element={<VideoBrowser />} />
         <Route path="/video/:videoId" element={<Video />} />
 
-        {/* 마이페이지 / 인증 */}
+        {/* 마이페이지/인증 */}
         <Route path="/mypage" element={<MyPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+
+        {/* 🔥 비밀번호 재설정 */}
+        <Route path="/password-reset" element={<PasswordReset />} />
 
         {/* 시세 확인 */}
         <Route path="/price-check" element={<PriceCheck />} />
