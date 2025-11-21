@@ -168,9 +168,17 @@ export const requestPasswordReset = (email) =>
 export const verifyPasswordResetCode = (email, code) =>
   postNoAuth(endpoints.AUTH.PASSWORD_RESET_VERIFY, { email, code });
 
-// [추가 주석] 3단계(최종 비밀번호 재설정)는 서버가 이전 단계에서 준 Authorization 임시 토큰으로 호출
-export const confirmPasswordReset = (newPw) =>
-  post(endpoints.AUTH.PASSWORD_RESET_CONFIRM, { newPassword: newPw });
+// [수정 주석] 3단계(최종 비밀번호 재설정): 이메일 인증에서 받은 세션 토큰을 헤더로 전송
+export const confirmPasswordReset = (newPw, sessionToken) =>
+  post(
+    endpoints.AUTH.PASSWORD_RESET_CONFIRM,
+    { newPassword: newPw },
+    {
+      headers: {
+        "X-Password-Reset-Token": sessionToken,
+      },
+    }
+  );
 
 export async function completeSocialSignup({ signupToken, nickname, regionId }) {
   const qs = new URLSearchParams({
