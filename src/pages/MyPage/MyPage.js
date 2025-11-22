@@ -27,7 +27,7 @@ import { myProfile } from "../../api/auth/service";
 
 export default function MyPage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("낙찰");
+  const [activeTab, setActiveTab] = useState("전체");
   const [sortValue, setSortValue] = useState("latest");
   const [isSellingDrawerOpen, setSellingDrawerOpen] = useState(false);
   const [isPurchaseDrawerOpen, setPurchaseDrawerOpen] = useState(false);
@@ -451,15 +451,15 @@ export default function MyPage() {
     return mappedItems;
   }, [auctionItems, activeTab]);
 
-  // 판매내역: myRole이 SELLER이고 유찰되지 않은 항목만
+  // 판매내역: itemStatus가 SELLING인 항목만 (진행중인 판매)
   const sellingItems = useMemo(
-    () => items.filter((item) => item.myRole === "SELLER" && item.itemStatus !== "FAIL"),
+    () => items.filter((item) => item.itemStatus === "SELLING"),
     [items]
   );
 
-  // 구매내역: myRole이 BIDDER 또는 WON인 항목만
+  // 구매내역: itemStatus가 WON인 항목만 (낙찰받은 상품)
   const purchaseItems = useMemo(
-    () => items.filter((item) => item.myRole === "BIDDER" || item.myRole === "WON"),
+    () => items.filter((item) => item.itemStatus === "WON"),
     [items]
   );
 
