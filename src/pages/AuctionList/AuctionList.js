@@ -78,7 +78,8 @@ const RANGE_TO_KM = { VERY_NEAR: 2, NEAR: 5, MEDIUM: 20, FAR: 50, ALL: null };
 
 const to2 = (n) => String(n).padStart(2, "0");
 const timeLeftFrom = (endAtISO, nowMs) => {
-  const diff = new Date(endAtISO).getTime() - nowMs;
+  const endMs = endAtISO ? new Date(endAtISO).getTime() : 0;
+  const diff = endMs - nowMs;
   if (diff <= 0) return "0일 00:00:00";
   const sec = Math.floor(diff / 1000);
   const d = Math.floor(sec / 86400);
@@ -88,13 +89,17 @@ const timeLeftFrom = (endAtISO, nowMs) => {
   return `${d}일 ${to2(h)}:${to2(m)}:${to2(s)}`;
 };
 const ymdTZ = (dateLike, timeZone = "Asia/Seoul") => {
+  if (!dateLike) return null;
   const d = typeof dateLike === "string" ? new Date(dateLike) : dateLike;
   const fmt = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" });
   return fmt.format(d).replaceAll("-", "/");
 };
 const isEndingTodayKST = (endAtISO, nowMs) =>
-  ymdTZ(new Date(nowMs), "Asia/Seoul") === ymdTZ(endAtISO, "Asia/Seoul");
-const isClosed = (endAtISO, nowMs) => new Date(endAtISO).getTime() <= nowMs;
+  !!endAtISO && ymdTZ(new Date(nowMs), "Asia/Seoul") === ymdTZ(endAtISO, "Asia/Seoul");
+const isClosed = (endAtISO, nowMs) => {
+  if (!endAtISO) return false;
+  return new Date(endAtISO).getTime() <= nowMs;
+};
 
 const ITEMS_PER_PAGE = 12;
 
@@ -175,7 +180,7 @@ export default function AuctionList() {
     const q = (query || "").trim();
     const p = {
       status: STATUS_MAP[tab] || "BIDDING",
-      page,                    // ← 여기! 1-based로 전달. service에서 0-based로 변환함
+      page,                    // 1-based → service에서 0-based 변환
       size: ITEMS_PER_PAGE,
       sort: SORT_MAP[sort] ?? SORT_MAP[""],
       q,
@@ -231,35 +236,50 @@ export default function AuctionList() {
     return () => { alive = false; };
   }, [serverParams]);
 
-  /* 카드 VM */
+  /* 카드 VM — 응답 키 차이 방어(fallback) */
   const VM = useMemo(() => {
     const now = nowTick;
-    return (server.items || []).map((it) => {
-      const endISO = it.endTime;
-      const imgs = Array.isArray(it.imageUrls) ? it.imageUrls.filter(Boolean) : [];
-      const images = Array.from(new Set(imgs));
-      const cover = images[0] || it.thumbnailUrl || it.imageUrl || "";
-      const closed = isClosed(endISO, now);
-      const endsTodayOpen = !closed && isEndingTodayKST(endISO, now);
-      return {
-        id: it.itemId,
-        title: it.title ?? "",
-        images: images.length ? images : (cover ? [cover] : []),
-        imageUrls: images,
-        thumbnailUrl: cover || null,
-        startAtISO: it.createdAt || null,
-        endAtISO: endISO,
-        startAt: it.createdAt ? ymdTZ(it.createdAt, "Asia/Seoul") : null,
-        endAt: ymdTZ(endISO, "Asia/Seoul"),
-        timeLeft: timeLeftFrom(endISO, now),
-        isClosed: closed,
-        isEndingTodayOpen: endsTodayOpen,
-        startPrice: it.startPrice ?? null,
-        currentPrice: it.currentPrice ?? 0,
-        views: it.viewCount ?? 0,
-        bidders: it.bidderCount ?? 0,
-      };
-    });
+    return (server.items || [])
+      .map((it) => {
+        const endISO =
+          it.endTime || it.endAt || it.endDate || it.endsAt || null;
+
+        const imgs = Array.isArray(it.imageUrls)
+          ? it.imageUrls
+          : Array.isArray(it.images)
+          ? it.images
+          : [];
+        const images = Array.from(new Set((imgs || []).filter(Boolean)));
+        const cover = images[0] || it.thumbnailUrl || it.imageUrl || "";
+
+        const closed = isClosed(endISO, now);
+        const endsTodayOpen = !closed && isEndingTodayKST(endISO, now);
+
+        const id =
+          it.itemId ?? it.id ?? it.auctionId ?? it.productId ?? null;
+
+        if (!id) return null; // id 없으면 스킵(렌더/라우팅 보호)
+
+        return {
+          id,
+          title: it.title ?? "",
+          images: images.length ? images : (cover ? [cover] : []),
+          imageUrls: images,
+          thumbnailUrl: cover || null,
+          startAtISO: it.createdAt || it.startTime || it.startAt || null,
+          endAtISO: endISO,
+          startAt: (it.createdAt || it.startTime || it.startAt) ? ymdTZ(it.createdAt || it.startTime || it.startAt, "Asia/Seoul") : null,
+          endAt: endISO ? ymdTZ(endISO, "Asia/Seoul") : null,
+          timeLeft: timeLeftFrom(endISO, now),
+          isClosed: closed,
+          isEndingTodayOpen: endsTodayOpen,
+          startPrice: it.startPrice ?? it.price?.start ?? null,
+          currentPrice: it.currentPrice ?? it.price?.current ?? it.currentBid ?? 0,
+          views: it.viewCount ?? it.views ?? 0,
+          bidders: it.bidderCount ?? it.bidders ?? it.bidCount ?? 0,
+        };
+      })
+      .filter(Boolean);
   }, [server.items, nowTick]);
 
   /* 탭/필터 변경 → 1페이지 */

@@ -28,14 +28,12 @@ function useNowTick() {
 /**
  * 마감 임박 경매
  * - /auctions?status=BIDDING&sort=END_TIME_ASC&page=0&size=12
- * - 더미(기본값) 없음
- * - 슬라이드 페이지는 pageSize(기본 4) 기준
  */
 export default function Ending({ pageSize = 4, onCardClick }) {
   const navigate = useNavigate();
   const nowTick = useNowTick();
 
-  const [items, setItems] = useState([]);      // [{ id,title,imageUrl,currentBid,views,endAtISO }]
+  const [items, setItems] = useState([]); // [{ id,title,imageUrl,currentBid,views,endAtISO }]
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
@@ -48,13 +46,14 @@ export default function Ending({ pageSize = 4, onCardClick }) {
         setLoading(true);
         setError(null);
 
-        // 마감 임박: 서버 정렬 END_TIME_ASC, 12개
         const res = await fetchEndingSoonAuctions({ size: 12 });
         const rows = Array.isArray(res?.result?.items) ? res.result.items : [];
 
         const mapped = rows
           .map((it) => {
-            const imgs = Array.isArray(it.imageUrls) ? it.imageUrls.filter(Boolean) : [];
+            const imgs = Array.isArray(it.imageUrls)
+              ? it.imageUrls.filter(Boolean)
+              : [];
             const thumb = imgs[0] || it.thumbnailUrl || it.imageUrl || "";
             return {
               id: it.itemId ?? it.id,
@@ -64,8 +63,12 @@ export default function Ending({ pageSize = 4, onCardClick }) {
               views: it.viewCount ?? it.views ?? 0,
               endAtISO: it.endTime ?? it.endAt ?? null,
               timeLeftMs:
-                (typeof it.timeLeftMs === "number" && it.timeLeftMs >= 0 && it.timeLeftMs) ||
-                (typeof it.remainingMs === "number" && it.remainingMs >= 0 && it.remainingMs) ||
+                (typeof it.timeLeftMs === "number" &&
+                  it.timeLeftMs >= 0 &&
+                  it.timeLeftMs) ||
+                (typeof it.remainingMs === "number" &&
+                  it.remainingMs >= 0 &&
+                  it.remainingMs) ||
                 null,
             };
           })
@@ -77,13 +80,15 @@ export default function Ending({ pageSize = 4, onCardClick }) {
       } catch (e) {
         if (!alive) return;
         setError(e);
-        setItems([]); // 기본값 없음
+        setItems([]);
       } finally {
         if (!alive) return;
         setLoading(false);
       }
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, []);
 
   // 남은 시간 (1초 갱신)
@@ -157,7 +162,9 @@ export default function Ending({ pageSize = 4, onCardClick }) {
         {/* 상태 표시 */}
         {loading && <div className={styles.state}>불러오는 중…</div>}
         {!loading && error && withLeft.length === 0 && (
-          <div className={styles.state}>오류가 발생했습니다. 잠시 후 다시 시도해 주세요.</div>
+          <div className={styles.state}>
+            오류가 발생했습니다. 잠시 후 다시 시도해 주세요.
+          </div>
         )}
         {!loading && !error && withLeft.length === 0 && (
           <div className={styles.state}>표시할 마감 임박 경매가 없습니다.</div>
@@ -204,7 +211,8 @@ export default function Ending({ pageSize = 4, onCardClick }) {
                       <div className={styles.priceWrap}>
                         <span className={styles.dim}>현재 입찰가</span>
                         <strong className={styles.price}>
-                          {"₩" + Number(it.currentBid ?? 0).toLocaleString("ko-KR")}
+                          {"₩" +
+                            Number(it.currentBid ?? 0).toLocaleString("ko-KR")}
                         </strong>
                       </div>
                     </div>
