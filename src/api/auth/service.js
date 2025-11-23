@@ -131,12 +131,11 @@ export const myProfile = async () => {
 };
 
 export const checkNickname = (nickname) =>
-  get(endpoints.AUTH.CHECK_NICK, { value: String(nickname || "").trim() })
-    .then((res) => {
-      const raw = res?.result?.exists;
-      const exists = raw === true || raw === "true" || raw === 1 || raw === "1";
-      return { available: !exists };
-    });
+  get(endpoints.AUTH.CHECK_NICK, { value: String(nickname || "").trim() }).then((res) => {
+    const raw = res?.result?.exists;
+    const exists = raw === true || raw === "true" || raw === 1 || raw === "1";
+    return { available: !exists };
+  });
 
 export const checkEmail = (email) =>
   get(endpoints.AUTH.CHECK_EMAIL, { value: email }).then((res) => {
@@ -161,6 +160,17 @@ export const requestEmailCode = (email) =>
 
 export const verifyEmailCode = (email, code) =>
   postNoAuth(endpoints.AUTH.EMAIL_VERIFY_CONFIRM, { email, code });
+
+// [추가 주석] 비밀번호 재설정 3단계 API 래퍼
+export const requestPasswordReset = (email) =>
+  postNoAuth(endpoints.AUTH.PASSWORD_RESET_REQUEST, { email });
+
+export const verifyPasswordResetCode = (email, code) =>
+  postNoAuth(endpoints.AUTH.PASSWORD_RESET_VERIFY, { email, code });
+
+// [추가 주석] 3단계(최종 비밀번호 재설정)는 서버가 이전 단계에서 준 Authorization 임시 토큰으로 호출
+export const confirmPasswordReset = (newPw) =>
+  post(endpoints.AUTH.PASSWORD_RESET_CONFIRM, { newPassword: newPw });
 
 export async function completeSocialSignup({ signupToken, nickname, regionId }) {
   const qs = new URLSearchParams({
