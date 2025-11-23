@@ -17,6 +17,7 @@ function PasswordReset() {
   const [newPw, setNewPw] = useState("");
   const [newPwCheck, setNewPwCheck] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetToken, setResetToken] = useState(""); // ✅ 이메일 인증에서 받은 세션 토큰
 
   const navigate = useNavigate();
 
@@ -43,7 +44,7 @@ function PasswordReset() {
     }
   };
 
-  // [추가 주석] 2단계: 이메일 + 코드 검증 (성공 시 서버가 Authorization 임시 토큰 발급)
+  // [추가 주석] 2단계: 이메일 + 코드 검증 (성공 시 세션 토큰 수신)
   const handleVerifyCode = async (e) => {
     e.preventDefault();
     if (loading) return;
@@ -57,9 +58,17 @@ function PasswordReset() {
         alert(res?.message || "인증번호 검증에 실패했습니다.");
         return;
       }
+
+      // ✅ result.sessionToken 저장
+      const token = res?.result?.sessionToken || res?.sessionToken;
+      if (!token) {
+        alert("세션 토큰이 없습니다. 다시 시도해주세요.");
+        return;
+      }
+      setResetToken(token);
+
       alert("인증이 완료되었습니다. 새로운 비밀번호를 설정하세요.");
       setStep(3);
-      // Authorization 토큰은 client.js 응답 인터셉터에서 자동 저장
     } catch (err) {
       console.error("[PasswordReset] verify error:", err);
       alert(err?.friendlyMessage || "인증번호 검증 요청에 실패했습니다.");
@@ -68,17 +77,18 @@ function PasswordReset() {
     }
   };
 
-  // [추가 주석] 3단계: 최종 비밀번호 재설정
+  // [추가 주석] 3단계: 최종 비밀번호 재설정 (세션 토큰 + 새 비밀번호 전송)
   const handleConfirmNewPassword = async (e) => {
     e.preventDefault();
     if (loading) return;
     if (!newPw) return alert("새 비밀번호를 입력하세요.");
     if (!newPwCheck) return alert("새 비밀번호 확인을 입력하세요.");
     if (newPw !== newPwCheck) return alert("새 비밀번호와 확인이 일치하지 않습니다.");
+    if (!resetToken) return alert("세션 토큰이 없습니다. 처음부터 다시 진행해주세요.");
 
     try {
       setLoading(true);
-      const res = await confirmPasswordReset(newPw);
+      const res = await confirmPasswordReset(newPw, resetToken);
       if (res?.isSuccess === false) {
         alert(res?.message || "비밀번호 재설정에 실패했습니다.");
         return;
@@ -187,7 +197,12 @@ function PasswordReset() {
 
         <div className="auth-signup">
           이미 비밀번호를 기억하셨나요?{" "}
-          <button type="button" className="auth-text-button" onClick={goLogin} disabled={loading}>
+          <button
+            type="button"
+            className="auth-text-button"
+            onClick={goLogin}
+            disabled={loading}
+          >
             로그인 하러가기
           </button>
         </div>
