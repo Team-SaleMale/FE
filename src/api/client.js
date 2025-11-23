@@ -1,4 +1,3 @@
-// src/api/client.js
 import axios from "axios";
 import { Cookies } from "react-cookie";
 import config from "../config";
@@ -41,7 +40,9 @@ function extractTokenFromHeader(h) {
 const api = axios.create({
   baseURL:
     config?.API_URL ||
-    (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE_URL) ||
+    (typeof import.meta !== "undefined" &&
+      import.meta.env &&
+      import.meta.env.VITE_API_BASE_URL) ||
     process.env.REACT_APP_API_URL ||
     "",
   withCredentials: true,
@@ -59,7 +60,7 @@ const NO_AUTH_EXACT = new Set([
   "/auth/check/nickname",
   "/auth/password/reset",
   "/auth/password/reset/verify",
-  "/auth/password/reset/confirm",
+  // "/auth/password/reset/confirm",  // [주의] 최종 단계는 Authorization 임시 토큰 필요 → no-auth 제외
   "/auth/email/verify/request",
   "/auth/email/verify/confirm",
 
@@ -120,25 +121,48 @@ const validateContentType = (response) => {
   const ct = (response.headers?.["content-type"] || "").toLowerCase();
   const st = response.status;
   if (st === 204) return;
-  if (ct.includes("application/json") || ct.includes("application/problem+json") || ct.includes("text/")) return;
-  if (ct.includes("multipart/") || ct.includes("image/") || ct.includes("octet-stream")) return;
+  if (
+    ct.includes("application/json") ||
+    ct.includes("application/problem+json") ||
+    ct.includes("text/")
+  )
+    return;
+  if (
+    ct.includes("multipart/") ||
+    ct.includes("image/") ||
+    ct.includes("octet-stream")
+  )
+    return;
   throw new Error("서버 응답이 올바르지 않습니다.");
 };
 
 const friendly = (error) => {
   const d = error?.response?.data;
-  return d?.message || d?.error?.message || d?.errorMessage || error?.message || "요청 실패";
+  return (
+    d?.message ||
+    d?.error?.message ||
+    d?.errorMessage ||
+    error?.message ||
+    "요청 실패"
+  );
 };
 
 api.interceptors.response.use(
   (res) => {
-    try { validateContentType(res); } catch (e) { console.error(e?.message || e); }
+    try {
+      validateContentType(res);
+    } catch (e) {
+      console.error(e?.message || e);
+    }
 
     // body/header에서 accessToken 자동 저장
     try {
       const data = res?.data || {};
       let token = data?.result?.accessToken || data?.accessToken || null;
-      if (!token) token = extractTokenFromHeader(res?.headers?.authorization || res?.headers?.Authorization);
+      if (!token)
+        token = extractTokenFromHeader(
+          res?.headers?.authorization || res?.headers?.Authorization
+        );
       if (token) saveToken(token);
     } catch (e) {
       console.warn("[token save failed]", e);
@@ -156,11 +180,16 @@ api.interceptors.response.use(
 );
 
 /* -------------------- common calls -------------------- */
-export const get    = async (url, params = {}, options = {}) => (await api.get(url, { params, ...options })).data;
-export const post   = async (url, data, options = {}) => (await api.post(url, data, { ...options })).data;
-export const put    = async (url, data, options = {}) => (await api.put(url, data, { ...options })).data;
-export const del    = async (url, options = {}) => (await api.delete(url, options)).data;
-export const patch  = async (url, data, options = {}) => (await api.patch(url, data, { ...options })).data;
+export const get = async (url, params = {}, options = {}) =>
+  (await api.get(url, { params, ...options })).data;
+export const post = async (url, data, options = {}) =>
+  (await api.post(url, data, { ...options })).data;
+export const put = async (url, data, options = {}) =>
+  (await api.put(url, data, { ...options })).data;
+export const del = async (url, options = {}) =>
+  (await api.delete(url, options)).data;
+export const patch = async (url, data, options = {}) =>
+  (await api.patch(url, data, { ...options })).data;
 
 // 🔵 multipart 전용: Content-Type 명시 금지(=undefined)
 export const postMultipart = async (url, formData, options = {}) => {
@@ -173,9 +202,29 @@ export const postMultipart = async (url, formData, options = {}) => {
 
 /* -------------------- explicit no-auth helpers -------------------- */
 export const postNoAuth = async (url, data = {}, options = {}) =>
-  (await api.post(url, data, { withCredentials: options.withCredentials ?? false, ...options, headers: { "Content-Type": "application/json", "X-Skip-Auth": "1", ...(options.headers || {}) } })).data;
+  (
+    await api.post(url, data, {
+      withCredentials: options.withCredentials ?? false,
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        "X-Skip-Auth": "1",
+        ...(options.headers || {}),
+      },
+    })
+  ).data;
 
 export const getNoAuth = async (url, params = {}, options = {}) =>
-  (await api.get(url, { params, withCredentials: options.withCredentials ?? false, ...options, headers: { "X-Skip-Auth": "1", ...(options.headers || {}) } })).data;
+  (
+    await api.get(url, {
+      params,
+      withCredentials: options.withCredentials ?? false,
+      ...options,
+      headers: {
+        "X-Skip-Auth": "1",
+        ...(options.headers || {}),
+      },
+    })
+  ).data;
 
 export default api;
