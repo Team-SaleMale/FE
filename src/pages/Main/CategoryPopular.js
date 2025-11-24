@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/Main/CategoryPopular.module.css";
-import { fetchCategoryPopular } from "../../api/auctions/service";
+import { fetchCategoryPopularForMain } from "../../api/auctions/service";
 
 /** 17개 카테고리 (solar 아이콘 사용) */
 const CATEGORIES = [
@@ -46,7 +46,7 @@ export default function CategoryPopular({ initialCategory = "home-appliance" }) 
   const gotoNext = () => !atLast && setTabStart((s) => Math.min(CATEGORIES.length - 1, s + 7));
   const goDetail = (id) => navigate(`/auctions/${id}`);
 
-  // 서버 호출: 카테고리별 인기 상품 (status=POPULAR, categories=선택된 카테고리)
+  // 서버 호출: 카테고리별 인기 상품 (항상 radius=ALL)
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -55,8 +55,8 @@ export default function CategoryPopular({ initialCategory = "home-appliance" }) 
         setError("");
         setItems([]);
 
-        const res = await fetchCategoryPopular({
-          categoryKey: activeKey, // UI key 그대로 넘기면 service에서 enum으로 직렬화
+        const res = await fetchCategoryPopularForMain({
+          categoryKey: activeKey, // UI key 전달 → service에서 enum 배열로 직렬화
           page: 1,
           size: 12,
         });

@@ -30,8 +30,6 @@ function Login() {
     try {
       setLoading(true);
 
-      // NOTE(ChatGPT): 서버는 로그인 응답의 'Authorization' 헤더로 accessToken을 내릴 수 있음.
-      // client.js 응답 인터셉터가 Authorization 헤더를 자동 수거/저장하므로 여기서는 단순 호출만.
       const res = await login({ email, password: pw });
 
       if (res?.isSuccess === false) {
@@ -39,15 +37,11 @@ function Login() {
         return;
       }
 
-      // NOTE(ChatGPT): 토큰 저장이 정상인지 가볍게 확인 (Authorization 주입 확인용)
       try {
-        await myProfile(); // 200이면 OK
-      } catch {
-        // 인터셉터 저장 타이밍 이슈 등으로 바로 실패할 수 있으나, 이후 새로고침 시 정상화될 수 있음
-      }
+        await myProfile();
+      } catch {}
 
       alert("로그인 성공!");
-      // NOTE(ChatGPT): Header는 mount 시 1회만 프로필을 조회하므로, 홈으로 이동 후 새로고침으로 상태 반영
       navigate("/", { replace: true });
       window.location.reload();
     } catch (err) {
@@ -58,7 +52,7 @@ function Login() {
     }
   };
 
-  // ✅ 소셜 로그인: 백엔드 OAuth2 엔드포인트로 리다이렉트
+  // 소셜 로그인
   const goNaver = () => {
     if (loading) return;
     setLoading(true);
@@ -126,6 +120,18 @@ function Login() {
             </button>
           </div>
         </form>
+
+        {/* 🔥 비밀번호 찾기 링크 추가 */}
+        <div className="auth-forgot">
+          <button
+            type="button"
+            className="auth-text-button"
+            onClick={() => navigate("/password-reset")}
+            disabled={loading}
+          >
+            비밀번호를 잊으셨나요?
+          </button>
+        </div>
 
         <div className="auth-signup">
           아직 계정이 없으신가요? <a href="/signup">회원가입</a>

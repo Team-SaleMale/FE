@@ -31,7 +31,7 @@
 
 .searchCard{
   --sep-color:#dddfe3;
-  --col-gap:44px;                 /* 수직선 양옆 간격(전역 column-gap) */
+  --col-gap:44px;
 
   background:#fff; border-radius:24px; box-shadow:0 35px 120px rgba(20,33,61,.20);
   padding:55px 28px 26px;
@@ -42,11 +42,10 @@
   box-sizing:border-box;
   overflow:hidden;
 
-  /* ⬇︎ 스페이서 열 제거(총 4열) */
   grid-template-columns:
-    minmax(240px, 1.20fr)   /* 현재 거주 지역 */
-    minmax(250px, 1.00fr)   /* 상품명 */
-    minmax(320px, 1.90fr)   /* 가격 범위 */
+    minmax(280px, 1.20fr)   /* 현재 거주 지역 */
+    minmax(230px, 1.00fr)   /* 상품명 */
+    minmax(270px, 1.90fr)   /* 가격 범위 */
     max-content;            /* 버튼 */
   column-gap: var(--col-gap);
 }
@@ -61,19 +60,46 @@
   font-weight:600; color:#343941; white-space:nowrap;
 }
 
-/* 주소 */
+/* 주소/지역 드롭다운 또는 텍스트 */
 .addressText{
   height:44px; display:flex; align-items:center;
   padding:0 14px; border-radius:12px; background:#fbfcff; color:#596274; font-size:14px; border:1px solid transparent;
   width:100%; min-width:0; box-sizing:border-box; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
+.selectsRow{ display:flex; gap:10px; align-items:center; }
+.selectWrap{ flex:1 1 0; min-width:0; position:relative; }
 
-/* ── 수직 구분선: 두 칼럼 사이 정확히 중앙 ── */
+/* ▼ 커스텀 셀렉트(화살표 왼쪽 배치 + 드롭다운 옵션 스타일) */
+.select{
+  height:44px; width:100%; box-sizing:border-box;
+  border-radius:12px; border:1px solid #e6e8ee; background:#fff;
+  /* 오른쪽 여백을 넉넉히 줘서 화살표와 겹치지 않도록 */
+  padding:0 38px 0 12px; font-size:14px; color:#111827;
+  appearance:none; -webkit-appearance:none; -moz-appearance:none;
+}
+.select:focus{ outline:none; border-color:#cad3ff; box-shadow:0 0 0 3px rgba(30,85,255,.12); }
+
+/* 화살표: 오른쪽에서 약간 안쪽(왼쪽으로) */
+.selectWrapArrow::after{
+  content:"";
+  position:absolute; top:50%; right:12px; width:8px; height:8px;
+  border-right:1px solid #6b7280; border-bottom:1px solid #6b7280;
+  transform:translateY(-50%) rotate(45deg);
+  pointer-events:none; opacity:.9;
+}
+
+/* 드롭다운 옵션(대부분의 최신 브라우저에서 적용) */
+.select option{
+  background:#ffffff;
+  color:#111111;
+}
+
+/* ── 수직 구분선 ── */
 .withSep{ position:relative; }
 .withSep::before{
   content:"";
   position:absolute; top:6px; bottom:6px; width:1px; background:var(--sep-color);
-  left: calc(-0.5 * var(--col-gap));   /* 칼럼 사이 중앙 */
+  left: calc(-0.5 * var(--col-gap));
 }
 
 /* 상품명 입력 */
@@ -99,10 +125,10 @@
 /* CTA */
 .searchBtn{
   height:48px; padding:0 22px; border:0; border-radius:12px; background:#1e55ff; color:#fff;
-  font-family:"Pretendard","Malgun Gothic","Noto Sans KR",system-ui,sans-serif; font-weight:500; font-size:16px;
+  font-family:"Pretendard","Malgunic","Noto Sans KR",system-ui,sans-serif; font-weight:500; font-size:16px;
   display:inline-flex; align-items:center; gap:8px; box-shadow:0 18px 36px rgba(30,85,255,.35); cursor:pointer;
   width:max-content; justify-self:end; position:relative; z-index:3;
-  grid-column: 4;                 /* 버튼은 네 번째 열 */
+  grid-column: 4;
 }
 .searchBtn:hover{ transform:translateY(-1px); }
 .searchIcon{ width:20px; height:20px; }
@@ -121,13 +147,13 @@
   .title{ font-size:56px; }
   .searchCard{
     grid-template-columns:
-      minmax(220px, 1fr)
+      minmax(240px, 1fr)
       minmax(240px, 1.0fr)
       minmax(280px, 1.15fr)
       max-content;
     column-gap: var(--col-gap);
   }
-  .withSep::before{ display:none; }  /* 좁은 화면에서는 분리선 숨김 */
+  .withSep::before{ display:none; }
 }
 
 @media (max-width:900px){
@@ -135,6 +161,8 @@
   .searchBtn{ grid-column:2 / 3; justify-self:end; }
   .withSep::before{ display:none; }
   .textInput{ width:100%; }
+  .selectsRow{ flex-direction:column; }
+  .selectWrap{ width:100%; }
 }
 
 @media (max-width:640px){

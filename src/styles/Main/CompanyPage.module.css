@@ -1,0 +1,398 @@
+@charset "utf-8";
+@import url("https://fonts.googleapis.com/css?family=Orbitron");
+
+/* 전체 화면을 큐브가 꽉 채우도록 */
+.wrap {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  color: #ddd;
+  font: 17px/1.4 "Orbitron", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  letter-spacing: 1px;
+  perspective: 1300px;
+  overflow: hidden;
+  z-index: 0;
+}
+
+/* 내부 요소 초기화 */
+.wrap * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 공통 리스트/링크/이미지 */
+.wrap ol,
+.wrap ul {
+  list-style: none;
+}
+.wrap a {
+  outline: 0;
+  text-decoration: none;
+}
+.wrap img {
+  border: 0;
+  display: block;
+}
+
+/* 배경 영상 */
+.bgVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: fixed;
+  inset: 0;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+@keyframes ani {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(360deg);
+  }
+}
+
+/* 3D 큐브 컨테이너 */
+.circle {
+  width: 600px;
+  height: 800px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-top: -400px;
+  margin-left: -300px;
+  transform-style: preserve-3d;
+  animation: ani linear 40s infinite;
+}
+
+/* 공통 article 스타일 */
+.article {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  backface-visibility: hidden;
+}
+
+.faceTitle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 30px;
+  opacity: 0;
+  transition: all 0.5s;
+}
+
+.article:hover .faceTitle {
+  top: -60px;
+  opacity: 1;
+}
+
+.inner {
+  width: 100%;
+  height: 100%;
+}
+
+.inner > div {
+  width: 100%;
+  height: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 50px;
+  position: relative;
+  opacity: 0.7;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.5s;
+}
+
+.inner > div:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.03);
+  opacity: 1;
+}
+
+.inner > div h2,
+.inner > div i {
+  transition: all 0.5s;
+}
+
+.inner > div:hover h2,
+.inner > div:hover i {
+  color: lightcyan;
+  text-shadow: 0 0 10px aqua;
+}
+
+/* ===================== face1 : SNS 아이콘 ===================== */
+.face1 .inner > div {
+  width: 290px;
+  height: 254px;
+  float: left;
+  margin-bottom: 20px;
+  text-align: center;
+}
+.face1 .inner > div:nth-of-type(odd) {
+  margin-right: 20px;
+}
+.face1 .inner > div p i {
+  font-size: 100px;
+  opacity: 0.7;
+}
+.face1 .inner > div h2 {
+  margin-top: 20px;
+  letter-spacing: 2px;
+}
+
+/* ===================== face2 : What's New ===================== */
+.face2 .inner > div img {
+  width: 100%;
+  margin-top: 30px;
+  margin-bottom: 40px;
+}
+.face2 .inner > div h3 {
+  color: #fff;
+  margin-bottom: 20px;
+}
+.face2 .inner > div p {
+  font: 18px/1.3 "arial";
+  color: #ccc;
+}
+
+/* ===================== face3 / face8 : Members ===================== */
+.face3 .inner > div,
+.face8 .inner > div {
+  width: 100%;
+  height: 253px;
+  margin-bottom: 20px;
+}
+
+/* 멤버 사진을 background 로 넣기 */
+.memberPic1,
+.memberPic2,
+.memberPic3,
+.memberPic4,
+.memberPic5,
+.memberPic6 {
+  width: 120px;
+  height: 120px;
+  background-repeat: no-repeat;
+  background-position: center top;
+  overflow: hidden;
+  border-radius: 60px;
+  border: 1px solid #fff;
+  float: left;
+  position: relative;
+  top: 15px;
+  background-size: cover;
+}
+
+/* 원본 멤버 1~3 */
+.memberPic1 {
+  background-image: url("../../assets/img/Main/Company/member4.jpg");
+}
+.memberPic2 {
+  background-image: url("../../assets/img/Main/Company/member5.jpg");
+}
+.memberPic3 {
+  background-image: url("../../assets/img/Main/Company/member6.jpg");
+}
+
+/* 복제 멤버 4~6 : 기존 1~3 이미지를 재사용 */
+.memberPic4 {
+  background-image: url("../../assets/img/Main/Company/member1.jpg");
+}
+.memberPic5 {
+  background-image: url("../../assets/img/Main/Company/member2.jpg");
+}
+.memberPic6 {
+  background-image: url("../../assets/img/Main/Company/member3.jpg");
+}
+
+.memberCon {
+  width: 340px;
+  float: right;
+}
+.memberCon h2 {
+  color: #fff;
+}
+.memberCon p {
+  font: 18px/1.3 "arial";
+  color: #ddd;
+  margin-top: 20px;
+}
+.memberCon span {
+  position: absolute;
+  bottom: 50px;
+  right: 50px;
+  font: 12px/1 "orbitron";
+  color: aqua;
+  opacity: 0.5;
+}
+
+/* ===================== face4 : Advertisement ===================== */
+.face4 .inner > div p {
+  font: 16px/1.3 "arial";
+  color: #bbb;
+  margin-top: 20px;
+}
+
+.face4 .inner > div:nth-of-type(1) {
+  width: 100%;
+  height: 600px;
+  margin-bottom: 20px;
+}
+.face4 .inner > div:nth-of-type(1) video {
+  width: 100%;
+  border: 1px solid #fff;
+  margin-bottom: 30px;
+}
+.face4 .inner > div:nth-of-type(2) {
+  width: 100%;
+  height: 180px;
+}
+.face4 .inner > div:nth-of-type(2) p {
+  float: left;
+}
+.face4 .inner > div:nth-of-type(2) em {
+  float: right;
+  font-size: 12px;
+  color: #ccc;
+  margin-top: 23px;
+}
+
+/* ===================== face5 : DCODELAB ===================== */
+.face5 .inner > div img {
+  margin-bottom: 40px;
+}
+.robotPic {
+  width: 100%;
+  height: 250px;
+  border: 1px solid #bbb;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.3)
+    url("../../assets/img/Main/Company/robot.png") no-repeat center center/cover;
+  margin-bottom: 50px;
+}
+.reflection {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  transition: all 0.5s;
+}
+.face5 .inner > div:hover .reflection {
+  top: -40%;
+}
+
+/* ===================== face6 : Services ===================== */
+.face6 .inner > div {
+  width: 100%;
+  height: 185px;
+  margin-bottom: 20px;
+}
+.face6 .inner > div i {
+  width: 22%;
+  height: 100%;
+  border-right: 1px solid #bbb;
+  float: left;
+  font-size: 50px;
+  color: #fff;
+  position: relative;
+  text-align: left;
+  line-height: 90px;
+  box-sizing: border-box;
+  padding-left: 15px;
+}
+.serviceCon {
+  width: 75%;
+  height: 100%;
+  box-sizing: border-box;
+  padding-left: 40px;
+  float: right;
+}
+.serviceCon p {
+  font: 18px/1 "arial";
+  color: #999;
+}
+
+/* ===================== face7 : Promote Your Company ===================== */
+.face7 .inner > div {
+  width: 100%;
+  height: 100%;
+}
+.face7Body {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #aaa;
+  box-sizing: border-box;
+  padding: 50px;
+}
+.loopVideo {
+  width: auto;
+  height: 100%;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  position: absolute;
+  opacity: 0.9;
+}
+.face7Body h2 {
+  position: absolute;
+  top: 140px;
+  left: 50px;
+  font-size: 40px;
+  color: #fff;
+  text-align: left;
+  line-height: 1.1;
+  text-shadow: 2px 2px 5px #555;
+  z-index: 2;
+}
+.face7Body img:nth-of-type(1) {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+}
+.face7Body img:nth-of-type(2) {
+  position: absolute;
+  bottom: 85px;
+  right: -18px;
+  width: 90%;
+}
+
+/* ===================== 3D 배치 ===================== */
+/* 여기서 face3(1~3)이 앞쪽(왼쪽), face8(4~6)이 그 다음(오른쪽)으로 보이도록 각도 교환 */
+.face1 {
+  transform: rotateY(0deg) translateZ(-764px);
+}
+.face2 {
+  transform: rotateY(45deg) translateZ(-764px);
+}
+/* Members 1~3 */
+.face3 {
+  transform: rotateY(90deg) translateZ(-764px);
+}
+/* Members 4~6 */
+.face8 {
+  transform: rotateY(135deg) translateZ(-764px);
+}
+.face4 {
+  transform: rotateY(180deg) translateZ(-764px);
+}
+.face5 {
+  transform: rotateY(225deg) translateZ(-764px);
+}
+.face6 {
+  transform: rotateY(270deg) translateZ(-764px);
+}
+.face7 {
+  transform: rotateY(315deg) translateZ(-764px);
+}
