@@ -31,7 +31,8 @@
   border-radius:18px;
   box-shadow:var(--shadow-md);
   background:var(--bg-soft);
-  height:clamp(300px,48vh,520px);
+  /* 높이 살짝 더 키운 버전 */
+  height:clamp(460px, 64vh, 720px);
   display:flex; align-items:center; justify-content:center;
   cursor:zoom-in;
 }
@@ -162,12 +163,14 @@
 
 /* 반응형 */
 @media (max-width:1080px){
-  .mainShot{ height:clamp(260px,44vh,480px); }
+  /* 태블릿 구간도 살짝 더 크게 */
+  .mainShot{ height:clamp(400px, 58vh, 620px); }
   .left{ left:32px; } .right{ right:32px; }
   :root{ --lb-hpad:56px; }
 }
 @media (max-width:640px){
-  .mainShot{ height:320px; }
+  /* 모바일에서도 약간 더 크게 */
+  .mainShot{ height:440px; }
   .thumbRow{ grid-template-columns:repeat(4, minmax(0,1fr)); }
   :root{ --lb-vpad:36px; --lb-hpad:44px; --lb-thumb-h:72px; }
   .left{ left:22px; } .right{ right:22px; }

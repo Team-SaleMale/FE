@@ -5,12 +5,24 @@
   --blue-600:#0046CC;
   --line:#DDDFE3;
   --bg:#FFFFFF;
-  --sticky-top: 16px; /* 필요 시 0~24px 사이로 조정 */
+  --sticky-top: 16px;
+
+  /* ✅ 사이드바 폭(필터 패널과 일치) */
+  --sidebar-w: 312px;  /* base */
+}
+@media (min-width: 1440px){
+  :root{ --sidebar-w: 328px; }      /* 넓은 화면에서 조금 더 */
+}
+@media (max-width: 1200px){
+  :root{ --sidebar-w: 252px; }
+}
+@media (max-width: 1024px){
+  :root{ --sidebar-w: 224px; }
 }
 
 /* 페이지 컨테이너 */
 .page{
-  max-width: 1200px;
+  max-width: 1248px;
   margin: 0 auto;
   padding: 20px 12px 40px;
   font-family:"Pretendard","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
@@ -22,8 +34,8 @@
 /* 레이아웃 */
 .body{
   display: grid;
-  grid-template-columns: 260px minmax(0,1fr);
-  gap: 25px;
+  grid-template-columns: var(--sidebar-w) minmax(0,1fr);
+  gap: 22px;
   align-items: start;
   min-width: 0;
 }
@@ -35,64 +47,64 @@
   position: sticky;
   top: var(--sticky-top);
   align-self: start;
-
-  /* viewport 기준 높이 확보 */
-  height: calc(100vh - var(--sticky-top));
   height: calc(100dvh - var(--sticky-top));
-  overflow: hidden;           /* 내부 스크롤러만 보이도록 */
-  contain: layout paint;      /* 성능 최적화 */
+  /* 🔧 잘림 방지: 부모에서는 숨기지 않음 */
+  overflow: visible;
+  contain: layout paint;
   z-index: 1;
+  width: var(--sidebar-w);
+  max-width: var(--sidebar-w);
 }
 
-/* ✅ 내부 스크롤러 (JS에서 추가한 div) */
+/* 내부 스크롤러 */
 .asideScroller{
   height: 100%;
   overflow-y: auto;
-  padding-right: 6px;         /* 스크롤바 겹침 방지 */
-  scrollbar-gutter: stable;
+
+  /* 🔑 오버레이 스크롤바가 컨텐츠를 가리지 않도록 여유 확보 */
+  padding-right: 18px;              /* 이전 6~10px → 18px로 확대 */
+  padding-left: 2px;
+  box-sizing: content-box;
+  scrollbar-gutter: stable both-edges;
+
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
 
+/* 리스트 래퍼 + 로딩 오버레이 */
+.listWrap{ position: relative; min-height: 200px; }
+.loadingOverlay{
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.45); backdrop-filter: blur(1.5px); pointer-events: none;
+}
+.spinner{
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 3px solid #E5E7EB; border-top-color: #111; animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty{ padding: 16px; color: var(--muted); font-weight: 600; }
+
 /* 헬퍼 */
 .list{ display: grid; gap: 16px; }
 .item{ list-style: none; }
-.grid{
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0,1fr));
-  gap: 16px;
-}
+.grid{ display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
 .gridItem{ list-style: none; }
-.paginationSpace{
-  margin-top: 8px;
-  display: flex;
-  justify-content: center;
-}
+.paginationSpace{ margin-top: 8px; display: flex; justify-content: center; }
 
 /* 반응형 */
 @media (max-width: 1200px){
-  .page{ max-width: 1100px; }
+  .page{ max-width: 1180px; }
 }
 @media (max-width: 1024px){
-  .body{
-    grid-template-columns: 220px minmax(0,1fr);
-    gap: 16px;
+  .body{ grid-template-columns: 1fr; gap: 16px; }
+  .aside{
+    position: static !important; top: auto; height: auto; overflow: visible;
+    width: auto; max-width: none;
   }
+  .asideScroller{ height: auto; overflow: visible; padding-right: 0; }
   .grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
 @media (max-width: 768px){
   .page{ padding: 12px 10px 28px; }
-  .body{ grid-template-columns: 1fr; }
-  .aside{
-    position: static !important;
-    top: auto;
-    height: auto;
-    overflow: visible;
-  }
-  .asideScroller{
-    height: auto;
-    overflow: visible;
-    padding-right: 0;
-  }
   .grid{ grid-template-columns: 1fr; }
 }

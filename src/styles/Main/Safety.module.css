@@ -1,0 +1,130 @@
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 72px 20px 80px;
+  background: #f9fafb;
+}
+
+
+.hero {
+  margin-bottom: 32px;
+}
+
+.kicker {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #111827;
+  margin: 0 0 8px;
+}
+
+.subtitle {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #4b5563;
+  max-width: 680px;
+}
+
+/* 상단 3개 요약 카드 */
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.summaryCard {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 18px 18px 16px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.summaryCard h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.summaryCard p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #4b5563;
+  margin-bottom: 8px;
+}
+
+.summaryCard ul {
+
+  padding-left: 18px;
+  margin: 0;
+}
+
+.summaryCard li {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #6b7280;
+}
+
+/* 상세 정책 섹션 */
+.section {
+  padding: 18px 18px 16px;
+  margin-bottom: 12px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgba(209, 213, 219, 0.9);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.section h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.section ul {
+
+  padding-left: 20px;
+  margin: 0;
+}
+
+.section li {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #4b5563;
+  margin-bottom: 4px;
+}
+
+.section li strong {
+  font-weight: 600;
+  color: #2563eb;
+}
+
+/* 하단 문구 */
+.footer {
+  margin-top: 16px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #6b7280;
+}
+
+/* 반응형 */
+@media (max-width: 900px) {
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .page {
+    padding-top: 56px;
+  }
+}

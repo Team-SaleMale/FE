@@ -1,7 +1,7 @@
+// src/pages/AuctionList/FilterSidebar.js
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/AuctionList/FilterSidebar.module.css";
-import mapPng from "../../assets/img/AuctionList/map.png";
 
 /** 정렬 옵션 */
 const SORTS = [
@@ -25,11 +25,11 @@ const fmt = (s) => (s ? Number(s).toLocaleString("ko-KR") : "");
 
 /** 활동 반경(5단계) — ALL의 short는 ‘전체’ */
 const RANGES = [
-  { key: "VERY_NEAR", km: 2,      short: "2km",   caption: "동네",  icon: "solar:home-2-linear" },
-  { key: "NEAR",      km: 5,      short: "5km",   caption: "근처",  icon: "solar:buildings-2-linear" },
-  { key: "MEDIUM",    km: 20,     short: "20km",  caption: "중간",  icon: "solar:map-point-wave-linear" },
-  { key: "FAR",       km: 50,     short: "50km",  caption: "멀리",  icon: "solar:plain-linear" },
-  { key: "ALL",       km: 20000,  short: "전체",  caption: "전국",  icon: "solar:planet-linear" },
+  { key: "VERY_NEAR", km:  0.5,      short: " 0.5km",   caption: "동네",  icon: "solar:home-2-linear" },
+  { key: "NEAR",      km: 1,      short: "1km",   caption: "근처",  icon: "solar:buildings-2-linear" },
+  { key: "MEDIUM",    km: 3,     short: "3km",  caption: "중간",  icon: "solar:map-point-wave-linear" },
+  { key: "FAR",       km: 5,     short: "5km",  caption: "멀리",  icon: "solar:plain-linear" },
+  { key: "ALL",       km: 20000000000,  short: "전체",  caption: "전국",  icon: "solar:planet-linear" },
 ];
 
 export default function FilterSidebar({
@@ -39,12 +39,15 @@ export default function FilterSidebar({
   sort = "",
   query = "",
   range = "NEAR",
+  showRange = true,
   onChangeCategories,
   onChangePrice,
   onChangeSort,
   onChangeQuery,
   onChangeRange,
   onClear,
+  /* ✅ 추가: 상단 지역 라벨(부모에서 전달) */
+  regionText = "로그인 후 확인가능합니다",
 }) {
   const [minStr, setMinStr] = useState("");
   const [maxStr, setMaxStr] = useState("");
@@ -119,7 +122,7 @@ export default function FilterSidebar({
     onChangePrice?.({ min: 0, max: 0 });
     onChangeSort?.("");
     onChangeCategories?.([]);
-    onChangeRange?.("NEAR");
+    onChangeRange?.(range || "NEAR");
     onClear?.();
   };
 
@@ -134,9 +137,21 @@ export default function FilterSidebar({
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.mapCard}>
-        <img className={styles.mapImg} src={mapPng} alt="map" />
-        <div className={styles.locPill}>경기도 고양시 덕양구</div>
+      {/* 지도 이미지 대신 심플한 그래디언트 카드 */}
+      <div className={styles.mapCard} role="region" aria-label="현재 위치 요약">
+        <div className={styles.mapCardBg} aria-hidden="true">
+          <span className={`${styles.bubble} ${styles.b1}`} />
+          <span className={`${styles.bubble} ${styles.b2}`} />
+          <span className={`${styles.bubble} ${styles.b3}`} />
+        </div>
+        <div className={styles.locRow}>
+          <Icon icon="solar:map-point-wave-linear" className={styles.locIcon} />
+          {/* ✅ 서버에서 받아온 지역/비로그인 문구 표시 */}
+          <span className={styles.locText}>{regionText || "로그인 후 확인가능합니다"}</span>
+          <button type="button" className={styles.locBtn} aria-label="현재 위치 갱신">
+            <Icon icon="solar:gps-linear" />
+          </button>
+        </div>
       </div>
 
       <section className={styles.panel}>
@@ -147,54 +162,56 @@ export default function FilterSidebar({
           </button>
         </header>
 
-        {/* 활동 반경 */}
-        <div className={styles.group}>
-          <button
-            type="button"
-            className={styles.groupHead}
-            aria-expanded={openRange}
-            onClick={() => setOpenRange((v) => !v)}
-          >
-            <span>활동 반경</span>
-            <Icon icon="solar:alt-arrow-down-linear" className={`${styles.chev} ${openRange ? styles.chevOpen : ""}`} />
-          </button>
+        {/* 활동 반경 — 비로그인 시 숨김 */}
+        {showRange && (
+          <div className={styles.group}>
+            <button
+              type="button"
+              className={styles.groupHead}
+              aria-expanded={openRange}
+              onClick={() => setOpenRange((v) => !v)}
+            >
+              <span>활동 반경</span>
+              <Icon icon="solar:alt-arrow-down-linear" className={`${styles.chev} ${openRange ? styles.chevOpen : ""}`} />
+            </button>
 
-          {openRange && (
-            <div className={styles.rateCard}>
-              <div className={styles.rateRow}>
-                {/* 좌측: 아이콘 + 캡션 */}
-                <div className={styles.rateIconCol}>
-                  <div className={styles.rateIconBadge} aria-hidden="true">
-                    <Icon icon={cur.icon} className={styles.rateIcon} />
+            {openRange && (
+              <div className={styles.rateCard}>
+                <div className={styles.rateRow}>
+                  {/* 좌측: 아이콘 + 캡션 */}
+                  <div className={styles.rateIconCol}>
+                    <div className={styles.rateIconBadge} aria-hidden="true">
+                      <Icon icon={cur.icon} className={styles.rateIcon} />
+                    </div>
+                    <div className={styles.rateCaption}>
+                      <span className={styles.rateCaptionTop}>{cur.caption}</span>
+                      <span className={styles.rateCaptionSub}>{cur.short}</span>
+                    </div>
                   </div>
-                  <div className={styles.rateCaption}>
-                    <span className={styles.rateCaptionTop}>{cur.caption}</span>
-                    <span className={styles.rateCaptionSub}>{cur.short}</span>
-                  </div>
-                </div>
 
-                {/* 중앙: 길어진 슬라이더 */}
-                <div className={styles.rateSliderCol}>
-                  <div className={styles.rateBar} role="group" aria-label="활동 반경 선택">
-                    <div className={styles.rateTrack} />
-                    <div className={styles.rateFill} style={{ width: `${pct}%` }} />
-                    <div className={styles.rateKnob} style={{ left: `${pct}%` }} />
-                    {RANGES.map((_, i) => (
-                      <button
-                        key={`hit-${i}`}
-                        type="button"
-                        className={styles.rateHit}
-                        style={{ left: `${(i / (RANGES.length - 1)) * 100}%` }}
-                        aria-label={`${RANGES[i].short}`}
-                        onClick={() => setByIndex(i)}
-                      />
-                    ))}
+                  {/* 중앙: 슬라이더 */}
+                  <div className={styles.rateSliderCol}>
+                    <div className={styles.rateBar} role="group" aria-label="활동 반경 선택">
+                      <div className={styles.rateTrack} />
+                      <div className={styles.rateFill} style={{ width: `${pct}%` }} />
+                      <div className={styles.rateKnob} style={{ left: `${pct}%` }} />
+                      {RANGES.map((_, i) => (
+                        <button
+                          key={`hit-${i}`}
+                          type="button"
+                          className={styles.rateHit}
+                          style={{ left: `${(i / (RANGES.length - 1)) * 100}%` }}
+                          aria-label={`${RANGES[i].short}`}
+                          onClick={() => setByIndex(i)}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {/* 검색 */}
         <div className={styles.group}>

@@ -54,7 +54,7 @@ export default function CautionList() {
       </ul>
 
       <div className={styles.footerHint} title="자세한 정책 보기">
-        안전거래 가이드 & 약관은 설정 &gt; 정책에서 확인할 수 있어요.
+       /safety 안전정책에서 확인할 수 있습니다.
       </div>
     </section>
   );

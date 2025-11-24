@@ -105,7 +105,7 @@ export default function HotDealPage() {
     setBidOpen(false);
   };
 
-  const GOOGLE_FORM_URL = "https://forms.gle/your-google-form-id";
+  const GOOGLE_FORM_URL = "https://forms.gle/pxrvVYqrcZZPS1oC9";
 
   async function checkBusinessAuth() {
     const authorized = false;
@@ -178,8 +178,14 @@ export default function HotDealPage() {
       <AuthCancelModal
         open={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
-        onOpenForm={() => window.open(GOOGLE_FORM_URL, "_blank", "noopener,noreferrer")}
-      />
+        onOpenForm={() =>
+        window.open(
+        GOOGLE_FORM_URL,
+        "_blank",
+        "noopener,noreferrer"
+       )
+      }
+/>
     </div>
   );
 }

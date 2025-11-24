@@ -34,19 +34,34 @@ import LabResult from "./pages/Lab/LabResult";
 // 최초 가입 온보딩 모달
 import CategoryOnboardingGate from "./components/modals/CategoryOnboardingGate";
 
+// 메인페이지 추가
+import CompanyPage from "./pages/Main/CompanyPage";
+import Safety from "pages/Main/Safety";
+
 console.log({ InquiryList, InquiryWrite, InquiryDetail });
-console.log("[App] mounted path:", window.location.pathname, "hash:", window.location.hash);
+console.log(
+  "[App] mounted path:",
+  window.location.pathname,
+  "hash:",
+  window.location.hash
+);
 
 export default function App() {
   const location = useLocation();
+
   const hideLayout = location.pathname === "/login";
-  const hideAuthLayout = hideLayout || location.pathname === "/signup";
+
+  const hideAuthLayout =
+    hideLayout ||
+    location.pathname === "/signup" ||
+    location.pathname === "/company";
 
   return (
     <>
       <ScrollToTop behavior="auto" />
       {!hideAuthLayout && <Header />}
 
+      {/* 최초 가입 온보딩 모달 (알림/카테고리 온보딩) */}
       <CategoryOnboardingGate />
 
       <Routes>
@@ -58,6 +73,10 @@ export default function App() {
         <Route path="/auctions/new" element={<AuctionRegistration />} />
         <Route path="/auctions/success" element={<AuctionComplete />} />
         <Route path="/auctions/:id" element={<AuctionProductDetails />} />
+
+        {/* 회사 소개 & 안전 가이드 */}
+        <Route path="/company" element={<CompanyPage />} />
+        <Route path="/safety" element={<Safety />} />
 
         {/* 동영상 */}
         <Route path="/videos" element={<VideoBrowser />} />
@@ -83,6 +102,7 @@ export default function App() {
         <Route path="/inquiries/new" element={<InquiryWrite />} />
         <Route path="/inquiries/:id" element={<InquiryDetail />} />
 
+        {/* 소셜 로그인 콜백 */}
         <Route path="/auth/callback/*" element={<AuthCallback />} />
 
         {/* 실험실 */}

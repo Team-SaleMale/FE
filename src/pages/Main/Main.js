@@ -34,14 +34,13 @@ export default function Main() {
       {/* 카테고리별 인기 상품 (status=POPULAR + categories) */}
       <CategoryPopular />
 
-
       {/* 이하 섹션 */}
       <Featured />
       <AuctionVideos />
 
       {/* 입찰 완료된 상품 (status=COMPLETED) */}
       <Completed pageSize={4} size={12} />
-      
+
       <CompanyIntro />
     </main>
   );
