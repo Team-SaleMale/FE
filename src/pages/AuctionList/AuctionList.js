@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars */
+// src/pages/AuctionList/AuctionList.js
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import styles from "../../styles/AuctionList/AuctionList.module.css";
@@ -9,7 +9,8 @@ import Horizontal from "./Horizontal";
 import Vertical from "./Vertical";
 import Pagination from "./Pagination";
 
-import { fetchAuctionList } from "../../api/auctions/service";
+import { fetchAuctionList, fetchMyProfile } from "../../api/auctions/service";
+import { isAuthenticated } from "../../api/client";
 
 /* 사이드바 고정 카테고리 */
 const CATEGORIES = [
@@ -56,14 +57,9 @@ const CAT_TO_ENUM = {
 const ENUM_TO_CAT = Object.fromEntries(Object.entries(CAT_TO_ENUM).map(([k, v]) => [v, k]));
 
 /* 탭 → status */
-const STATUS_MAP = {
-  ongoing: "BIDDING",
-  done: "COMPLETED",
-  hot: "POPULAR",
-  rec: "RECOMMENDED",
-};
+const STATUS_MAP = { ongoing: "BIDDING", done: "COMPLETED", hot: "POPULAR", rec: "RECOMMENDED" };
 
-/* 정렬키 ↔ sort 파라미터 */
+/* 정렬키 ↔ sort */
 const SORT_MAP = {
   "": "CREATED_DESC",
   views: "VIEW_COUNT_DESC",
@@ -73,12 +69,10 @@ const SORT_MAP = {
 };
 const REVERSE_SORT_MAP = Object.fromEntries(Object.entries(SORT_MAP).map(([k, v]) => [v, k]));
 
-/* range → km 매핑(ALL은 전국) */
-const RANGE_TO_KM = { VERY_NEAR: 2, NEAR: 5, MEDIUM: 20, FAR: 50, ALL: null };
-
 const to2 = (n) => String(n).padStart(2, "0");
 const timeLeftFrom = (endAtISO, nowMs) => {
-  const diff = new Date(endAtISO).getTime() - nowMs;
+  const endMs = endAtISO ? new Date(endAtISO).getTime() : 0;
+  const diff = endMs - nowMs;
   if (diff <= 0) return "0일 00:00:00";
   const sec = Math.floor(diff / 1000);
   const d = Math.floor(sec / 86400);
@@ -88,45 +82,56 @@ const timeLeftFrom = (endAtISO, nowMs) => {
   return `${d}일 ${to2(h)}:${to2(m)}:${to2(s)}`;
 };
 const ymdTZ = (dateLike, timeZone = "Asia/Seoul") => {
+  if (!dateLike) return null;
   const d = typeof dateLike === "string" ? new Date(dateLike) : dateLike;
   const fmt = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" });
   return fmt.format(d).replaceAll("-", "/");
 };
 const isEndingTodayKST = (endAtISO, nowMs) =>
-  ymdTZ(new Date(nowMs), "Asia/Seoul") === ymdTZ(endAtISO, "Asia/Seoul");
-const isClosed = (endAtISO, nowMs) => new Date(endAtISO).getTime() <= nowMs;
+  !!endAtISO && ymdTZ(new Date(nowMs), "Asia/Seoul") === ymdTZ(endAtISO, "Asia/Seoul");
+const isClosed = (endAtISO, nowMs) => !endAtISO ? false : new Date(endAtISO).getTime() <= nowMs;
 
 const ITEMS_PER_PAGE = 12;
+
+/* 디바운스 훅 */
+function useDebouncedValue(value, delay = 220) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return debounced;
+}
 
 export default function AuctionList() {
   const location = useLocation();
   const { search } = location;
   const navigate = useNavigate();
 
+  const authed = isAuthenticated?.() ?? !!localStorage.getItem("accessToken");
+
   const [layout, setLayout] = useState("horizontal");
   const [page, setPage] = useState(1);
 
-  // 툴바 탭
+  // 탭
   const [tab, setTab] = useState("ongoing");
 
-  // 사이드바 필터
+  // 필터
   const [categories, setCategories] = useState([]);
   const [price, setPrice] = useState({ min: 0, max: 0 });
   const [sort, setSort] = useState("");
   const [query, setQuery] = useState("");
-  const [range, setRange] = useState("NEAR"); // VERY_NEAR|NEAR|MEDIUM|FAR|ALL
+  const [range, setRange] = useState(authed ? "NEAR" : "ALL");
 
   // 서버 응답
-  const [server, setServer] = useState({
-    items: [],
-    totalPages: 1,
-    size: ITEMS_PER_PAGE,
-    currentPage: 0,
-  });
-  const [loading, setLoading] = useState(false);
+  const [server, setServer] = useState({ items: [], totalPages: 1, size: ITEMS_PER_PAGE, currentPage: 0 });
+  const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState(null);
 
-  /* URL → 초기 필터 */
+  // 지역 라벨
+  const [regionText, setRegionText] = useState("로그인 후 확인가능합니다");
+
+  /* URL → 초기값 */
   useEffect(() => {
     const qs = new URLSearchParams(search);
 
@@ -152,43 +157,58 @@ export default function AuctionList() {
     });
 
     const sortQ = qs.get("sort");
-    if (sortQ) {
-      const ui = SORT_MAP.hasOwnProperty(sortQ) ? sortQ : (REVERSE_SORT_MAP[sortQ] ?? "");
-      setSort(ui);
+    setSort(sortQ ? (SORT_MAP.hasOwnProperty(sortQ) ? sortQ : (REVERSE_SORT_MAP[sortQ] ?? "")) : "");
+
+    if (authed) {
+      const r = qs.get("range") || qs.get("radius") || "NEAR";
+      setRange(["VERY_NEAR","NEAR","MEDIUM","FAR","ALL"].includes(r) ? r : "NEAR");
     } else {
-      setSort("");
+      setRange("ALL");
     }
+  }, [search, authed]);
 
-    const r = qs.get("range");
-    if (r) setRange(r);
-  }, [search]);
-
-  /* 1초 주기 타이머 */
+  /* 1초 타이머 */
   const [nowTick, setNowTick] = useState(Date.now());
   useEffect(() => {
     const t = setInterval(() => setNowTick(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
 
-  /* 서버 요청 파라미터 (⚠ page는 1-based로 유지) */
+  /* 프로필 지역 불러오기 */
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      if (!authed) { setRegionText("로그인 후 확인가능합니다"); return; }
+      try {
+        const res = await fetchMyProfile();
+        if (!alive) return;
+        const payload = res?.result || {};
+        const regions = payload?.regions || [];
+        let label = "";
+        if (Array.isArray(regions) && regions.length) {
+          const r0 = regions[0] || {};
+          label = [r0.sido, r0.sigungu, r0.eupmyeondong].filter(Boolean).join(" ");
+        }
+        setRegionText(label || "지역 정보 없음");
+      } catch {
+        if (alive) setRegionText("지역 정보 없음");
+      }
+    })();
+    return () => { alive = false; };
+  }, [authed]);
+
+  /* 서버 요청 파라미터 */
   const serverParams = useMemo(() => {
     const q = (query || "").trim();
     const p = {
       status: STATUS_MAP[tab] || "BIDDING",
-      page,                    // ← 여기! 1-based로 전달. service에서 0-based로 변환함
+      page,
       size: ITEMS_PER_PAGE,
       sort: SORT_MAP[sort] ?? SORT_MAP[""],
       q,
-      range,
+      range: authed ? range : "ALL",
+      _auth: authed,
     };
-
-    if (range === "ALL") {
-      p.includeOutside = true;
-    } else if (range && range !== "NEAR") {
-      p.includeOutside = false;
-      const km = RANGE_TO_KM[range] ?? RANGE_TO_KM.NEAR;
-      p.distanceKm = km;
-    }
 
     if (categories?.length) {
       const enums = categories.map((k) => CAT_TO_ENUM[k]).filter(Boolean);
@@ -198,68 +218,82 @@ export default function AuctionList() {
     if (Number.isFinite(price.max) && price.max > 0) p.maxPrice = Math.trunc(price.max);
 
     return p;
-  }, [tab, categories, price.min, price.max, sort, page, query, range]);
+  }, [tab, categories, price.min, price.max, sort, page, query, range, authed]);
+
+  /* 디바운스 */
+  const debouncedParams = useDebouncedValue(serverParams, 220);
 
   /* 목록 API */
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        setLoading(true);
+        setIsFetching(true);
         setError(null);
-        const res = await fetchAuctionList(serverParams);
+        const res = await fetchAuctionList(debouncedParams);
         if (!alive) return;
         if (res?.isSuccess) {
           const r = res.result || {};
-          setServer({
+          setServer((prev) => ({
             items: Array.isArray(r.items) ? r.items : [],
-            totalPages: r.totalPages ?? 1,
-            size: r.size ?? ITEMS_PER_PAGE,
-            currentPage: r.currentPage ?? 0,
-          });
+            totalPages: r.totalPages ?? prev.totalPages ?? 1,
+            size: r.size ?? prev.size ?? ITEMS_PER_PAGE,
+            currentPage: r.currentPage ?? prev.currentPage ?? 0,
+          }));
         } else {
           throw new Error(res?.message || "API error");
         }
       } catch (e) {
         if (!alive) return;
         setError(e);
-        setServer({ items: [], totalPages: 1, size: ITEMS_PER_PAGE, currentPage: 0 });
       } finally {
-        if (alive) setLoading(false);
+        if (alive) setIsFetching(false);
       }
     })();
     return () => { alive = false; };
-  }, [serverParams]);
+  }, [debouncedParams]);
 
   /* 카드 VM */
   const VM = useMemo(() => {
     const now = nowTick;
-    return (server.items || []).map((it) => {
-      const endISO = it.endTime;
-      const imgs = Array.isArray(it.imageUrls) ? it.imageUrls.filter(Boolean) : [];
-      const images = Array.from(new Set(imgs));
-      const cover = images[0] || it.thumbnailUrl || it.imageUrl || "";
-      const closed = isClosed(endISO, now);
-      const endsTodayOpen = !closed && isEndingTodayKST(endISO, now);
-      return {
-        id: it.itemId,
-        title: it.title ?? "",
-        images: images.length ? images : (cover ? [cover] : []),
-        imageUrls: images,
-        thumbnailUrl: cover || null,
-        startAtISO: it.createdAt || null,
-        endAtISO: endISO,
-        startAt: it.createdAt ? ymdTZ(it.createdAt, "Asia/Seoul") : null,
-        endAt: ymdTZ(endISO, "Asia/Seoul"),
-        timeLeft: timeLeftFrom(endISO, now),
-        isClosed: closed,
-        isEndingTodayOpen: endsTodayOpen,
-        startPrice: it.startPrice ?? null,
-        currentPrice: it.currentPrice ?? 0,
-        views: it.viewCount ?? 0,
-        bidders: it.bidderCount ?? 0,
-      };
-    });
+    return (server.items || [])
+      .map((it) => {
+        const endISO = it.endTime || it.endAt || it.endDate || it.endsAt || null;
+
+        const imgs = Array.isArray(it.imageUrls)
+          ? it.imageUrls
+          : Array.isArray(it.images)
+          ? it.images
+          : [];
+        const images = Array.from(new Set((imgs || []).filter(Boolean)));
+        const cover = images[0] || it.thumbnailUrl || it.imageUrl || "";
+
+        const closed = isClosed(endISO, now);
+        const endsTodayOpen = !closed && isEndingTodayKST(endISO, now);
+
+        const id = it.itemId ?? it.id ?? it.auctionId ?? it.productId ?? null;
+        if (!id) return null;
+
+        return {
+          id,
+          title: it.title ?? "",
+          images: images.length ? images : (cover ? [cover] : []),
+          imageUrls: images,
+          thumbnailUrl: cover || null,
+          startAtISO: it.createdAt || it.startTime || it.startAt || null,
+          endAtISO: endISO,
+          startAt: (it.createdAt || it.startTime || it.startAt) ? ymdTZ(it.createdAt || it.startTime || it.startAt, "Asia/Seoul") : null,
+          endAt: endISO ? ymdTZ(endISO, "Asia/Seoul") : null,
+          timeLeft: timeLeftFrom(endISO, now),
+          isClosed: closed,
+          isEndingTodayOpen: endsTodayOpen,
+          startPrice: it.startPrice ?? it.price?.start ?? null,
+          currentPrice: it.currentPrice ?? it.price?.current ?? it.currentBid ?? 0,
+          views: it.viewCount ?? it.views ?? 0,
+          bidders: it.bidderCount ?? it.bidders ?? it.bidCount ?? 0,
+        };
+      })
+      .filter(Boolean);
   }, [server.items, nowTick]);
 
   /* 탭/필터 변경 → 1페이지 */
@@ -267,10 +301,12 @@ export default function AuctionList() {
 
   const totalPages = server.totalPages || 1;
 
-  /* 총 페이지 감소 시 현재 페이지 보정(안전장치) */
+  /* 총 페이지 감소 보정 */
   useEffect(() => {
     if (page > totalPages) setPage(totalPages || 1);
   }, [totalPages, page]);
+
+  const isEmpty = !VM.length && !isFetching && !error;
 
   return (
     <div className={styles.page}>
@@ -285,6 +321,7 @@ export default function AuctionList() {
               sort={sort}
               query={query}
               range={range}
+              showRange={authed}
               onChangeRange={setRange}
               onChangeQuery={setQuery}
               onChangeCategories={setCategories}
@@ -295,17 +332,19 @@ export default function AuctionList() {
                 setPrice({ min: 0, max: 0 });
                 setSort("");
                 setTab("ongoing");
-                setRange("NEAR");
+                setRange(authed ? "NEAR" : "ALL");
                 setQuery("");
                 setPage(1);
                 navigate({ pathname: location.pathname }, { replace: true });
               }}
+              /* ✅ 지역 라벨 전달 */
+              regionText={regionText}
             />
           </div>
         </aside>
 
-        {/* 우측: 툴바 + 리스트 */}
-        <div>
+        {/* 우측: 툴바 + 리스트 (가로폭 살짝 제한) */}
+        <div className={styles.right}>
           <Toolbar
             activeTab={tab}
             onChangeTab={setTab}
@@ -314,30 +353,35 @@ export default function AuctionList() {
           />
 
           <main className={styles.main}>
-            {loading && <div>불러오는 중…</div>}
             {error && <div>오류가 발생했어요. 잠시 후 다시 시도해 주세요.</div>}
 
-            {!loading && !error && (
-              <>
-                {layout === "horizontal" ? (
-                  <Horizontal items={VM} />
-                ) : (
-                  <Vertical items={VM} />
-                )}
+            <div className={styles.listWrap}>
+              {layout === "horizontal" ? (
+                <Horizontal items={VM} />
+              ) : (
+                <Vertical items={VM} />
+              )}
 
-                {totalPages > 1 && (
-                  <Pagination
-                    page={page}
-                    totalPages={totalPages}
-                    onChange={(p) => {
-                      setPage(p);
-                      if (typeof window !== "undefined") {
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }
-                    }}
-                  />
-                )}
-              </>
+              {isFetching && (
+                <div className={styles.loadingOverlay}>
+                  <div className={styles.spinner} aria-label="불러오는 중" />
+                </div>
+              )}
+
+              {isEmpty && <div className={styles.empty}>조건에 맞는 상품이 없어요.</div>}
+            </div>
+
+            {totalPages > 1 && (
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                onChange={(p) => {
+                  setPage(p);
+                  if (typeof window !== "undefined") {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
+                }}
+              />
             )}
           </main>
         </div>

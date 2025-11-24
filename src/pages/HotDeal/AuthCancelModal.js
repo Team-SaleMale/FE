@@ -1,6 +1,7 @@
+// FE/src/pages/HotDeal/AuthCancelModal.js
 import styles from "../../styles/HotDeal/AuthCancelModal.module.css";
 
-export default function AuthCancelModal({ open, onClose, onGoForm }) {
+export default function AuthCancelModal({ open, onClose, onOpenForm }) {
   if (!open) return null; // 부모에서 open 제어
 
   return (
@@ -16,8 +17,15 @@ export default function AuthCancelModal({ open, onClose, onGoForm }) {
 
         {/* Toolbar와 동일 룩(흰색=btn, 검정=btnActive). 닫기 왼쪽 / 구글 폼 오른쪽 */}
         <div className={styles.actions}>
-          <button className={styles.btn} onClick={onClose}>닫기</button>
-          <button className={styles.btnActive} onClick={onGoForm}>구글 폼 등록</button>
+          <button className={styles.btn} onClick={onClose}>
+            닫기
+          </button>
+          <button
+            className={styles.btnActive}
+            onClick={onOpenForm} // 여기서 부모의 window.open 실행
+          >
+            구글 폼 등록
+          </button>
         </div>
       </div>
     </div>

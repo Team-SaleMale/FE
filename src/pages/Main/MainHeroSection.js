@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/Main/MainHeroSection.module.css";
+import { fetchMyProfile } from "../../api/auctions/service";
 
 /* ---------- 유틸 ---------- */
 const onlyDigits = (s) => String(s || "").replace(/\D/g, "");
@@ -31,6 +33,42 @@ const CAT_TO_ENUM = {
   etc: "ETC",
 };
 
+/* 반경 옵션 */
+const RADIUS_OPTIONS = [
+  { value: "VERY_NEAR", label: "0.5km" },
+  { value: "NEAR",      label: "1km"   },
+  { value: "MEDIUM",    label: "3km"   },
+  { value: "FAR",       label: "5km"   },
+  { value: "ALL",       label: "전국"  },
+];
+
+/* 프로필에서 1차 지역 객체 추출(방어적) */
+function extractPrimaryRegionObject(p) {
+  const root = (p?.result ?? p?.data ?? p) || {};
+  const bySingle =
+    root.region ?? root.primaryRegion ?? root.homeRegion ?? root.currentRegion ?? null;
+  if (bySingle) return bySingle;
+
+  const list =
+    root.regions ?? root.regionList ?? root.userRegions ?? root.myRegions ?? [];
+  if (Array.isArray(list) && list.length) return list[0];
+  return null;
+}
+function regionName(r) {
+  const primary = r?.name ?? r?.label ?? r?.title;
+  if (primary != null && primary !== "") return primary;
+
+  const composed = [r?.sido, r?.sigungu, r?.dong].filter(Boolean).join(" ");
+  if (composed) return composed;
+
+  const addr = r?.address ?? r?.addr;
+  return addr != null && addr !== "" ? addr : "지역";
+}
+function regionId(r) {
+  if (!r) return null;
+  return r.id ?? r.regionId ?? r.code ?? r.value ?? null;
+}
+
 const MainHeroSection = () => {
   const navigate = useNavigate();
 
@@ -46,14 +84,46 @@ const MainHeroSection = () => {
     []
   );
 
+  // 카테고리
   const [activeCat, setActiveCat] = useState("all");
-  const [address] = useState("경기도 고양시 항공대로~");
 
+  // 검색/가격
   const [keyword, setKeyword] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const handleMinChange = (e) => setMinPrice(withCommas(e.target.value));
   const handleMaxChange = (e) => setMaxPrice(withCommas(e.target.value));
+
+  // 지역/반경
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [regionLoading, setRegionLoading] = useState(false);
+  const [primaryRegion, setPrimaryRegion] = useState(null);
+  const [radius, setRadius] = useState("ALL"); // 기본값: 전국
+
+  // 프로필에서 지역 불러오기(로그인 여부 판별 포함)
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        setRegionLoading(true);
+        const res = await fetchMyProfile();
+        const root = res?.result ?? res ?? {};
+        const isLogin = !!(root?.id || root?.userId || root?.email || root?.username);
+        if (!alive) return;
+        setLoggedIn(isLogin);
+        if (isLogin) {
+          setPrimaryRegion(extractPrimaryRegionObject(res));
+        }
+      } catch (_) {
+        if (!alive) return;
+        setLoggedIn(false);
+        setPrimaryRegion(null);
+      } finally {
+        if (alive) setRegionLoading(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
 
   const onSearch = () => {
     // 가격 정규화
@@ -62,32 +132,39 @@ const MainHeroSection = () => {
     if (min > 0 && max > 0 && min > max) [min, max] = [max, min];
 
     const qs = new URLSearchParams();
-    qs.set("tab", "ongoing"); // 진행 중 기준
+    qs.set("tab", "ongoing"); // 진행 중 기본
 
-    // 카테고리/가격 필터(둘 다 /auctions에서도, /search/items에서도 의미 있음)
+    // 카테고리
     if (activeCat && activeCat !== "all") {
       const catEnum = CAT_TO_ENUM[activeCat];
-      // 구버전/신버전 호환 위해 둘 다 세팅
-      qs.set("cat", activeCat);
-      if (catEnum) qs.set("categories", catEnum);
+      qs.set("cat", activeCat);                // UI 복원용
+      if (catEnum) qs.set("categories", catEnum); // API용
     }
+
+    // 검색어
+    const qTrim = keyword.trim();
+    if (qTrim) {
+      qs.set("q", qTrim);
+      qs.set("query", qTrim);
+    }
+
+    // 가격
     if (min > 0) {
       qs.set("min", String(min));
-      qs.set("minPrice", String(min)); // 호환
+      qs.set("minPrice", String(min));
     }
     if (max > 0) {
       qs.set("max", String(max));
-      qs.set("maxPrice", String(max)); // 호환
+      qs.set("maxPrice", String(max));
     }
 
-    // 🔑 핵심 분기: 검색어가 있으면 q를 넣어 리스트 페이지가 /search/items로 분기
-    const qTrim = keyword.trim();
-    if (qTrim) {
-      qs.set("q", qTrim);       // 신 로직
-      qs.set("query", qTrim);   // 과거 호환
+    // 반경/지역: 로그인 사용자인 경우만 적용
+    if (loggedIn) {
+      if (radius) qs.set("radius", radius); // service.js에서 radius/range 모두 처리
+      const rid = regionId(primaryRegion);
+      if (rid != null) qs.set("regionId", String(rid)); // 선택 UI는 없지만 값이 있으면 전달
     }
 
-    // 결과 페이지로 이동(분기는 AuctionList의 fetchAuctionList가 q 유무로 처리)
     navigate(`/auctions?${qs.toString()}`);
   };
 
@@ -122,11 +199,46 @@ const MainHeroSection = () => {
 
       <div className={styles.searchWrap}>
         <div className={styles.searchCard}>
+
+          {/* 현재 거주 지역 + 반경 */}
           <div className={styles.field}>
             <div className={styles.label}>현재 거주 지역</div>
-            <div className={styles.addressText}>{address}</div>
+
+            {loggedIn ? (
+              <div className={styles.selectsRow}>
+                {/* 지역은 단순 표시(드롭다운 제거) */}
+                <div className={styles.selectWrap}>
+                  <div className={styles.addressText} title={regionName(primaryRegion) || "설정된 지역 없음"}>
+                    {regionLoading
+                      ? "불러오는 중…"
+                      : (regionName(primaryRegion) || "설정된 지역 없음")}
+                  </div>
+                </div>
+
+                {/* 반경 선택 */}
+                <div className={`${styles.selectWrap} ${styles.selectWrapArrow}`}>
+                  <select
+                    className={styles.select}
+                    value={radius}
+                    onChange={(e) => setRadius(e.target.value)}
+                    aria-label="표시 반경 선택"
+                  >
+                    {RADIUS_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            ) : (
+              <div className={styles.addressText} aria-live="polite">
+                로그인 후 확인가능합니다
+              </div>
+            )}
           </div>
 
+          {/* 상품명 */}
           <div className={`${styles.field} ${styles.withSep} ${styles.sepNarrow}`}>
             <div className={styles.label}>상품명</div>
             <input
@@ -139,6 +251,7 @@ const MainHeroSection = () => {
             />
           </div>
 
+          {/* 가격 범위 */}
           <div className={`${styles.field} ${styles.priceField} ${styles.withSep} ${styles.sepNarrow}`}>
             <div className={styles.label}>가격 범위</div>
             <div className={styles.priceInputs}>
@@ -168,6 +281,7 @@ const MainHeroSection = () => {
             </div>
           </div>
 
+          {/* CTA */}
           <button type="button" className={styles.searchBtn} onClick={onSearch}>
             <Icon icon="solar:magnifer-zoom-in-broken" className={styles.searchIcon} />
             상품 찾기
