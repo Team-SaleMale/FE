@@ -1,19 +1,16 @@
 // src/components/common/Header.js
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bell } from "lucide-react";
 import logoBlue from "../../assets/img/header/logo_blue.png";
 import "../../styles/common/Header.css";
 import { myProfile, logout as apiLogout } from "../../api/auth/service";
 import { Cookies } from "react-cookie";
+import NotificationBell from "../notifications/NotificationBell";
 
 export default function Header() {
   const [user, setUser] = useState(null);
-  const [openBell, setOpenBell] = useState(false);
   const [openUser, setOpenUser] = useState(false);
 
-  const bellRef = useRef(null);
-  const bellPopRef = useRef(null);
   const userRef = useRef(null);
   const userPopRef = useRef(null);
 
@@ -60,11 +57,6 @@ export default function Header() {
   // 바깥 클릭/ESC로 팝오버 닫기
   useEffect(() => {
     const onDown = (e) => {
-      if (openBell) {
-        const inBellBtn = bellRef.current?.contains(e.target);
-        const inBellPop = bellPopRef.current?.contains?.(e.target);
-        if (!inBellBtn && !inBellPop) setOpenBell(false);
-      }
       if (openUser) {
         const inUserBtn = userRef.current?.contains(e.target);
         const inUserPop = userPopRef.current?.contains?.(e.target);
@@ -73,7 +65,6 @@ export default function Header() {
     };
     const onEsc = (e) => {
       if (e.key === "Escape") {
-        setOpenBell(false);
         setOpenUser(false);
       }
     };
@@ -84,7 +75,7 @@ export default function Header() {
       document.removeEventListener("mousedown", onDown);
       document.removeEventListener("keydown", onEsc);
     };
-  }, [openBell, openUser]);
+  }, [openUser]);
 
   const unifiedTop = 40;
 
@@ -117,52 +108,35 @@ export default function Header() {
           </div>
 
           <nav className="vb-center">
-            <Link to="/auctions" className="vb-link">경매하기</Link>
-            <Link to="/price-check" className="vb-link">시세 둘러보기</Link>
-            <Link to="/auctions/new" className="vb-link">상품 등록</Link>
-            <Link to="/hotdeal" className="vb-link">핫딜</Link>
-            <Link to="/lab" className="vb-link">실험실</Link>
+            <Link to="/auctions" className="vb-link">
+              경매하기
+            </Link>
+            <Link to="/price-check" className="vb-link">
+              시세 둘러보기
+            </Link>
+            <Link to="/auctions/new" className="vb-link">
+              상품 등록
+            </Link>
+            <Link to="/hotdeal" className="vb-link">
+              핫딜
+            </Link>
+            <Link to="/lab" className="vb-link">
+              실험실
+            </Link>
           </nav>
 
           <div className="vb-right">
             {user ? (
               <>
                 {/* 알림 버튼 */}
-                <button
-                  ref={bellRef}
-                  type="button"
-                  className="vb-bell"
-                  aria-haspopup="dialog"
-                  aria-expanded={openBell}
-                  onClick={() => {
-                    setOpenBell((v) => !v);
-                    setOpenUser(false);
-                  }}
-                >
-                  <Bell size={22} strokeWidth={2} />
-                </button>
-
                 {/* 알림 모달 */}
-                {openBell && (
-                  <div
-                    ref={bellPopRef}
-                    className="vb-popover"
-                    role="dialog"
-                    aria-label="알림"
-                    style={{ position: "absolute", right: 56, top: unifiedTop }}
-                  >
-                    <div className="vb-popover__arrow" />
-                    <div className="vb-popover__head" style={{ fontWeight: "normal" }}>
-                      알림
-                    </div>
-                    <div className="vb-popover__body" style={{ fontWeight: "normal" }}>
-                      아직 알림이 없습니다.
-                    </div>
-                  </div>
-                )}
+                <NotificationBell user={user} />
 
                 {/* 사용자 드롭다운 */}
-                <div className="vb-user" style={{ position: "relative", marginLeft: 12 }}>
+                <div
+                  className="vb-user"
+                  style={{ position: "relative", marginLeft: 12 }}
+                >
                   <button
                     ref={userRef}
                     type="button"
@@ -171,7 +145,6 @@ export default function Header() {
                     aria-expanded={openUser}
                     onClick={() => {
                       setOpenUser((v) => !v);
-                      setOpenBell(false);
                     }}
                     style={{
                       background: "transparent",
@@ -195,8 +168,13 @@ export default function Header() {
                       <div className="vb-popover__arrow" />
 
                       <div className="vb-popover__head">
-                        <span>{(user?.nickname ?? user?.name) || "회원"} 님</span>
-                        <button className="vb-menu__logout" onClick={handleLogout}>
+                        <span>
+                          {(user?.nickname ?? user?.name) || "회원"} 님
+                        </span>
+                        <button
+                          className="vb-menu__logout"
+                          onClick={handleLogout}
+                        >
                           로그아웃
                         </button>
                       </div>
