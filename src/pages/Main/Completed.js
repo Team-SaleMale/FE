@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/Main/Completed.module.css";
-import { fetchCompletedAuctions } from "../../api/auctions/service";
+import { fetchCompletedAuctionsForMain } from "../../api/auctions/service";
 
 /** 가격 포맷 */
 const formatWon = (n) => "₩" + Number(n ?? 0).toLocaleString("ko-KR");
@@ -24,9 +24,8 @@ function mapRow(it) {
 
 /**
  * 입찰 완료된 상품
- * - /auctions?status=COMPLETED 기반
+ * - /search/items?status=COMPLETED&sort=BID_COUNT_DESC&radius=ALL
  * - 내부 슬라이더(pageSize 개씩)
- * - 더미 없음(빈 결과/오류 안내)
  */
 export default function Completed({ pageSize, onCardClick, size, sort }) {
   const navigate = useNavigate();
@@ -58,8 +57,8 @@ export default function Completed({ pageSize, onCardClick, size, sort }) {
         setLoading(true);
         setError(null);
 
-        // 완료된 경매 최대 size개
-        const res = await fetchCompletedAuctions({ page: 1, size, sort });
+        // ✅ 메인 전용(항상 radius=ALL, sort=BID_COUNT_DESC)
+        const res = await fetchCompletedAuctionsForMain({ page: 1, size });
         const rows = Array.isArray(res?.result?.items) ? res.result.items : [];
         const mapped = rows.map(mapRow).filter((x) => x && x.id != null);
 
@@ -75,7 +74,7 @@ export default function Completed({ pageSize, onCardClick, size, sort }) {
         setLoading(false);
       }
     })();
-    return () => { alive = false; };
+    // sort prop은 유지하되, 메인 전용 API는 고정 정렬을 사용
   }, [size, sort]);
 
   const stateMsg = useMemo(() => {

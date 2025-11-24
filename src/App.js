@@ -18,9 +18,24 @@ import PriceCheck from "./pages/PriceCheck/PriceCheck";
 import InquiryList from "./pages/Inquiry/InquiryList";
 import InquiryWrite from "./pages/Inquiry/InquiryWrite";
 import InquiryDetail from "./pages/Inquiry/InquiryDetail";
-import AuthCallback from "pages/Auth/AuthCallback";
+import AuthCallback from "./pages/Auth/AuthCallback";
 import HotDealPage from "./pages/HotDeal/HotDeal";
 import HotDealRegistration from "./pages/HotDealRegistration/HotDealRegistration";
+
+// 🔥 비밀번호 재설정 페이지 import
+import PasswordReset from "./pages/Auth/PasswordReset";
+
+// ✅ 실험실 페이지 import
+import LabHome from "./pages/Lab/LabHome";
+import LabWear from "./pages/Lab/LabWear";
+import LabDecor from "./pages/Lab/LabDecor";
+import LabResult from "./pages/Lab/LabResult";
+
+
+// 최초 가입 온보딩 모달
+import CategoryOnboardingGate from "./components/modals/CategoryOnboardingGate";
+
+// 메인페이지 추가
 import CompanyPage from "./pages/Main/CompanyPage";
 import Safety from "pages/Main/Safety";
 
@@ -36,7 +51,7 @@ export default function App() {
   const location = useLocation();
 
   const hideLayout = location.pathname === "/login";
-  // 🔧 여기만 수정: /company 에서도 헤더/푸터 숨김
+
   const hideAuthLayout =
     hideLayout ||
     location.pathname === "/signup" ||
@@ -46,6 +61,8 @@ export default function App() {
     <>
       <ScrollToTop behavior="auto" />
       {!hideAuthLayout && <Header />}
+
+      <CategoryOnboardingGate />
 
       <Routes>
         <Route path="/" element={<Main />} />
@@ -67,10 +84,13 @@ export default function App() {
         <Route path="/videos" element={<VideoBrowser />} />
         <Route path="/video/:videoId" element={<Video />} />
 
-        {/* 마이페이지 / 인증 */}
+        {/* 마이페이지/인증 */}
         <Route path="/mypage" element={<MyPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+
+        {/* 🔥 비밀번호 재설정 */}
+        <Route path="/password-reset" element={<PasswordReset />} />
 
         {/* 시세 확인 */}
         <Route path="/price-check" element={<PriceCheck />} />
@@ -85,6 +105,14 @@ export default function App() {
         <Route path="/inquiries/:id" element={<InquiryDetail />} />
 
         <Route path="/auth/callback/*" element={<AuthCallback />} />
+
+
+        {/* 실험실 */}
+        <Route path="/lab" element={<LabHome />} />
+        <Route path="/lab/wear" element={<LabWear />} />
+        <Route path="/lab/decor" element={<LabDecor />} />
+        <Route path="/lab/result" element={<LabResult />} />
+
       </Routes>
 
       {!hideAuthLayout && <Footer />}

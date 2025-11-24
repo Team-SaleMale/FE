@@ -1,4 +1,4 @@
-/* eslint-disable jsx-a11y/role-supports-aria-props */
+// // src/pages/AuctionList/Toolbar.js
 import styles from "../../styles/AuctionList/Toolbar.module.css";
 
 import HorSel from "../../assets/img/AuctionList/SortIcon/Horizontal_List_Selected.svg";

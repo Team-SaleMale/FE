@@ -121,6 +121,7 @@ export default function Header() {
             <Link to="/price-check" className="vb-link">시세 둘러보기</Link>
             <Link to="/auctions/new" className="vb-link">상품 등록</Link>
             <Link to="/hotdeal" className="vb-link">핫딜</Link>
+            <Link to="/lab" className="vb-link">실험실</Link>
           </nav>
 
           <div className="vb-right">

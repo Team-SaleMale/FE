@@ -7,53 +7,80 @@
   --track:#ECEFF3;
   --card-border: rgba(5,11,32,.08);
   --white:#FFFFFF;
+
+  /* AuctionList.module.css와 동일 값 */
+  --sidebar-w: 312px;
+}
+@media (min-width: 1440px){
+  :root{ --sidebar-w: 328px; }
 }
 
-/* 전체 */
+/* ===== 전체 래퍼 ===== */
 .wrap{
   display: grid;
   gap: 12px;
   font-family: "Pretendard","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
   min-height: 100%;
+  width: min(100%, var(--sidebar-w));
+  max-width: min(100%, var(--sidebar-w));
+  box-sizing: border-box;
 }
 
-/* 지도 카드 */
+/* 공통 컨테이너 */
+.mapCard,
+.panel,
+.searchWrap,
+.priceGrid,
+.checkCol,
+.chipWrap{
+  box-sizing: border-box;
+}
+
+/* ===== 지도 카드 (단색, 깔끔 버전) ===== */
 .mapCard{
   position: relative;
   height: 160px;
   border: 1px solid var(--card-border);
   border-radius: 16px;
   overflow: hidden;
-  background: #eef2f7;
+  background: #00000005;               /* ← 그래디언트 제거, 단색 */
 }
-.mapImg{ width: 100%; height: 100%; object-fit: cover; display: block; }
-.locPill{
-  position: absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-  padding:10px 16px; background:var(--white);
-  border:1px solid #E6E8EE; border-radius:999px; font-weight:600; font-size:14px;
-  color:#2B3037; white-space:nowrap; box-shadow:0 1px 0 rgba(5,11,32,.02);
-}
+/* 기존 map.png가 들어와도 보이지 않도록 처리 */
+.mapImg{ display: none; }
 
-/* 패널 */
+/* 중앙 위치 배지(아이콘/텍스트/버튼) — 기존 스타일 유지 */
+.locRow,
+.locPill{
+  position:absolute; left:50%; top:50%; transform:translate(-50%, -50%);
+  display:flex; align-items:center; gap:10px;
+  padding:10px 16px; border-radius:999px;
+  background: rgba(255,255,255,.92);
+  border: 1px solid #E6E8EE;
+  box-shadow: 0 6px 20px rgba(10,16,32,.06);
+}
+.locIcon{ font-size:18px; color:#2F6BFF; }
+.locText{ font-weight:800; font-size:14px; color:#2B3037; white-space:nowrap; }
+.locBtn{
+  border:0; background:transparent; display:inline-flex; align-items:center; justify-content:center;
+  width:26px; height:26px; border-radius:50%; color:#5B6473; cursor:pointer;
+}
+.locBtn:hover{ background:#F3F5FA; color:#2B3037; }
+
+/* ===== 패널 ===== */
 .panel{
   background: var(--white);
   border: 1px solid var(--card-border);
   border-radius: 16px;
-  overflow: hidden;
+  overflow: visible;
 }
-
-/* 헤더 */
 .panelHead{
   display:flex; align-items:center; justify-content:space-between;
   padding:14px 16px; border-bottom:1px solid #EEF0F3;
 }
 .panelTitle{ margin:0; font-size:16px; font-weight:800; color:#2B3037; }
-.clearBtn{ background:transparent; border:0; padding:4px 6px; color:#6B7280; font-size:14px; }
+.clearBtn{ background:transparent; border:0; padding:4px 6px; color:#6B7280; font-size:14px; cursor:pointer; }
 
-/* 그룹 */
 .group{ padding:0; }
-
-/* 토글 헤드 */
 .groupHead{
   width:100%; border:none; display:flex; align-items:center; justify-content:space-between; gap:8px;
   padding:16px; background:transparent; font-weight:800; color:#111827;
@@ -61,99 +88,123 @@
 .chev{ font-size:18px; color:#748093; transition:transform .18s ease; }
 .chevOpen{ transform:rotate(180deg); }
 
-/* 검색 */
+/* ===== 검색 ===== */
 .searchWrap{
-  position:relative; margin:0 16px 16px; height:46px;
-  border:1px solid var(--line); border-radius:16px; background:#fff;
-  display:flex; align-items:center; padding:0 42px 0 38px;
+  position:relative;
+  margin:0 16px 16px;
+  height:46px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:#fff;
+  display:flex; align-items:center;
+  padding:0 42px 0 38px;
+  min-width:0;
+  overflow:visible;
 }
 .searchIcon{ position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:18px; color:#748093; }
 .searchInput{ width:100%; height:100%; border:0; outline:0; background:transparent; font-size:16px; color:#1F2226; }
 .searchClear{
   position:absolute; right:8px; top:50%; transform:translateY(-50%);
-  display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px;
-  border:0; background:transparent; color:#8B94A4;
+  display:inline-flex; align-items:center; justify-content:center;
+  width:30px; height:30px; border:0; background:transparent; color:#8B94A4; cursor:pointer;
 }
 .searchClear:hover{ color:#5F6977; }
 
-/* 가격 입력 */
-.priceGrid{ display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; padding:0 16px 16px; }
+/* ===== 가격 입력 ===== */
+.priceGrid{
+  display:grid;
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+  gap:12px;
+  padding:0 16px 16px;
+  min-width:0;
+}
 .subLabel{ font-size:12px; color:#8B94A4; align-self:end; }
-.inputPillWrap{ position:relative; height:46px; border:1px solid var(--line); border-radius:16px; background:#fff; display:flex; align-items:center; padding-left:30px; }
+.inputPillWrap{
+  position:relative;
+  height:46px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:#fff;
+  display:flex; align-items:center;
+  padding-left:30px;
+  flex: 1 1 auto;
+  min-width:0;
+  overflow:visible;
+}
 .won{ position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:14px; color:#616A77; }
-.inputPill{ width:100%; height:100%; border:0; outline:0; background:transparent; padding:0 14px 0 0; font-size:18px; color:#1F2226; }
+.inputPill{
+  width:100%; height:100%;
+  border:0; outline:0; background:transparent;
+  padding:0 14px 0 0;
+  font-size:18px; color:#1F2226;
+}
 
-/* 정렬 체크 */
+/* ===== 정렬 체크 ===== */
 .checkCol{ display:grid; gap:12px; padding:0 16px 16px; }
 .checkRow{ display:flex; align-items:center; gap:10px; font-size:18px; color:#111827; }
 .checkRow input{ width:20px; height:20px; accent-color:#111216; }
 
-/* 카테고리 칩 */
-.chipWrap{ display:flex; flex-wrap:wrap; gap:12px; padding:0 16px 16px; }
+/* ===== 카테고리 칩 (현재 사이즈 유지) ===== */
+.chipWrap{
+  display:flex; flex-wrap:wrap; gap:11px;
+  padding:0 16px 16px;
+  overflow:hidden;
+}
 .chip{
-  height:44px; padding:0 14px; border-radius:12px; border:1px solid var(--line);
-  background:#F8FAFC; color:#2B3037; display:inline-flex; align-items:center; gap:10px;
+  height:46px;
+  padding:0 16px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:#F8FAFC; color:#2B3037;
+  display:inline-flex; align-items:center; gap:9px;
   cursor:pointer; transition:background .15s ease, color .15s ease, border-color .15s ease;
   width:fit-content; max-width:100%;
 }
 .chip:hover{ border-color:#D1D5DB; box-shadow:0 1px 0 rgba(5,11,32,.02); }
-.chipIcon{ font-size:18px; color:#6B7280; line-height:1; display:inline-flex; align-items:center; }
+.chipIcon{ font-size:20px; color:#6B7280; line-height:1; display:inline-flex; align-items:center; }
 .chipLabel{ font-size:14px; font-weight:700; letter-spacing:-.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .isActive{ background:var(--ink-121); border-color:var(--ink-121); color:#fff; }
 .isActive .chipIcon{ color:#fff; }
 
-/* ===== 활동 반경 : 슬라이더 (아이콘 → 긴 트랙, 점 없음) ===== */
-.rateCard{ padding: 8px 14px 14px; }
-.rateRow{ display:flex; align-items:center; gap:12px; }
-
+/* ===== 활동 반경 슬라이더 ===== */
+.rateCard{ padding: 8px 16px 16px; }
+.rateRow{ display:flex; align-items:center; gap:12px; min-width:0; }
 .rateIconCol{
-  width: 54px; min-width:54px;
+  width:54px; min-width:54px;
   display:flex; flex-direction:column; align-items:center; gap:6px;
 }
 .rateIconBadge{
-  width: 46px; height: 46px; border-radius: 50%;
-  background: #fff; border: 1px solid #DBE1EA;
+  width:46px; height:46px; border-radius:50%;
+  background:#fff; border:1px solid #DBE1EA;
   display:flex; align-items:center; justify-content:center;
-  color: var(--ink);
-  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  color:var(--ink);
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
 }
-.rateIcon{ font-size: 26px; }
+.rateIcon{ font-size:26px; }
 .rateCaption{ display:flex; flex-direction:column; align-items:center; gap:2px; text-align:center; }
-.rateCaptionTop{ font-size: 12.5px; font-weight: 800; color: var(--ink); line-height: 16px; }
-.rateCaptionSub{ font-size: 12px; font-weight: 600; color: #6B7280; line-height: 16px; }
+.rateCaptionTop{ font-size:12.5px; font-weight:800; color:var(--ink); line-height:16px; }
+.rateCaptionSub{ font-size:12px; font-weight:600; color:#6B7280; line-height:16px; }
 
-/* 길어진 슬라이더 */
-.rateSliderCol{ flex: 1 1 auto; padding: 2px 0; }
-.rateBar{ position:relative; height: 40px; }
+.rateSliderCol{ flex:1 1 auto; padding:2px 0; min-width:0; }
+.rateBar{ position:relative; height:40px; }
 .rateTrack{
   position:absolute; left:0; right:0; top:50%;
   transform: translateY(-50%);
-  height: 10px; border-radius: 999px; background: var(--track);
+  height:10px; border-radius:999px; background:var(--track);
 }
 .rateFill{
   position:absolute; left:0; top:50%; transform:translateY(-50%);
-  height: 10px; border-radius: 999px; background: var(--ink);
+  height:10px; border-radius:999px; background:var(--ink);
 }
-/* 슬라이더 노브(선택 점) — 더 작게 */
 .rateKnob{
   position:absolute; top:50%; transform: translate(-50%, -50%);
-  width: 18px;              /* 22px → 18px */
-  height: 18px;             /* 22px → 18px */
-  border-radius:50%;
-  background:#fff;
-  border: 2px solid var(--ink);
-  box-shadow: 0 1px 4px rgba(0,0,0,.18), 0 0 0 1px rgba(0,0,0,.06); /* 살짝 가벼운 그림자 */
+  width:18px; height:18px; border-radius:50%;
+  background:#fff; border:2px solid var(--ink);
+  box-shadow:0 1px 4px rgba(0,0,0,.18), 0 0 0 1px rgba(0,0,0,.06);
 }
-/* 눌렀을 때 살짝 작아 보이는 효과 */
 .rateKnob:active,
-.rateKnob:focus-visible{
-  transform: translate(-50%, -50%) scale(.92);
-}
-/* 점(눈금) 제거 → 클릭 히트존만 투명 유지 */
-.rateHit{
-  position:absolute; top:0; transform:translateX(-50%);
-  width: 20%; height:100%; background:transparent; border:0; cursor:pointer;
-}
+.rateKnob:focus-visible{ transform: translate(-50%, -50%) scale(.92); }
+.rateHit{ position:absolute; top:0; transform:translateX(-50%); width:20%; height:100%; background:transparent; border:0; cursor:pointer; }
 
-/* 패널 바깥쪽 하단 여백(스크롤 여유) */
-.outsideSpacer{ height: 160px; }
+/* 패널 바깥쪽 하단 여백 */
+.outsideSpacer{ height:160px; }

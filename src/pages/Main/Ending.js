@@ -1,8 +1,10 @@
+// src/pages/Main/Ending.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/Main/Ending.module.css";
-import { fetchEndingSoonAuctions } from "../../api/auctions/service";
+// ✅ 메인 전용: radius=ALL 강제 함수로 교체
+import { fetchEndingSoonAuctionsForMain } from "../../api/auctions/service";
 
 /* ===== 시간 유틸 ===== */
 const pad2 = (n) => String(n).padStart(2, "0");
@@ -27,7 +29,7 @@ function useNowTick() {
 
 /**
  * 마감 임박 경매
- * - /auctions?status=BIDDING&sort=END_TIME_ASC&page=0&size=12
+ * - /search/items?status=BIDDING&sort=END_TIME_ASC&page=0&size=12&radius=ALL
  */
 export default function Ending({ pageSize = 4, onCardClick }) {
   const navigate = useNavigate();
@@ -46,7 +48,8 @@ export default function Ending({ pageSize = 4, onCardClick }) {
         setLoading(true);
         setError(null);
 
-        const res = await fetchEndingSoonAuctions({ size: 12 });
+        // ✅ 메인 전용: radius=ALL 고정
+        const res = await fetchEndingSoonAuctionsForMain({ size: 12 });
         const rows = Array.isArray(res?.result?.items) ? res.result.items : [];
 
         const mapped = rows
