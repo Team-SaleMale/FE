@@ -1,8 +1,8 @@
 // src/pages/PriceCheck/RegularPriceTab.js
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import PriceCheckHeader from "../../components/pricecheck/PriceCheckHeader";
 import "../../styles/PriceCheck/RegularPriceTab.css";
+import { get } from "../../api/client"; // 🔵 공용 axios client (토큰 자동 주입)
 
 const SS_KEY = "pricecheck:lastState";
 
@@ -47,6 +47,7 @@ export default function RegularPriceTab({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
+  // 🔵 백엔드 네이버 검색 API 호출
   const fetchProducts = async (pageNum = 1, q = searchTerm) => {
     const keyword = (q || "").trim();
     if (!keyword) {
@@ -55,25 +56,57 @@ export default function RegularPriceTab({
       setPage(1);
       return;
     }
+
     setLoading(true);
     try {
-      const start = (pageNum - 1) * PER_PAGE + 1;
-      const res = await axios.get("/.netlify/functions/naver-shop", {
-        params: { query: keyword, display: PER_PAGE, start, sort: "sim" },
-      });
-      if (res.status !== 200 || !Array.isArray(res.data?.items)) {
-        console.warn("NAVER API ERROR:", res.status, res.data);
-        alert(`네이버 API 오류: ${res.status} ${res.data?.errorMessage || ""}`);
+      // NOTE:
+      // GET /api/v1/search/naver
+      // query: string, limit: int (기본 10)
+      const params = {
+        query: keyword,
+        limit: PER_PAGE,
+        // pageNum을 넘기고 싶으면 백엔드와 합의해서 여기에 추가
+        // page: pageNum,
+      };
+
+      const res = await get("/api/v1/search/naver", params);
+
+      // 응답 예시:
+      // {
+      //   "isSuccess": true,
+      //   "code": "string",
+      //   "message": "string",
+      //   "result": {
+      //     "total": 0,
+      //     "start": 0,
+      //     "display": 0,
+      //     "items": [ ... ]
+      //   }
+      // }
+      if (!res || res.isSuccess === false) {
+        console.warn("NAVER SEARCH API ERROR:", res);
+        alert(res?.message || "네이버 시세 조회 중 오류가 발생했습니다.");
         setItems([]);
         setTotal(0);
         setPage(1);
         return;
       }
-      setItems(res.data.items || []);
-      setTotal(res.data.total || 0);
+
+      const result = res.result || {};
+      const list = Array.isArray(result.items) ? result.items : [];
+
+      setItems(list);
+      setTotal(
+        typeof result.total === "number"
+          ? result.total
+          : typeof result.display === "number"
+          ? result.display
+          : list.length
+      );
       setPage(pageNum);
     } catch (e) {
-      console.error("네이버 API 프록시 오류:", e);
+      console.error("네이버 시세 API 오류:", e);
+      alert(e?.friendlyMessage || "네이버 시세 조회에 실패했습니다.");
       setItems([]);
       setTotal(0);
       setPage(1);
@@ -85,8 +118,8 @@ export default function RegularPriceTab({
   const onSubmit = (e) => {
     e.preventDefault();
     const q = (tempQuery || "").trim();
-    setSearchTerm(q);       // 부모에 제출 검색어 저장 → 두 탭 동기화
-    fetchProducts(1, q);    // 즉시 검색
+    setSearchTerm(q); // 부모에 제출 검색어 저장 → 두 탭 동기화
+    fetchProducts(1, q); // 즉시 검색
   };
 
   // 탭 이동/검색어 변경 시 마지막 검색어로 자동 재검색
@@ -128,31 +161,65 @@ export default function RegularPriceTab({
         {!searchTerm ? null : (
           <>
             {loading && <p className="hint">불러오는 중…</p>}
-            {!loading && items.length === 0 && <p className="hint">검색 결과가 없습니다.</p>}
+            {!loading && items.length === 0 && (
+              <p className="hint">검색 결과가 없습니다.</p>
+            )}
 
             {items.map((it, i) => (
               <article key={i} className="card">
-                <div className="thumb"><img src={it.image} alt="" /></div>
+                <div className="thumb">
+                  <img src={it.image} alt="" />
+                </div>
                 <div className="info">
-                  <h3 className="name" dangerouslySetInnerHTML={{ __html: it.title }} />
-                  <div className="price">최저 {Number(it.lprice).toLocaleString()}원</div>
-                  <div className="meta">
-                    {it.category1}{it.category2 ? ` > ${it.category2}` : ""}{it.brand ? ` · ${it.brand}` : ""}
+                  <h3
+                    className="name"
+                    dangerouslySetInnerHTML={{ __html: it.title }}
+                  />
+                  <div className="price">
+                    최저 {Number(it.lprice).toLocaleString()}원
                   </div>
-                  <a className="link" href={it.link} target="_blank" rel="noopener noreferrer">바로가기</a>
+                  <div className="meta">
+                    {it.category1}
+                    {it.category2 ? ` > ${it.category2}` : ""}
+                    {it.brand ? ` · ${it.brand}` : ""}
+                  </div>
+                  <a
+                    className="link"
+                    href={it.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    바로가기
+                  </a>
                 </div>
               </article>
             ))}
 
             {items.length > 0 && pages > 1 && (
               <div className="pagination">
-                <button className="nav" disabled={page === 1} onClick={() => fetchProducts(page - 1, searchTerm)}>‹</button>
+                <button
+                  className="nav"
+                  disabled={page === 1}
+                  onClick={() => fetchProducts(page - 1, searchTerm)}
+                >
+                  ‹
+                </button>
                 {Array.from({ length: pages }, (_, k) => k + 1).map((n) => (
-                  <button key={n} className={`page ${page === n ? "active" : ""}`} onClick={() => fetchProducts(n, searchTerm)}>
+                  <button
+                    key={n}
+                    className={`page ${page === n ? "active" : ""}`}
+                    onClick={() => fetchProducts(n, searchTerm)}
+                  >
                     {n}
                   </button>
                 ))}
-                <button className="nav" disabled={page === pages} onClick={() => fetchProducts(page + 1, searchTerm)}>›</button>
+                <button
+                  className="nav"
+                  disabled={page === pages}
+                  onClick={() => fetchProducts(page + 1, searchTerm)}
+                >
+                  ›
+                </button>
               </div>
             )}
           </>
