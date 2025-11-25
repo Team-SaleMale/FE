@@ -7,7 +7,7 @@
 .metaRow{ display:flex; align-items:center; gap:8px; font-size:13px; color:#383E48; }
 .label{ color:#6B7280; }
 .price{ color:#0046CC; font-weight:700; }
-.footer{ margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.footer{ margin-top:auto; display:flex; align-items:center; justify-content:flex-end; gap:8px; }
 .detailBtn{
   display:flex; align-items:center; justify-content:center;
   width:32px; height:32px;
@@ -22,3 +22,19 @@
   transform: scale(1.1);
 }
 .detailBtn svg{ width:18px; height:18px; }
+
+.reviewBtn{
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  padding:8px 16px;
+  background:#3B82F6; color:#fff;
+  border:none; border-radius:8px;
+  font-size:14px; font-weight:600;
+  cursor:pointer;
+  transition: all 0.2s;
+}
+.reviewBtn:hover{
+  background:#2563EB;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+.reviewBtn svg{ width:16px; height:16px; }

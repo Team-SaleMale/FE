@@ -30,6 +30,7 @@ const endpoints = {
     CHANGE_NICKNAME: "/mypage/nickname",  // 닉네임 변경
     NEARBY_REGION_IDS: "/mypage/regions/nearby",  // 근처 지역 ID 조회
     PROFILE_IMAGE: "/mypage/profile-image",  // 프로필 이미지 변경
+    RECEIVED_REVIEWS: "/mypage/auctions/reviews",  // 받은 후기 조회
   },
 
   REGIONS: {
@@ -49,6 +50,7 @@ const endpoints = {
     LIKED:    "/auctions/liked",
     UPLOAD_IMAGES: "/auctions/images",
     SUGGEST_TITLE: "/auctions/registration/suggest-title",
+    CREATE_REVIEW: (itemId) => `/auctions/${itemId}/reviews`,  // 거래 후기 작성
   },
   SEARCH: {
     PRICE_HISTORY: "/search/price-history",

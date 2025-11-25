@@ -13,6 +13,7 @@ import PurchaseHistoryList from "./PurchaseHistory/PurchaseHistoryList";
 import ChatDrawer from "./ChatDrawer";
 import ChatListDrawer from "./ChatListDrawer";
 import ReviewDrawer from "./ReviewDrawer";
+import ReviewWriteDrawer from "./ReviewWriteDrawer";
 import CategoryDrawer from "./CategoryDrawer";
 import LocationDrawer from "./LocationDrawer";
 import NicknameChangeDrawer from "./NicknameChangeDrawer";
@@ -34,6 +35,8 @@ export default function MyPage() {
   const [isChatDrawerOpen, setChatDrawerOpen] = useState(false);
   const [isChatListDrawerOpen, setChatListDrawerOpen] = useState(false);
   const [isReviewDrawerOpen, setReviewDrawerOpen] = useState(false);
+  const [isReviewWriteDrawerOpen, setReviewWriteDrawerOpen] = useState(false);
+  const [selectedReviewItem, setSelectedReviewItem] = useState(null);
   const [isCategoryDrawerOpen, setCategoryDrawerOpen] = useState(false);
   const [isLocationDrawerOpen, setLocationDrawerOpen] = useState(false);
   const [isNicknameChangeDrawerOpen, setNicknameChangeDrawerOpen] = useState(false);
@@ -50,6 +53,8 @@ export default function MyPage() {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [purchaseHistoryItems, setPurchaseHistoryItems] = useState([]);
+  const [salesHistoryItems, setSalesHistoryItems] = useState([]);
 
   // 프로필 조회
   useEffect(() => {
@@ -250,9 +255,51 @@ export default function MyPage() {
     return `${minutes}분`;
   };
 
-  const openSellingDrawer = () => setSellingDrawerOpen(true);
+  const openSellingDrawer = async () => {
+    setSellingDrawerOpen(true);
+    try {
+      const response = await mypageService.getMyAuctions({
+        type: "SELLING",
+        sort: "CREATED_DESC",
+        page: 0,
+        size: 20,
+      });
+      const res = response?.data || response;
+      if (res?.isSuccess) {
+        // 경매가 끝나고 낙찰된 상품만 필터링 (진행중/유찰 제외)
+        const completedItems = (res.result?.items || []).filter(item => {
+          const now = new Date();
+          const endTime = new Date(item.endTime);
+          // 시간이 끝났고, 유찰이 아닌 상품만
+          return endTime <= now && item.itemStatus !== "FAILED" && item.itemStatus !== "FAIL";
+        });
+        setSalesHistoryItems(completedItems);
+      }
+    } catch (err) {
+      console.error("판매내역 조회 실패:", err);
+    }
+  };
+
   const closeSellingDrawer = () => setSellingDrawerOpen(false);
-  const openPurchaseDrawer = () => setPurchaseDrawerOpen(true);
+
+  const openPurchaseDrawer = async () => {
+    setPurchaseDrawerOpen(true);
+    try {
+      const response = await mypageService.getMyAuctions({
+        type: "WON",
+        sort: "CREATED_DESC",
+        page: 0,
+        size: 20,
+      });
+      const res = response?.data || response;
+      if (res?.isSuccess) {
+        setPurchaseHistoryItems(res.result?.items || []);
+      }
+    } catch (err) {
+      console.error("구매내역 조회 실패:", err);
+    }
+  };
+
   const closePurchaseDrawer = () => setPurchaseDrawerOpen(false);
 
   // 채팅 버튼 클릭 -> 채팅방 생성 후 ChatDrawer 열림
@@ -264,7 +311,7 @@ export default function MyPage() {
         console.log("채팅방 생성 응답:", response);
 
         const res = response?.data || response;
-        const chatId = res?.chatId;
+        const chatId = res?.result?.chatId || res?.chatId;  // result 안에 있는 chatId 접근
         setSelectedChatItem(chatId ? { ...item, chatId } : item);
       } else {
         setSelectedChatItem(item);
@@ -290,11 +337,17 @@ export default function MyPage() {
 
   // ChatList에서 항목 선택 -> ChatDrawer 열기
   const handleSelectChatFromList = (chat) => {
+    console.log('📋 선택한 채팅 데이터:', chat);
     const item = {
-      id: chat.id,
-      image: chat.productImage,
-      title: chat.productTitle,
-      currentPrice: 2130000,
+      chatId: chat.chatId,
+      partner: chat.partner,
+      lastMessage: chat.lastMessage,
+      // 상품 정보 (API에서 제공하는 경우)
+      id: chat.itemId || chat.item?.itemId,
+      title: chat.itemTitle || chat.item?.title,
+      image: chat.itemImage || chat.item?.image || chat.item?.images?.[0],
+      images: chat.item?.images,
+      currentPrice: chat.winningPrice || chat.item?.currentPrice || chat.item?.winningPrice,
     };
     setSelectedChatItem(item);
     setChatDrawerOpen(true);
@@ -418,6 +471,21 @@ export default function MyPage() {
     setWishlistItems((prev) => prev.filter((it) => it.id !== item.id));
   };
 
+  const openReviewWriteDrawer = (item) => {
+    setSelectedReviewItem(item);
+    setReviewWriteDrawerOpen(true);
+  };
+
+  const closeReviewWriteDrawer = () => {
+    setReviewWriteDrawerOpen(false);
+    setSelectedReviewItem(null);
+  };
+
+  const handleReviewSuccess = (result) => {
+    alert(`후기가 작성되었습니다! ${result.targetNickname}님의 매너 점수: ${result.updatedMannerScore}`);
+    closeReviewWriteDrawer();
+  };
+
   const closeAll = () => {
     setChatDrawerOpen(false);
     setChatListDrawerOpen(false);
@@ -468,26 +536,28 @@ export default function MyPage() {
       <div className={styles.container}>
         <SellingDrawer open={isSellingDrawerOpen} onClose={closeSellingDrawer} title="판매내역">
           <SalesHistoryList
-            items={sellingItems.map((i) => ({
-              id: i.id,
-              image: i.images?.[0],
-              title: i.title,
+            items={salesHistoryItems.map((item) => ({
+              id: item.itemId,
+              image: item.thumbnailUrl,
+              title: item.title,
               tradeType: "직거래",
-              finalPrice: i.currentPrice,
-              status: i.isClosed ? "SOLD" : "IN_PROGRESS",
+              finalPrice: item.currentPrice,
+              status: item.itemStatus === "CLOSED" ? "SOLD" : "IN_PROGRESS",
             }))}
+            onReviewClick={openReviewWriteDrawer}
           />
         </SellingDrawer>
 
         <PurchaseDrawer open={isPurchaseDrawerOpen} onClose={closePurchaseDrawer} title="구매내역">
           <PurchaseHistoryList
-            items={purchaseItems.map((i) => ({
-              id: i.id,
-              image: i.images?.[0],
-              title: i.title,
+            items={purchaseHistoryItems.map((item) => ({
+              id: item.itemId,
+              image: item.thumbnailUrl,
+              title: item.title,
               tradeType: "직거래",
-              finalPrice: i.currentPrice,
+              finalPrice: item.currentPrice,
             }))}
+            onReviewClick={openReviewWriteDrawer}
           />
         </PurchaseDrawer>
 
@@ -505,6 +575,12 @@ export default function MyPage() {
           userId={userProfile?.id}
         />
         <ReviewDrawer open={isReviewDrawerOpen} onClose={closeReviewDrawer} />
+        <ReviewWriteDrawer
+          open={isReviewWriteDrawerOpen}
+          onClose={closeReviewWriteDrawer}
+          item={selectedReviewItem}
+          onSuccess={handleReviewSuccess}
+        />
         <CategoryDrawer
           open={isCategoryDrawerOpen}
           onClose={closeCategoryDrawer}
@@ -601,6 +677,7 @@ export default function MyPage() {
                 if (chat && chat.chatId) openChatDrawer({ chatId: chat.chatId, ...chat });
               }}
               onViewAllChats={openChatList}
+              onViewAllReviews={openReviewDrawer}
             />
           </section>
 

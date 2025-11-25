@@ -31,7 +31,9 @@ export default function ChatListDrawer({ open, onClose, onSelectChat, userId }) 
     setLoading(true);
     try {
       const response = await chatService.getChatList(userId, { page: 0, size: 50 });
-      const chatData = response?.result || [];
+      console.log('📋 채팅 목록 API 원본 응답:', response);
+      const chatData = response?.data?.result || response?.result || [];
+      console.log('📋 채팅 목록 데이터:', chatData);
       setChatList(chatData);
     } catch (error) {
       console.error('채팅방 목록 조회 실패:', error);
