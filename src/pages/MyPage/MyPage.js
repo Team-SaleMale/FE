@@ -25,6 +25,7 @@ import { setRegion } from "../../api/users/service";
 import { mypageService } from "../../api/mypage/service";
 import { chatService } from "../../api/chat/service";
 import { myProfile } from "../../api/auth/service";
+import { unlikeAuction } from "../../api/auctions/service";
 
 export default function MyPage() {
   const navigate = useNavigate();
@@ -185,51 +186,26 @@ export default function MyPage() {
     const fetchLikedAuctions = async () => {
       try {
         const response = await mypageService.getLikedAuctions({ page: 0, size: 20 });
+        console.log('💖 찜한 목록 API 원본 응답:', response);
         const res = response?.data || response;
         if (res?.isSuccess) {
           const likedItems = res.result?.likedItems || [];
+          console.log('💖 찜한 상품 목록:', likedItems);
 
-          // 각 아이템의 상세 정보를 병렬로 조회하여 가격 정보 가져오기
-          const itemsWithDetails = await Promise.all(
-            likedItems.map(async (item) => {
-              try {
-                const detailResponse = await fetch(`${process.env.REACT_APP_API_URL || ''}/auctions/${item.itemId}`, {
-                  headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('accessToken') || ''}`,
-                  },
-                });
-                const detailData = await detailResponse.json();
+          // API에서 이미 모든 정보를 제공하므로 변환만 수행
+          const transformedItems = likedItems.map((item) => ({
+            id: item.itemId,
+            image: item.thumbnailUrl,
+            title: item.title,
+            bidders: item.bidderCount,
+            timeLeft: calculateTimeLeft(item.endTime),
+            startPrice: item.startPrice,
+            currentPrice: item.currentPrice,
+            viewCount: item.viewCount,
+          }));
 
-                if (detailData?.isSuccess) {
-                  const detail = detailData.result;
-                  return {
-                    id: item.itemId,
-                    image: item.thumbnailUrl,
-                    title: item.title,
-                    bidders: item.bidderCount,
-                    timeLeft: calculateTimeLeft(item.endTime),
-                    startPrice: detail.startPrice,
-                    currentPrice: detail.currentPrice,
-                  };
-                }
-              } catch (err) {
-                console.error(`아이템 ${item.itemId} 상세 조회 실패:`, err);
-              }
-
-              // 실패 시 기본값
-              return {
-                id: item.itemId,
-                image: item.thumbnailUrl,
-                title: item.title,
-                bidders: item.bidderCount,
-                timeLeft: calculateTimeLeft(item.endTime),
-                startPrice: null,
-                currentPrice: null,
-              };
-            })
-          );
-
-          setWishlistItems(itemsWithDetails);
+          console.log('💖 변환된 찜한 상품:', transformedItems);
+          setWishlistItems(transformedItems);
         }
       } catch (err) {
         console.error("찜한 목록 조회 실패:", err);
@@ -266,14 +242,11 @@ export default function MyPage() {
       });
       const res = response?.data || response;
       if (res?.isSuccess) {
-        // 경매가 끝나고 낙찰된 상품만 필터링 (진행중/유찰 제외)
-        const completedItems = (res.result?.items || []).filter(item => {
-          const now = new Date();
-          const endTime = new Date(item.endTime);
-          // 시간이 끝났고, 유찰이 아닌 상품만
-          return endTime <= now && item.itemStatus !== "FAILED" && item.itemStatus !== "FAIL";
-        });
-        setSalesHistoryItems(completedItems);
+        // 유찰 상품 제외
+        const filteredItems = (res.result?.items || []).filter(item =>
+          item.itemStatus !== "FAILED" && item.itemStatus !== "FAIL"
+        );
+        setSalesHistoryItems(filteredItems);
       }
     } catch (err) {
       console.error("판매내역 조회 실패:", err);
@@ -340,14 +313,16 @@ export default function MyPage() {
     console.log('📋 선택한 채팅 데이터:', chat);
     const item = {
       chatId: chat.chatId,
-      partner: chat.partner,
+      partner: {
+        ...chat.partner,
+        location: chat.partner?.regionName || null,
+      },
       lastMessage: chat.lastMessage,
-      // 상품 정보 (API에서 제공하는 경우)
-      id: chat.itemId || chat.item?.itemId,
-      title: chat.itemTitle || chat.item?.title,
-      image: chat.itemImage || chat.item?.image || chat.item?.images?.[0],
-      images: chat.item?.images,
-      currentPrice: chat.winningPrice || chat.item?.currentPrice || chat.item?.winningPrice,
+      // 상품 정보
+      id: chat.item?.itemId,
+      title: chat.item?.title,
+      image: chat.item?.image,
+      currentPrice: chat.item?.winningPrice,
     };
     setSelectedChatItem(item);
     setChatDrawerOpen(true);
@@ -467,8 +442,29 @@ export default function MyPage() {
   const openWishlistDrawer = () => setWishlistDrawerOpen(true);
   const closeWishlistDrawer = () => setWishlistDrawerOpen(false);
 
-  const handleRemoveWishlist = (item) => {
+  const handleRemoveWishlist = async (item) => {
+    // 낙관적 업데이트: 먼저 UI에서 제거
+    const previousItems = wishlistItems;
     setWishlistItems((prev) => prev.filter((it) => it.id !== item.id));
+
+    try {
+      const response = await unlikeAuction(item.id);
+      console.log('💔 찜 취소 응답:', response);
+
+      const res = response?.data || response;
+      if (res?.isSuccess) {
+        console.log('✅ 찜 취소 성공:', item.title);
+      } else {
+        // 실패 시 롤백
+        setWishlistItems(previousItems);
+        alert('찜 취소에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('❌ 찜 취소 실패:', err);
+      // 에러 시 롤백
+      setWishlistItems(previousItems);
+      alert('찜 취소에 실패했습니다.');
+    }
   };
 
   const openReviewWriteDrawer = (item) => {
@@ -674,7 +670,22 @@ export default function MyPage() {
               mannerScore={userProfile?.mannerScore || 0}
               userId={userProfile?.id}
               onChatClick={(chat) => {
-                if (chat && chat.chatId) openChatDrawer({ chatId: chat.chatId, ...chat });
+                if (chat && chat.chatId) {
+                  // 채팅 목록과 동일하게 데이터 변환
+                  const item = {
+                    chatId: chat.chatId,
+                    partner: {
+                      ...chat.partner,
+                      location: chat.partner?.regionName || null,
+                    },
+                    lastMessage: chat.lastMessage,
+                    id: chat.item?.itemId,
+                    title: chat.item?.title,
+                    image: chat.item?.image,
+                    currentPrice: chat.item?.winningPrice,
+                  };
+                  openChatDrawer(item);
+                }
               }}
               onViewAllChats={openChatList}
               onViewAllReviews={openReviewDrawer}

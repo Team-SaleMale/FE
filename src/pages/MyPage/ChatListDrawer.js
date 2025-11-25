@@ -107,8 +107,8 @@ export default function ChatListDrawer({ open, onClose, onSelectChat, userId }) 
               >
                 <div className={styles.productImageWrapper}>
                   <img
-                    src={chat.partner?.profileImage || "https://via.placeholder.com/150"}
-                    alt={chat.partner?.nickname || "사용자"}
+                    src={chat.item?.image || chat.partner?.profileImage || "https://via.placeholder.com/150"}
+                    alt={chat.item?.title || chat.partner?.nickname || "상품"}
                     className={styles.productImage}
                   />
                 </div>
@@ -122,7 +122,7 @@ export default function ChatListDrawer({ open, onClose, onSelectChat, userId }) 
                     </span>
                   </div>
                   <p className={styles.productTitle}>
-                    {chat.partner?.nickname || ""}
+                    {chat.item?.title || "상품 정보 없음"}
                   </p>
                   <div className={styles.lastMessageRow}>
                     <p className={styles.lastMessage}>

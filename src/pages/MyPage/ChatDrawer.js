@@ -1,5 +1,5 @@
 import { Icon } from "@iconify/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import styles from "../../styles/MyPage/ChatDrawer.module.css";
 import { chatService } from "../../api/chat/service";
 import { fetchAuctionDetail } from "../../api/auctions/service";
@@ -11,6 +11,8 @@ export default function ChatDrawer({ open, onClose, onBack, item, userId }) {
   const [canSend, setCanSend] = useState(true);
   const [chatInfo, setChatInfo] = useState(null);
   const [sellerInfo, setSellerInfo] = useState(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (open) {
@@ -310,6 +312,67 @@ export default function ChatDrawer({ open, onClose, onBack, item, userId }) {
     }
   };
 
+  // 이미지 첨부 버튼 클릭
+  const handleAttachClick = () => {
+    if (canSend && fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  // 이미지 파일 선택 시
+  const handleImageSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !chatInfo?.chatId || !userId) {
+      return;
+    }
+
+    // 파일 타입 검증
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 전송할 수 있습니다.');
+      return;
+    }
+
+    // 파일 크기 검증 (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('이미지 크기는 10MB 이하만 가능합니다.');
+      return;
+    }
+
+    setImageUploading(true);
+
+    try {
+      const response = await chatService.sendImage(userId, chatInfo.chatId, file);
+      console.log('📷 이미지 전송 응답:', response);
+
+      const data = response?.data?.result || response?.data || response;
+
+      // UI에 이미지 메시지 추가
+      const newMessage = {
+        id: data.messageId || Date.now(),
+        sender: "me",
+        text: data.content, // 이미지 URL
+        time: new Date(data.sentAt || new Date()).toLocaleTimeString("ko-KR", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }),
+        type: "IMAGE",
+      };
+
+      setMessages([...messages, newMessage]);
+      console.log('✅ 이미지 전송 성공');
+    } catch (error) {
+      console.error('❌ 이미지 전송 실패:', error);
+      alert('이미지 전송에 실패했습니다.');
+    } finally {
+      setImageUploading(false);
+      // 파일 입력 초기화
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   if (!open) return null;
 
   return (
@@ -386,7 +449,16 @@ export default function ChatDrawer({ open, onClose, onBack, item, userId }) {
                   </div>
                 )}
                 <div className={styles.messageBubble}>
-                  <p className={styles.messageText}>{msg.text}</p>
+                  {msg.type === "IMAGE" ? (
+                    <img
+                      src={msg.text}
+                      alt="이미지"
+                      className={styles.messageImage}
+                      onClick={() => window.open(msg.text, '_blank')}
+                    />
+                  ) : (
+                    <p className={styles.messageText}>{msg.text}</p>
+                  )}
                   <span className={styles.messageTime}>{msg.time}</span>
                 </div>
               </div>
@@ -402,12 +474,24 @@ export default function ChatDrawer({ open, onClose, onBack, item, userId }) {
           </div>
         )}
         <div className={styles.inputContainer}>
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept="image/*"
+            onChange={handleImageSelect}
+            style={{ display: 'none' }}
+          />
           <button
             className={styles.attachButton}
-            aria-label="파일 첨부"
-            disabled={!canSend}
+            aria-label="이미지 첨부"
+            disabled={!canSend || imageUploading}
+            onClick={handleAttachClick}
           >
-            <Icon icon="solar:paperclip-linear" />
+            {imageUploading ? (
+              <Icon icon="solar:loading-bold" className={styles.spinning} />
+            ) : (
+              <Icon icon="solar:gallery-linear" />
+            )}
           </button>
           <input
             type="text"
