@@ -105,6 +105,30 @@ export const chatService = {
       }
     });
   },
+
+  /**
+   * 이미지 메시지 전송
+   * POST /messages/image
+   *
+   * 이미지를 업로드하고 메시지로 전송합니다.
+   *
+   * @param {number} userId - 사용자 ID (헤더에 포함)
+   * @param {number} chatId - 채팅방 ID
+   * @param {File} file - 이미지 파일
+   * @returns {Promise} 메시지 전송 응답 { messageId, chatId, senderId, content, type, read, sentAt }
+   */
+  sendImage: (userId, chatId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return apiClient.post('/messages/image', formData, {
+      params: { chatId },
+      headers: {
+        'user-id': String(userId),
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+  },
 };
 
 export default chatService;

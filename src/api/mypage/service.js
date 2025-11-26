@@ -62,6 +62,37 @@ export const mypageService = {
   setPreferredCategories: (categories) => {
     return apiClient.post('/mypage/auctions/category', { categories });
   },
+
+  /**
+   * 받은 후기 조회
+   * GET /mypage/auctions/reviews
+   *
+   * 마이페이지에서 다른 사용자들이 나에게 작성한 거래 후기 목록을 조회합니다.
+   *
+   * @param {Object} params - 쿼리 파라미터
+   * @param {number} params.page - 페이지 번호 (0부터 시작, 기본값: 0)
+   * @param {number} params.size - 페이지당 아이템 개수 (기본값: 20)
+   * @returns {Promise} 받은 후기 목록 응답 { isSuccess, code, message, result: { reviews, totalElements, totalPages, currentPage, size, hasNext, hasPrevious } }
+   */
+  getReceivedReviews: (params = { page: 0, size: 20 }) => {
+    return apiClient.get('/mypage/auctions/reviews', { params });
+  },
+
+  /**
+   * 거래 후기 작성
+   * POST /auctions/{itemId}/reviews
+   *
+   * 경매가 성공적으로 완료된 상품에 대해 거래 상대방에게 후기를 작성합니다.
+   *
+   * @param {number} itemId - 상품 ID
+   * @param {Object} data - 후기 데이터
+   * @param {string} data.rating - 별점 (ONE, TWO, THREE, FOUR, FIVE)
+   * @param {string} data.content - 후기 내용
+   * @returns {Promise} 후기 작성 응답 { isSuccess, code, message, result: { reviewId, itemId, itemTitle, targetUserId, targetNickname, rating, content, createdAt, updatedMannerScore } }
+   */
+  createReview: (itemId, data) => {
+    return apiClient.post(`/auctions/${itemId}/reviews`, data);
+  },
 };
 
 export default mypageService;

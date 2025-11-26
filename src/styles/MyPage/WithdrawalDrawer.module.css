@@ -184,6 +184,29 @@
   border-color: var(--color-primary, #007bff);
 }
 
+/* 비밀번호 입력 */
+.passwordInput {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--color-border, #e5e5e5);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+  margin-top: 8px;
+}
+
+.passwordInput:focus {
+  outline: none;
+  border-color: var(--color-primary, #007bff);
+}
+
+.passwordHint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
 /* 동의 섹션 */
 .agreementSection {
   padding: 16px;

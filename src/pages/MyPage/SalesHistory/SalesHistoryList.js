@@ -1,7 +1,7 @@
 import styles from "../../../styles/MyPage/SalesHistory/SalesHistoryList.module.css";
 import SalesHistoryCard from "./SalesHistoryCard";
 
-export default function SalesHistoryList({ items = [], onItemClick, onChatClick }) {
+export default function SalesHistoryList({ items = [], onItemClick, onChatClick, onReviewClick }) {
   if (!items.length) {
     return (
       <div className={styles.empty}>
@@ -18,6 +18,7 @@ export default function SalesHistoryList({ items = [], onItemClick, onChatClick 
           item={it}
           onClick={() => onItemClick?.(it)}
           onChatClick={() => onChatClick?.(it)}
+          onReviewClick={() => onReviewClick?.(it)}
         />
       ))}
     </div>
