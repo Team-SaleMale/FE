@@ -147,12 +147,25 @@
 /* ============ Body ============ */
 .body{
   min-height: 0;                /* 자식 overflow 계산 */
-  min-width: 0;                 /* 말줄임 작동 */
   display: flex;
   flex-direction: column;
   gap: 14px;
   flex: 1 1 auto;               /* 본문이 여유 공간 차지 → 가격 박스 아래 고정 */
-  overflow: hidden;             /* 제목 넘침 방지 */
+}
+
+/* 제목 wrapper */
+.titleWrapper{
+  overflow: hidden;
+  line-height: 0;
+}
+
+.titleWrapper h3{
+  line-height: 1.3;
+}
+
+/* 호버 시 wrapper overflow visible */
+.card:hover .titleWrapper{
+  overflow: visible;
 }
 
 /* 제목 */
@@ -168,17 +181,26 @@
   margin: 0;
 }
 
-/* 호버 시 제목 애니메이션 */
-.card:hover .title{
-  animation: slideLeft 10s linear infinite;
+/* overflow가 있는 제목만 호버 시 애니메이션 */
+.card:hover .titleOverflow{
+  animation: marqueeScroll 12s linear infinite;
 }
 
-@keyframes slideLeft {
+@keyframes marqueeScroll {
   0% {
     transform: translateX(0);
   }
+  40% {
+    transform: translateX(calc(-100% + 100px));
+  }
+  50% {
+    transform: translateX(calc(-100% + 100px));
+  }
+  90% {
+    transform: translateX(0);
+  }
   100% {
-    transform: translateX(-50%);
+    transform: translateX(0);
   }
 }
 
@@ -206,9 +228,9 @@
   white-space: nowrap;
 }
 
-/* 호버 시 메타 정보 애니메이션 - 아이콘 포함 전체 이동 */
-.card:hover .metaItem{
-  animation: slideLeft 10s linear infinite;
+/* overflow가 있는 메타 정보만 호버 시 애니메이션 */
+.card:hover .metaOverflow{
+  animation: marqueeScroll 12s linear infinite;
 }
 
 /* 가격(하단 고정) */
@@ -244,6 +266,30 @@
 @media (hover:hover){
   .chatButtonSmall:hover{
     background:#659711;
+    color:white;
+  }
+}
+
+/* 재등록 버튼 */
+.repostButton{
+  display:flex; align-items:center; justify-content:center; gap:4px;
+  padding:6px 12px;
+  border:1px solid #4b5563;
+  background:white;
+  color:#4b5563;
+  border-radius:8px;
+  cursor:pointer;
+  transition:all 0.2s ease;
+  flex-shrink:0;
+  font-size:13px;
+  font-weight:600;
+}
+.repostButton svg{
+  width:16px; height:16px;
+}
+@media (hover:hover){
+  .repostButton:hover{
+    background:#4b5563;
     color:white;
   }
 }

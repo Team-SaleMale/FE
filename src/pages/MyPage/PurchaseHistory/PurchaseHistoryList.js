@@ -1,7 +1,7 @@
 import styles from "../../../styles/MyPage/PurchaseHistory/PurchaseHistoryList.module.css";
 import PurchaseHistoryCard from "./PurchaseHistoryCard";
 
-export default function PurchaseHistoryList({ items = [], onItemClick }) {
+export default function PurchaseHistoryList({ items = [], onItemClick, onReviewClick }) {
   if (!items.length) {
     return (
       <div className={styles.empty}>
@@ -17,6 +17,7 @@ export default function PurchaseHistoryList({ items = [], onItemClick }) {
           key={item.id}
           item={item}
           onClick={() => onItemClick?.(item)}
+          onReviewClick={() => onReviewClick?.(item)}
         />
       ))}
     </div>
