@@ -1,8 +1,10 @@
+// src/pages/Main/Trending.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/Main/Trending.module.css";
-import { fetchPopularAuctions } from "../../api/auctions/service";
+// ✅ 메인 전용: radius=ALL 강제 함수로 교체
+import { fetchPopularAuctionsForMain } from "../../api/auctions/service";
 
 /* ===== 시간 헬퍼 ===== */
 const pad2 = (n) => String(n).padStart(2, "0");
@@ -26,21 +28,21 @@ function useNowTick() {
 
 /**
  * 실시간 인기 경매
- * - /auctions?status=POPULAR&sort=BID_COUNT_DESC&page=0&size=12
+ * - /search/items?status=POPULAR&sort=BID_COUNT_DESC&page=0&size=12&radius=ALL
  * - pageSize: 한 화면당 카드 개수(슬라이드 단위)
  */
 export default function Trending({ pageSize = 4, onCardClick }) {
   const navigate = useNavigate();
   const nowTick = useNowTick();
 
-  // 서버 데이터 상태 (기본값 없음)
+  // 서버 데이터 상태
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [page, setPage] = useState(0);           // 슬라이드 페이지(0-based)
-  const [fetchedAt, setFetchedAt] = useState(Date.now()); // timeLeftMs 보정 기준
+  const [page, setPage] = useState(0);                     // 슬라이드 페이지(0-based)
+  const [fetchedAt, setFetchedAt] = useState(Date.now());  // timeLeftMs 보정 기준
 
-  // API 호출 (/auctions POPULAR 12개)
+  // API 호출 (status=POPULAR, sort=BID_COUNT_DESC, size=12, radius=ALL)
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -48,8 +50,7 @@ export default function Trending({ pageSize = 4, onCardClick }) {
         setLoading(true);
         setError(null);
 
-        // 인기 경매 12개
-        const res = await fetchPopularAuctions({ page: 1, size: 12 }); // status=POPULAR, sort=BID_COUNT_DESC
+        const res = await fetchPopularAuctionsForMain({ page: 1, size: 12 });
         const rows = Array.isArray(res?.result?.items) ? res.result.items : [];
 
         const mapped = rows
@@ -86,20 +87,19 @@ export default function Trending({ pageSize = 4, onCardClick }) {
     return () => { alive = false; };
   }, []);
 
-  // 기본값 없는 소스
-  const source = items;
-
   // 남은 시간 계산(1초 갱신)
-  const withTimeLeft = source.map((it) => {
-    let diffMs = null;
-    if (typeof it.timeLeftMs === "number") {
-      diffMs = it.timeLeftMs - (nowTick - fetchedAt);
-    } else if (it.endAtISO) {
-      const endMs = new Date(it.endAtISO).getTime();
-      if (Number.isFinite(endMs)) diffMs = endMs - nowTick;
-    }
-    return { ...it, timeLeft: toDHMS(diffMs ?? -1) };
-  });
+  const withTimeLeft = useMemo(() => {
+    return items.map((it) => {
+      let diffMs = null;
+      if (typeof it.timeLeftMs === "number") {
+        diffMs = it.timeLeftMs - (nowTick - fetchedAt);
+      } else if (it.endAtISO) {
+        const endMs = new Date(it.endAtISO).getTime();
+        if (Number.isFinite(endMs)) diffMs = endMs - nowTick;
+      }
+      return { ...it, timeLeft: toDHMS(diffMs ?? -1) };
+    });
+  }, [items, nowTick, fetchedAt]);
 
   // 페이지네이션(슬라이드)
   const totalPages = Math.max(1, Math.ceil(withTimeLeft.length / pageSize));
@@ -153,7 +153,7 @@ export default function Trending({ pageSize = 4, onCardClick }) {
         {!loading && error && (
           <div className={styles.state}>오류가 발생했습니다. 잠시 후 다시 시도해 주세요.</div>
         )}
-        {!loading && !error && source.length === 0 && (
+        {!loading && !error && withTimeLeft.length === 0 && (
           <div className={styles.state}>표시할 인기 경매가 없습니다.</div>
         )}
 
