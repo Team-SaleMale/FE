@@ -3,12 +3,17 @@ import React from "react";
 import SectionTitle from "./SectionTitle";
 import PhotoUploadCard from "./PhotoUploadCard";
 
-function UploadPanel({ mode }) {
+function UploadPanel({ mode, onRunExperiment }) {   // [⭐ MODIFY] 부모에서 내려주는 콜백 받기
   const isWear = mode === "wear";
   const isDecor = mode === "decor";
 
   const handleExperiment = () => {
-    // [추가 주석] API 연동 전까지는 안내만
+    // [⭐ ADD] 부모에서 내려준 onRunExperiment 실행
+    if (onRunExperiment) {
+      onRunExperiment();   // ← 이 한 줄이 핵심
+    }
+
+    // [기존 안내 유지 — 원하면 삭제 가능]
     alert("실험 기능은 현재 UI 미리보기 상태입니다. 추후 AI API 연동 예정입니다.");
   };
 
@@ -76,7 +81,11 @@ function UploadPanel({ mode }) {
         title="실험하기"
         subtitle="준비가 되었다면 아래 버튼을 눌러 결과를 확인해보세요."
       />
-      <button type="button" className="lab-experiment-button" onClick={handleExperiment}>
+      <button
+        type="button"
+        className="lab-experiment-button"
+        onClick={handleExperiment}
+      >
         실험해보기
       </button>
     </div>

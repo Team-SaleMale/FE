@@ -24,7 +24,8 @@ function LabResult() {
 
       <div className="lab-main-layout">
         <div className="lab-right-panel lab-right-panel--full">
-          <ResultPanel mode="wear" />
+          {/* 결과 보기 탭에서는 항상 mock 결과가 있다고 가정 */}
+          <ResultPanel mode="wear" hasMockResult={true} />
           <InfoBox
             title="안내"
             lines={[
