@@ -1,3 +1,4 @@
+// src/pages/HotDeal/Toolbar.js
 // 상단 컨트롤 바: 반경 슬라이더 + 지도/로드뷰 토글 + 상품 등록(부모 콜백만 호출)
 import styles from "../../styles/HotDeal/Toolbar.module.css";
 

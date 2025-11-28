@@ -1,4 +1,4 @@
-// src/pages/AuctionProductDetails/AuctionProductDetails.jsx
+// src/pages/AuctionProductDetails/AuctionProductDetails.js
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import styles from "../../styles/AuctionProductDetails/AuctionProductDetails.module.css";
@@ -15,7 +15,11 @@ import CautionList from "./CautionList";
 import RecommendedList from "./RecommendedList";
 import BidPanel from "./BidPanel";
 
-import { fetchAuctionDetail, placeBid } from "../../api/auctions/service";
+import {
+  fetchAuctionDetail,
+  placeBid,
+  fetchRecommendedAuctionsForDetail,
+} from "../../api/auctions/service";
 
 /** enum → 한글 매핑 */
 const TRADE_METHOD_LABELS = {
@@ -119,7 +123,8 @@ function toViewModel(api) {
   const end = splitISO(r.auctionInfo?.endTime);
 
   const metrics = {
-    views: 0,
+    // ✅ 상세 응답에 viewCount가 있으면 사용, 없으면 0
+    views: r.viewCount ?? r.auctionInfo?.viewCount ?? 0,
     watchers: r.userInteraction?.likeCount ?? 0,
     userLiked: r.userInteraction?.isLiked ?? false,
     bids: r.auctionInfo?.bidCount ?? 0,
@@ -176,6 +181,7 @@ function toViewModel(api) {
     },
     price,
     bidHistory,
+    // 추천 상품은 나중에 별도 API로 채움
     recommended: [],
   };
 }
@@ -200,17 +206,48 @@ export default function AuctionProductDetails() {
     setLoading(true);
     setError(null);
 
-    fetchAuctionDetail(id, { bidHistoryLimit: 10 })
-      .then((payload) => {
+    (async () => {
+      try {
+        // 1) 상세 정보 먼저 로딩
+        const payload = await fetchAuctionDetail(id, { bidHistoryLimit: 10 });
         if (!alive) return;
+
         const vm = toViewModel(payload);
         setAuction(vm);
-      })
-      .catch((e) => {
+
+        // 2) 추천 상품 로딩 (에러나도 전체 페이지는 유지)
+        try {
+          const recRes = await fetchRecommendedAuctionsForDetail({
+            page: 1,
+            size: 8,
+            categories: vm.category, // 같은 카테고리 위주 추천
+          });
+          if (!alive) return;
+
+          const rawItems = recRes?.result?.items ?? [];
+          // 자기 자신은 추천 목록에서 제거
+          const filtered = rawItems.filter(
+            (it) => String(it.itemId ?? it.id) !== String(vm.id)
+          );
+
+          setAuction((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  recommended: filtered,
+                }
+              : prev
+          );
+        } catch {
+          // 추천 API 실패 시에는 조용히 무시 (추천 목록만 비어있게)
+        }
+      } catch (e) {
         if (!alive) return;
         setError(e);
-      })
-      .finally(() => alive && setLoading(false));
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
 
     return () => {
       alive = false;

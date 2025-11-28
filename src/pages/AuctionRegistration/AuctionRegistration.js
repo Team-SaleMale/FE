@@ -1,3 +1,4 @@
+// src/pages/AuctionRegistraion/AuctionRegistraion.js
 // 상품 등록 화면 (JSON POST 버전)
 import React, { useMemo, useReducer, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -22,8 +23,8 @@ const initialState = {
 
   // 제목/이름
   title: "",
-  titleEdited: false,     // 사용자가 직접 수정했는지
-  name: "",               // 항상 AI 인식 모델명 유지
+  titleEdited: false, // 사용자가 직접 수정했는지
+  name: "", // 항상 AI 인식 모델명 유지
   description: "",
 
   startPrice: "",
@@ -45,7 +46,10 @@ function reducer(state, action) {
     case "SET_IMAGES":
       return { ...state, images: action.value };
     case "SET_CONSENT":
-      return { ...state, consents: { ...state.consents, [action.key]: action.value } };
+      return {
+        ...state,
+        consents: { ...state.consents, [action.key]: action.value },
+      };
     default:
       return state;
   }
@@ -62,7 +66,10 @@ export default function AuctionRegistration() {
     () => (state.images || []).map((it) => it?.url).filter(Boolean),
     [state.images]
   );
-  const previewImage = useMemo(() => previewImages[0] || "", [previewImages]);
+  const previewImage = useMemo(
+    () => previewImages[0] || "",
+    [previewImages]
+  );
 
   const previewCurrent = useMemo(() => {
     const p = Number(state.startPrice || 0);
@@ -72,7 +79,8 @@ export default function AuctionRegistration() {
   const previewData = {
     imageUrl: previewImage,
     images: previewImages,
-    title: state.title || state.name || "제목을 입력하면 여기에 표시됩니다",
+    title:
+      state.title || state.name || "제목을 입력하면 여기에 표시됩니다",
     views: 1500,
     bidders: 1260,
     timeLeftLabel: "01:45:20",
@@ -82,9 +90,11 @@ export default function AuctionRegistration() {
 
   /** 검증 */
   const validate = (nowISO) => {
-    if (state.images.length < 1) return "이미지를 1장 이상 업로드해주세요.";
+    if (state.images.length < 1)
+      return "이미지를 1장 이상 업로드해주세요.";
     // ✅ 서버 필수: name은 AI 분석으로만 세팅됨
-    if (!state.name.trim()) return "AI 분석으로 상품명을 먼저 인식하세요.";
+    if (!state.name.trim())
+      return "AI 분석으로 상품명을 먼저 인식하세요.";
 
     const startPriceNum = Number(state.startPrice);
     if (!Number.isFinite(startPriceNum) || startPriceNum <= 0) {
@@ -100,11 +110,14 @@ export default function AuctionRegistration() {
       return "종료 시간이 현재 시각 이후가 되도록 선택해주세요.";
     }
 
-    if (state.categories.length !== 1) return "카테고리를 한 개 선택해주세요.";
+    if (state.categories.length !== 1)
+      return "카테고리를 한 개 선택해주세요.";
 
     const hasTrade =
-      (Array.isArray(state.tradeMethods) && state.tradeMethods.length > 0) ||
-      (typeof state.tradeMethod === "string" && state.tradeMethod.trim() !== "");
+      (Array.isArray(state.tradeMethods) &&
+        state.tradeMethods.length > 0) ||
+      (typeof state.tradeMethod === "string" &&
+        state.tradeMethod.trim() !== "");
     if (!hasTrade) return "거래 방식을 1개 이상 선택해주세요.";
 
     if (!state.consents.policy) return "정책 동의를 체크해주세요.";
@@ -120,7 +133,8 @@ export default function AuctionRegistration() {
     setError("");
     setSubmitting(true);
     try {
-      const imageUrls = state.images?.map((it) => it.uploadedUrl).filter(Boolean) ?? [];
+      const imageUrls =
+        state.images?.map((it) => it.uploadedUrl).filter(Boolean) ?? [];
       const debugPayload = buildRegistrationPayload(state, { imageUrls });
       console.log("[registerAuction] payload", debugPayload);
 
@@ -136,7 +150,11 @@ export default function AuctionRegistration() {
       });
     } catch (e) {
       const data = e?.response?.data;
-      const m = data?.message || data?.result?.message || e?.message || "등록 중 오류가 발생했습니다.";
+      const m =
+        data?.message ||
+        data?.result?.message ||
+        e?.message ||
+        "등록 중 오류가 발생했습니다.";
       setError(m);
       console.warn("[registerAuction] error", e?.response || e);
     } finally {
@@ -149,7 +167,11 @@ export default function AuctionRegistration() {
     if (k === "title") {
       const trimmed = String(v ?? "").slice(0, 30);
       if (!state.titleEdited) {
-        dispatch({ type: "SET_FIELD", key: "titleEdited", value: true });
+        dispatch({
+          type: "SET_FIELD",
+          key: "titleEdited",
+          value: true,
+        });
       }
       dispatch({ type: "SET_FIELD", key: "title", value: trimmed });
       return;
@@ -164,9 +186,13 @@ export default function AuctionRegistration() {
           <section className={styles.section}>
             <UploadPanel
               images={state.images}
-              onChange={(imgs) => dispatch({ type: "SET_IMAGES", value: imgs })}
-              onMetaChange={(k, v) => dispatch({ type: "SET_FIELD", key: k, value: v })}
-              shouldAutoFillTitle={!state.titleEdited}   // 사용자가 수정 전이면 AI가 title을 채움
+              onChange={(imgs) =>
+                dispatch({ type: "SET_IMAGES", value: imgs })
+              }
+              onMetaChange={(k, v) =>
+                dispatch({ type: "SET_FIELD", key: k, value: v })
+              }
+              shouldAutoFillTitle={!state.titleEdited} // 사용자가 수정 전이면 AI가 title을 채움
             />
           </section>
 
@@ -183,14 +209,22 @@ export default function AuctionRegistration() {
               startPrice={state.startPrice}
               startDate={state.startDate}
               endDate={state.endDate}
-              onChange={(k, v) => dispatch({ type: "SET_FIELD", key: k, value: v })}
+              onChange={(k, v) =>
+                dispatch({ type: "SET_FIELD", key: k, value: v })
+              }
             />
           </section>
 
           <section className={styles.section}>
             <CategoryChips
               value={state.categories}
-              onChange={(v) => dispatch({ type: "SET_FIELD", key: "categories", value: v })}
+              onChange={(v) =>
+                dispatch({
+                  type: "SET_FIELD",
+                  key: "categories",
+                  value: v,
+                })
+              }
               title="카테고리 선택"
               helper="원하는 카테고리가 없으면 ‘기타’를 선택하세요."
             />
@@ -201,24 +235,39 @@ export default function AuctionRegistration() {
               method={state.tradeMethod}
               methods={state.tradeMethods}
               note={state.tradeNote}
-              onChange={(k, v) => dispatch({ type: "SET_FIELD", key: k, value: v })}
+              onChange={(k, v) =>
+                dispatch({ type: "SET_FIELD", key: k, value: v })
+              }
             />
           </section>
 
           <section className={styles.section}>
             <PolicyConsent
               value={state.consents}
-              onChange={(k, v) => dispatch({ type: "SET_CONSENT", key: k, value: v })}
+              onChange={(k, v) =>
+                dispatch({
+                  type: "SET_CONSENT",
+                  key: k,
+                  value: v,
+                })
+              }
             />
           </section>
         </div>
 
         <aside className={styles.rightCol}>
-          <PreviewCard key={previewImages.join("|")} {...previewData} />
+          <PreviewCard
+            key={previewImages.join("|")}
+            {...previewData}
+          />
         </aside>
       </div>
 
-      <SubmitBar onSubmit={handleSubmit} loading={submitting} error={error} />
+      <SubmitBar
+        onSubmit={handleSubmit}
+        loading={submitting}
+        error={error}
+      />
     </div>
   );
 }
