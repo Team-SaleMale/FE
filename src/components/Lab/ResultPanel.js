@@ -6,31 +6,54 @@ import LabWearBefore1 from "../../assets/img/Lab/Lab_wear_before1.png";
 import LabWearBefore2 from "../../assets/img/Lab/Lab_wear_before2.png";
 import LabWearResult from "../../assets/img/Lab/Lab_wear_result.png";
 
-function ResultPanel({ mode, hasMockResult = false }) {
+function ResultPanel({
+  mode,
+  hasMockResult = false,
+  resultUrl,
+  maskedUrl,
+  loading = false,
+  error = "",
+}) {
   const [view, setView] = useState("before"); // before | after | compare
 
   const isWear = mode === "wear";
   const isDecor = mode === "decor";
 
+  const hasRealResult = !!resultUrl;
+  const hasAnyResult = hasRealResult || hasMockResult;
+
   const getPlaceholderText = () => {
+    if (loading) {
+      return "AI가 가상 피팅을 진행 중입니다...";
+    }
+
+    if (!hasAnyResult) {
+      if (view === "before") {
+        return "업로드한 원본 이미지가 여기 표시될 예정입니다.";
+      }
+
+      if (isWear) {
+        return "AI가 생성한 착용 이미지가 여기 표시될 예정입니다.";
+      }
+
+      if (isDecor) {
+        return "AI가 생성한 배치 이미지가 여기 표시될 예정입니다.";
+      }
+
+      return "AI가 생성한 결과 이미지가 여기 표시될 예정입니다.";
+    }
+
+    // 결과는 있는데 뷰에 맞는 이미지가 없을 때
     if (view === "before") {
-      return "업로드한 원본 이미지가 여기 표시될 예정입니다.";
+      return "원본 이미지를 불러오지 못했습니다. After 탭에서 결과 이미지를 확인해 주세요.";
     }
 
-    if (isWear) {
-      return "AI가 생성한 착용 이미지가 여기 표시될 예정입니다.";
-    }
-
-    if (isDecor) {
-      return "AI가 생성한 배치 이미지가 여기 표시될 예정입니다.";
-    }
-
-    return "AI가 생성한 결과 이미지가 여기 표시될 예정입니다.";
+    return "";
   };
 
-  // [핵심] 비교 탭에서 사용할 이미지 (지금은 mock)
-  const compareBeforeImg = hasMockResult ? LabWearBefore1 : null;
-  const compareAfterImg = hasMockResult ? LabWearResult : null;
+  // 🔹 비교 탭에서 사용할 이미지
+  const compareBeforeImg = hasRealResult ? maskedUrl || LabWearBefore1 : hasMockResult ? LabWearBefore1 : null;
+  const compareAfterImg = hasRealResult ? resultUrl : hasMockResult ? LabWearResult : null;
 
   return (
     <div className="lab-result-panel">
@@ -66,12 +89,20 @@ function ResultPanel({ mode, hasMockResult = false }) {
           // 🔹 비교 탭도 기존 박스 크기를 그대로 사용
           <div className="lab-result-placeholder">
             <div className="lab-result-image lab-result-image--compare">
-              <ImageCompareSlider
-                beforeLabel="원본 이미지"
-                afterLabel={isWear ? "착용 이미지" : isDecor ? "배치 이미지" : "After"}
-                beforeImage={compareBeforeImg}
-                afterImage={compareAfterImg}
-              />
+              {compareBeforeImg && compareAfterImg ? (
+                <ImageCompareSlider
+                  beforeLabel="원본 / 마스크"
+                  afterLabel={isWear ? "착용 이미지" : isDecor ? "배치 이미지" : "After"}
+                  beforeImage={compareBeforeImg}
+                  afterImage={compareAfterImg}
+                />
+              ) : (
+                <span className="lab-result-image-text">
+                  {hasAnyResult
+                    ? "비교에 사용할 이미지를 불러오지 못했습니다. After 탭에서 결과 이미지를 확인해 주세요."
+                    : getPlaceholderText()}
+                </span>
+              )}
             </div>
           </div>
         ) : (
@@ -79,7 +110,13 @@ function ResultPanel({ mode, hasMockResult = false }) {
             {/* BEFORE 뷰 */}
             {view === "before" && (
               <div className="lab-result-image lab-result-image--before">
-                {hasMockResult ? (
+                {hasRealResult && maskedUrl ? (
+                  <img
+                    src={maskedUrl}
+                    alt="마스크/원본 이미지"
+                    className="lab-result-image-inner"
+                  />
+                ) : hasMockResult ? (
                   <img
                     src={LabWearBefore1}
                     alt="입어보기 Before 예시"
@@ -96,7 +133,13 @@ function ResultPanel({ mode, hasMockResult = false }) {
             {/* AFTER 뷰 */}
             {view === "after" && (
               <div className="lab-result-image lab-result-image--after">
-                {hasMockResult ? (
+                {hasRealResult ? (
+                  <img
+                    src={resultUrl}
+                    alt="가상 피팅 결과 이미지"
+                    className="lab-result-image-inner"
+                  />
+                ) : hasMockResult ? (
                   <img
                     src={LabWearResult}
                     alt="입어보기 After 예시"
@@ -114,8 +157,13 @@ function ResultPanel({ mode, hasMockResult = false }) {
       </div>
 
       <div className="lab-result-footer">
+        {error && (
+          <p className="lab-result-error">
+            {error}
+          </p>
+        )}
         <p className="lab-result-note">
-          ※ 현재는 예시 레이아웃만 제공되며, 실제 이미지는 AI API 연동 후 표시됩니다.
+          ※ 본 기능은 실험실(BETA) 단계의 AI 가상 피팅 결과입니다. 실제 착용감, 핏, 색감은 이미지와 다를 수 있습니다.
         </p>
       </div>
     </div>
@@ -123,3 +171,4 @@ function ResultPanel({ mode, hasMockResult = false }) {
 }
 
 export default ResultPanel;
+                                                          

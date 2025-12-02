@@ -6,15 +6,65 @@ import LabModeTabs from "../../components/Lab/LabModeTabs";
 import UploadPanel from "../../components/Lab/UploadPanel";
 import ResultPanel from "../../components/Lab/ResultPanel";
 import InfoBox from "../../components/Lab/InfoBox";
+import { requestVirtualTryOn } from "../../api/experimental/service";
 
 function LabWear() {
-  // 실험 결과가 준비되었는지 여부 (mock용)
+  // 🔹 결과 유무 (기존 mock용)
   const [hasMockResult, setHasMockResult] = useState(false);
 
+  // 🔹 NEW: 실제 API 결과 상태
+  const [resultUrl, setResultUrl] = useState("");
+  const [maskedUrl, setMaskedUrl] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
   // "실험해보기" 버튼 눌렀을 때 호출할 함수
-  const handleRunExperiment = () => {
-    // 나중에 API 붙일 때는 여기서 실제 요청 보내면 됨.
-    setHasMockResult(true);
+  // UploadPanel에서 onRunExperiment({ backgroundFile, garmentFile }) 형태로 호출
+  const handleRunExperiment = async ({ backgroundFile, garmentFile }) => {
+    if (!backgroundFile || !garmentFile) {
+      setError("사람(배경) 이미지와 옷 이미지를 모두 업로드해주세요.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setHasMockResult(false);
+    setResultUrl("");
+    setMaskedUrl("");
+
+    try {
+      const res = await requestVirtualTryOn({ backgroundFile, garmentFile });
+      const data = res?.data ?? res;
+      const result = data?.result ?? data;
+
+      const nextResultUrl = result?.resultUrl || "";
+      const nextMaskedUrl = result?.maskedUrl || "";
+
+      if (!nextResultUrl) {
+        setError("가상 피팅 결과 URL을 불러오지 못했습니다.");
+        return;
+      }
+
+      setResultUrl(nextResultUrl);
+      setMaskedUrl(nextMaskedUrl);
+      setHasMockResult(true);
+
+      // LabResult에서 최근 결과 다시 보기용
+      const persisted = {
+        resultUrl: nextResultUrl,
+        maskedUrl: nextMaskedUrl,
+        createdAt: Date.now(),
+      };
+      window.localStorage.setItem(
+        "lab_wear_last_result",
+        JSON.stringify(persisted)
+      );
+    } catch (e) {
+      console.error(e);
+      setError("가상 피팅 요청 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -34,12 +84,21 @@ function LabWear() {
 
       <div className="lab-main-layout">
         <div className="lab-left-panel">
-          {/* UploadPanel에서 실험해보기 버튼 누를 때 이 콜백을 호출하도록 */}
-          <UploadPanel mode="wear" onRunExperiment={handleRunExperiment} />
+          <UploadPanel
+            mode="wear"
+            onRunExperiment={handleRunExperiment}
+            loading={loading}
+          />
         </div>
         <div className="lab-right-panel">
-          {/* ResultPanel에 mock 결과 여부 전달 */}
-          <ResultPanel mode="wear" hasMockResult={hasMockResult} />
+          <ResultPanel
+            mode="wear"
+            hasMockResult={hasMockResult}
+            resultUrl={resultUrl}
+            maskedUrl={maskedUrl}
+            loading={loading}
+            error={error}
+          />
           <InfoBox
             title="안내"
             lines={[

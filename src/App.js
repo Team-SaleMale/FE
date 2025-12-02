@@ -28,8 +28,9 @@ import PasswordReset from "./pages/Auth/PasswordReset";
 // ✅ 실험실 페이지 import
 import LabHome from "./pages/Lab/LabHome";
 import LabWear from "./pages/Lab/LabWear";
-import LabDecor from "./pages/Lab/LabDecor";
 import LabResult from "./pages/Lab/LabResult";
+import LabProductAnalysis from "./pages/Lab/LabProductAnalysis";
+import LabBrandAnalysis from "./pages/Lab/LabBrandAnalysis";
 
 // 최초 가입 온보딩 모달
 import CategoryOnboardingGate from "./components/modals/CategoryOnboardingGate";
@@ -109,8 +110,9 @@ export default function App() {
         {/* 실험실 */}
         <Route path="/lab" element={<LabHome />} />
         <Route path="/lab/wear" element={<LabWear />} />
-        <Route path="/lab/decor" element={<LabDecor />} />
         <Route path="/lab/result" element={<LabResult />} />
+        <Route path="/lab/product" element={<LabProductAnalysis />} />
+        <Route path="/lab/brand" element={<LabBrandAnalysis />} />
       </Routes>
 
       {!hideAuthLayout && <Footer />}
