@@ -1,5 +1,5 @@
 // src/pages/Lab/LabWear.jsx
-import React from "react";
+import React, { useState } from "react";
 import "../../styles/Lab/Lab.css";
 
 import LabModeTabs from "../../components/Lab/LabModeTabs";
@@ -8,6 +8,15 @@ import ResultPanel from "../../components/Lab/ResultPanel";
 import InfoBox from "../../components/Lab/InfoBox";
 
 function LabWear() {
+  // 실험 결과가 준비되었는지 여부 (mock용)
+  const [hasMockResult, setHasMockResult] = useState(false);
+
+  // "실험해보기" 버튼 눌렀을 때 호출할 함수
+  const handleRunExperiment = () => {
+    // 나중에 API 붙일 때는 여기서 실제 요청 보내면 됨.
+    setHasMockResult(true);
+  };
+
   return (
     <div className="lab-page">
       <header className="lab-header">
@@ -25,10 +34,12 @@ function LabWear() {
 
       <div className="lab-main-layout">
         <div className="lab-left-panel">
-          <UploadPanel mode="wear" />
+          {/* UploadPanel에서 실험해보기 버튼 누를 때 이 콜백을 호출하도록 */}
+          <UploadPanel mode="wear" onRunExperiment={handleRunExperiment} />
         </div>
         <div className="lab-right-panel">
-          <ResultPanel mode="wear" />
+          {/* ResultPanel에 mock 결과 여부 전달 */}
+          <ResultPanel mode="wear" hasMockResult={hasMockResult} />
           <InfoBox
             title="안내"
             lines={[

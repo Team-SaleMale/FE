@@ -523,12 +523,6 @@ export default function LocationDrawer({ open, onClose, currentLocation, current
         <div className={styles.rangeSection}>
           <div className={styles.rangeSectionHeader}>
             <h4 className={styles.rangeSectionTitle}>활동 반경</h4>
-            {nearbyCount !== null && !loadingNearby && (
-              <span className={styles.nearbyCount}>근처 지역 {nearbyCount}개</span>
-            )}
-            {loadingNearby && (
-              <span className={styles.nearbyCount}>조회 중...</span>
-            )}
           </div>
           <div className={styles.rangeButtonsGrid}>
             <button

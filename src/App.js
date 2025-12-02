@@ -31,7 +31,6 @@ import LabWear from "./pages/Lab/LabWear";
 import LabDecor from "./pages/Lab/LabDecor";
 import LabResult from "./pages/Lab/LabResult";
 
-
 // 최초 가입 온보딩 모달
 import CategoryOnboardingGate from "./components/modals/CategoryOnboardingGate";
 
@@ -62,6 +61,7 @@ export default function App() {
       <ScrollToTop behavior="auto" />
       {!hideAuthLayout && <Header />}
 
+      {/* 최초 가입 온보딩 모달 (알림/카테고리 온보딩) */}
       <CategoryOnboardingGate />
 
       <Routes>
@@ -71,14 +71,13 @@ export default function App() {
         {/* 경매 */}
         <Route path="/auctions" element={<AuctionList />} />
         <Route path="/auctions/new" element={<AuctionRegistration />} />
+        <Route path="/auctions/register" element={<AuctionRegistration />} />
         <Route path="/auctions/success" element={<AuctionComplete />} />
+        <Route path="/auctions/:id" element={<AuctionProductDetails />} />
 
-        {/* ✅ 회사 소개 전체 페이지 */}
+        {/* 회사 소개 & 안전 가이드 */}
         <Route path="/company" element={<CompanyPage />} />
         <Route path="/safety" element={<Safety />} />
-
-        {/* ✅ 상세 동적 라우트 */}
-        <Route path="/auctions/:id" element={<AuctionProductDetails />} />
 
         {/* 동영상 */}
         <Route path="/videos" element={<VideoBrowser />} />
@@ -104,15 +103,14 @@ export default function App() {
         <Route path="/inquiries/new" element={<InquiryWrite />} />
         <Route path="/inquiries/:id" element={<InquiryDetail />} />
 
+        {/* 소셜 로그인 콜백 */}
         <Route path="/auth/callback/*" element={<AuthCallback />} />
-
 
         {/* 실험실 */}
         <Route path="/lab" element={<LabHome />} />
         <Route path="/lab/wear" element={<LabWear />} />
         <Route path="/lab/decor" element={<LabDecor />} />
         <Route path="/lab/result" element={<LabResult />} />
-
       </Routes>
 
       {!hideAuthLayout && <Footer />}

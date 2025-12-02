@@ -71,12 +71,14 @@ const NO_AUTH_EXACT = new Set([
   "/auth/check/nickname",
   "/auth/password/reset",
   "/auth/password/reset/verify",
+  // "/auth/password/reset/confirm",  // [주의] 최종 단계는 Authorization 임시 토큰 필요 → no-auth 제외
   "/auth/email/verify/request",
   "/auth/email/verify/confirm",
   // 공개 검색 엔드포인트 중 가격 히스토리만 토큰 미주입
+  // [추가 주석] 공개 검색 엔드포인트는 토큰 미주입(401 방지)
   "/search/price-history",
 ]);
-const NO_AUTH_PREFIX = [];
+const NO_AUTH_PREFIX: string[] = [];
 
 /* -------------------- request interceptor -------------------- */
 api.interceptors.request.use(
@@ -90,6 +92,7 @@ api.interceptors.request.use(
       path === "/auth/login" ||
       path === "/auth/refresh";
 
+    // X-Skip-Auth가 있으면 토큰 완전히 스킵
     if (cfg.headers?.["X-Skip-Auth"]) {
       cfg.withCredentials = !!wantsCreds;
       delete cfg.headers["X-Skip-Auth"];
@@ -108,8 +111,13 @@ api.interceptors.request.use(
     }
 
     // 인증 경로면 Authorization 주입
+    // (feature/10-mypage-purchase-sales) 인증 경로 → Authorization 주입
+    // NOTE: 위 isNoAuth 판단으로 무인증 경로는 제외됨. X-Skip-Auth가 있으면 일찍 반환됨.
+    // cookie/localStorage 모두 체크하여 토큰 설정
     if (!isNoAuth) {
-      const token = getAccessToken();
+      const cookieToken = cookies.get(ACCESS_TOKEN_KEY);
+      const lsToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+      const token = cookieToken || lsToken;
       if (token) cfg.headers.Authorization = `Bearer ${token}`;
       cfg.withCredentials = true;
     }
@@ -185,16 +193,21 @@ api.interceptors.response.use(
 /* -------------------- common calls -------------------- */
 export const get = async (url, params = {}, options = {}) =>
   (await api.get(url, { params, ...options })).data;
+
 export const post = async (url, data, options = {}) =>
   (await api.post(url, data, { ...options })).data;
+
 export const put = async (url, data, options = {}) =>
   (await api.put(url, data, { ...options })).data;
+
 export const del = async (url, options = {}) =>
   (await api.delete(url, options)).data;
+
 export const patch = async (url, data, options = {}) =>
   (await api.patch(url, data, { ...options })).data;
 
 // 🔵 multipart 전용
+// 🔵 multipart 전용: Content-Type 명시 금지(=undefined)
 export const postMultipart = async (url, formData, options = {}) => {
   const res = await api.post(url, formData, {
     headers: { "Content-Type": undefined },

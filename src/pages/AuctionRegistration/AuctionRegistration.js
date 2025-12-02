@@ -1,7 +1,7 @@
 // src/pages/AuctionRegistraion/AuctionRegistraion.js
 // 상품 등록 화면 (JSON POST 버전)
-import React, { useMemo, useReducer, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useMemo, useReducer, useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import styles from "../../styles/AuctionRegistration/AuctionRegistration.module.css";
 
 import UploadPanel from "./UploadPanel";
@@ -13,7 +13,7 @@ import PolicyConsent from "./PolicyConsent";
 import PreviewCard from "./PreviewCard";
 import SubmitBar from "./SubmitBar";
 
-import { registerAuction } from "../../api/auctions/service";
+import { registerAuction, fetchAuctionDetail } from "../../api/auctions/service";
 import { buildRegistrationPayload } from "../../api/auctions/buildRegistrationPayload";
 
 /** 중앙 상태 */
@@ -57,9 +57,92 @@ function reducer(state, action) {
 
 export default function AuctionRegistration() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [state, dispatch] = useReducer(reducer, initialState);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // 재등록: repost 파라미터가 있으면 상세 정보 로드
+  useEffect(() => {
+    const repostId = searchParams.get('repost');
+    if (!repostId) return;
+
+    console.log('[AuctionRegistration] repost ID:', repostId);
+
+    const loadRepostData = async () => {
+      setLoading(true);
+      try {
+        console.log('[AuctionRegistration] fetching detail for:', repostId);
+        const data = await fetchAuctionDetail(repostId);
+        console.log('[AuctionRegistration] received data:', data);
+
+        if (data?.isSuccess) {
+          const detail = data.result;
+
+          console.log('[AuctionRegistration] detail 전체:', detail);
+          console.log('[AuctionRegistration] detail.images:', detail.images);
+
+          // 이미지 URL을 UploadPanel 형식으로 변환
+          const imageObjects = (detail.images || []).map((img, index) => {
+            const imageUrl = img?.url || img?.imageUrl || img;
+            console.log('[AuctionRegistration] img:', img, 'imageUrl:', imageUrl);
+            return {
+              id: `repost-${index}`,
+              url: imageUrl,
+              uploadedUrl: imageUrl,
+              file: null,
+            };
+          });
+
+          console.log('[AuctionRegistration] imageObjects:', imageObjects);
+
+          // state 채우기
+          dispatch({ type: "SET_IMAGES", value: imageObjects });
+          dispatch({ type: "SET_FIELD", key: "title", value: detail.title || "" });
+          dispatch({ type: "SET_FIELD", key: "name", value: detail.name || detail.title || "" });
+          dispatch({ type: "SET_FIELD", key: "description", value: detail.description || "" });
+          dispatch({ type: "SET_FIELD", key: "startPrice", value: detail.auctionInfo?.startPrice || "" });
+
+          // 카테고리 변환 (대문자 → 소문자-하이픈)
+          if (detail.category) {
+            const categoryMap = {
+              "WOMEN_ACC": "women-acc",
+              "FOOD_PROCESSED": "food-processed",
+              "SPORTS": "sports",
+              "PLANT": "plant",
+              "GAME_HOBBY": "game-hobby",
+              "TICKET": "ticket",
+              "FURNITURE": "furniture",
+              "BEAUTY": "beauty",
+              "CLOTHES": "clothes",
+              "HEALTH_FOOD": "health-food",
+              "BOOK": "book",
+              "KIDS": "kids",
+              "DIGITAL": "digital",
+              "LIVING_KITCHEN": "living-kitchen",
+              "HOME_APPLIANCE": "home-appliance",
+              "ETC": "etc",
+            };
+            const uiCategory = categoryMap[detail.category] || detail.category.toLowerCase();
+            dispatch({ type: "SET_FIELD", key: "categories", value: [uiCategory] });
+          }
+
+          // 거래 방식
+          if (detail.tradeInfo?.tradeMethods) {
+            dispatch({ type: "SET_FIELD", key: "tradeMethods", value: detail.tradeInfo.tradeMethods });
+          }
+        }
+      } catch (error) {
+        console.error('재등록 데이터 로드 실패:', error);
+        setError('이전 상품 정보를 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadRepostData();
+  }, [searchParams]);
 
   /* 프리뷰 */
   const previewImages = useMemo(

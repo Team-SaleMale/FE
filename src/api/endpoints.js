@@ -29,7 +29,9 @@ const endpoints = {
     RESET_PASSWORD: "/mypage/password", // 비밀번호 변경
     CHANGE_NICKNAME: "/mypage/nickname", // 닉네임 변경
     NEARBY_REGION_IDS: "/mypage/regions/nearby", // 근처 지역 ID 조회
-    SET_CATEGORIES: "/mypage/auctions/category",
+    SET_CATEGORIES: "/mypage/auctions/category", // 선호 카테고리 설정
+    PROFILE_IMAGE: "/mypage/profile-image", // 프로필 이미지 변경
+    RECEIVED_REVIEWS: "/mypage/auctions/reviews", // 받은 후기 조회
   },
 
   REGIONS: {
@@ -40,7 +42,7 @@ const endpoints = {
   },
 
   AUCTIONS: {
-    LIST: "/auctions",
+    LIST: "/auctions", // 기본 목록
     REGISTER: "/auctions/registration",
     DETAIL: (itemId) => `/auctions/${itemId}`,
     LIKE: (itemId) => `/auctions/${itemId}/liked`,
@@ -49,13 +51,13 @@ const endpoints = {
     LIKED: "/auctions/liked",
     UPLOAD_IMAGES: "/auctions/images",
     SUGGEST_TITLE: "/auctions/registration/suggest-title",
+    CREATE_REVIEW: (itemId) => `/auctions/${itemId}/reviews`, // 거래 후기 작성
   },
 
-  
   // Hotdeal 전용 엔드포인트
   HOTDEALS: {
-    LIST: "/hotdeals",          // GET 핫딜 목록
-    REGISTER: "/hotdeals",      // POST 핫딜 등록
+    LIST: "/hotdeals", // GET 핫딜 목록
+    REGISTER: "/hotdeals", // POST 핫딜 등록
     MY_STORE: "/hotdeals/my-store", // GET 내 가게 정보
   },
 
@@ -67,7 +69,7 @@ const endpoints = {
   CHAT: {
     CREATE_ROOM: (itemId) => `/items/${itemId}/chat`, // 채팅방 생성
     LIST: "/chats", // 채팅방 목록 조회
-    ENTER: (chatId) => `/chats/${chatId}/enter`, // 채팅방 입장
+    ENTER: (chatId) => `/chats/${chatId}/enter", // 채팅방 입장
     EXIT: (chatId) => `/chats/${chatId}/exit`, // 채팅방 나가기
     SEND_MESSAGE: "/messages", // 메시지 보내기
   },

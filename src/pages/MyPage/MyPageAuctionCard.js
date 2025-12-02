@@ -1,5 +1,6 @@
 /* eslint-disable jsx-a11y/role-supports-aria-props */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/MyPage/MyPageAuctionCard.module.css";
 
@@ -26,6 +27,7 @@ function useTimeLeft(endAtISO, disabled) {
 }
 
 export default function MyPageAuctionCard({ item, onChatClick }) {
+  const navigate = useNavigate();
   const images = useMemo(
     () => (item?.images?.length ? item.images : item?.image ? [item.image] : []),
     [item]
@@ -37,9 +39,50 @@ export default function MyPageAuctionCard({ item, onChatClick }) {
   const computedTimeLeft = useTimeLeft(item?.endAtISO, item?.isClosed);
   const timeLeft = item?.timeLeft ?? computedTimeLeft;
 
+  // 텍스트 overflow 감지를 위한 refs
+  const bodyRef = useRef(null);
+  const titleRef = useRef(null);
+  const metaRef = useRef(null);
+  const meta1Ref = useRef(null);
+  const meta2Ref = useRef(null);
+  const [titleOverflow, setTitleOverflow] = useState(false);
+  const [meta1Overflow, setMeta1Overflow] = useState(false);
+  const [meta2Overflow, setMeta2Overflow] = useState(false);
+
+  // overflow 여부 체크 - 부모 컨테이너 너비와 비교
+  useEffect(() => {
+    const checkOverflow = () => {
+      const bodyWidth = bodyRef.current?.clientWidth || 0;
+      const metaWidth = metaRef.current?.clientWidth || 0;
+
+      if (titleRef.current && bodyWidth) {
+        setTitleOverflow(titleRef.current.scrollWidth > bodyWidth);
+      }
+      if (meta1Ref.current && metaWidth) {
+        setMeta1Overflow(meta1Ref.current.scrollWidth > metaWidth);
+      }
+      if (meta2Ref.current && metaWidth) {
+        setMeta2Overflow(meta2Ref.current.scrollWidth > metaWidth);
+      }
+    };
+
+    // DOM이 렌더링된 후 체크
+    const timer = setTimeout(checkOverflow, 100);
+    window.addEventListener('resize', checkOverflow);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', checkOverflow);
+    };
+  }, [item]);
+
   const handleChatClick = (e) => {
     e.stopPropagation();
     onChatClick?.(item);
+  };
+
+  const handleRepost = (e) => {
+    e.stopPropagation();
+    navigate(`/auctions/register?repost=${item?.id}`);
   };
 
   return (
@@ -52,13 +95,7 @@ export default function MyPageAuctionCard({ item, onChatClick }) {
           <div className={styles.empty} />
         )}
 
-        {/* ✅ 오늘 마감 배지만 노출 */}
-        {item?.isEndingTodayOpen && <span className={styles.badge}>오늘 마감 경매</span>}
-
-        {/* 낙찰 배지 */}
-        {item?.isClosed && <span className={styles.closedBadge}>낙찰</span>}
-
-        {/* 유찰 배지 */}
+        {/* 유찰 배지만 표시 */}
         {item?.isFailedBid && <span className={styles.failedBadge}>유찰</span>}
 
         {/* 슬라이더 컨트롤 */}
@@ -85,16 +122,30 @@ export default function MyPageAuctionCard({ item, onChatClick }) {
       </div>
 
       {/* 본문 */}
-      <div className={styles.body}>
-        <h3 className={styles.title} title={item?.title}>{item?.title}</h3>
+      <div ref={bodyRef} className={styles.body}>
+        <div className={styles.titleWrapper}>
+          <h3
+            ref={titleRef}
+            className={`${styles.title} ${titleOverflow ? styles.titleOverflow : ''}`}
+            title={item?.title}
+          >
+            {item?.title}
+          </h3>
+        </div>
         <div className={styles.views}>{item?.views?.toLocaleString()} views</div>
 
-        <div className={styles.meta}>
-          <div className={styles.metaItem}>
+        <div ref={metaRef} className={styles.meta}>
+          <div
+            ref={meta1Ref}
+            className={`${styles.metaItem} ${meta1Overflow ? styles.metaOverflow : ''}`}
+          >
             <Icon icon="solar:chat-round-dots-linear" />
             <span>현재 참여자 수(Bidders): {item?.bidders?.toLocaleString()}명</span>
           </div>
-          <div className={styles.metaItem}>
+          <div
+            ref={meta2Ref}
+            className={`${styles.metaItem} ${meta2Overflow ? styles.metaOverflow : ''}`}
+          >
             <Icon icon="solar:clock-circle-linear" />
             <span>남은 시간 (Time Left): {timeLeft}</span>
           </div>
@@ -113,6 +164,12 @@ export default function MyPageAuctionCard({ item, onChatClick }) {
             {item?.isClosed && onChatClick && (
               <button className={styles.chatButtonSmall} onClick={handleChatClick} type="button" aria-label="채팅하기">
                 <Icon icon="solar:chat-round-dots-linear" />
+              </button>
+            )}
+            {item?.isFailedBid && (
+              <button className={styles.repostButton} onClick={handleRepost} type="button" aria-label="재등록하기">
+                <Icon icon="solar:restart-linear" />
+                <span>재등록</span>
               </button>
             )}
           </div>

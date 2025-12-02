@@ -241,6 +241,90 @@
   white-space: nowrap;
 }
 
+/* 로딩 상태 */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  gap: 16px;
+}
+
+.loadingContainer p {
+  font-size: 15px;
+  color: #6B7280;
+  margin: 0;
+}
+
+/* 빈 상태 */
+.emptyContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  gap: 16px;
+}
+
+.emptyContainer svg {
+  color: #D1D5DB;
+}
+
+.emptyContainer p {
+  font-size: 15px;
+  color: #9CA3AF;
+  margin: 0;
+}
+
+/* 페이징 */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  margin-top: 8px;
+}
+
+.pageButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid #E5E7EB;
+  background: #ffffff;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pageButton:hover:not(:disabled) {
+  background: #F9FAFB;
+  border-color: #D1D5DB;
+}
+
+.pageButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pageButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+.pageInfo {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6B7280;
+  min-width: 60px;
+  text-align: center;
+}
+
 /* 반응형 */
 @media (max-width: 640px) {
   .drawer {
@@ -274,5 +358,19 @@
 
   .reviewComment {
     font-size: 14px;
+  }
+
+  .loadingContainer,
+  .emptyContainer {
+    padding: 60px 20px;
+  }
+
+  .pagination {
+    padding: 20px;
+  }
+
+  .pageButton {
+    padding: 6px 12px;
+    font-size: 13px;
   }
 }

@@ -1,10 +1,10 @@
 import styles from "../../../styles/MyPage/SalesHistory/SalesHistoryCard.module.css";
 import { Icon } from "@iconify/react";
 
-export default function SalesHistoryCard({ item, onClick, onChatClick }) {
+export default function SalesHistoryCard({ item, onClick, onChatClick, onReviewClick }) {
   return (
-    <article className={styles.card} onClick={onClick}>
-      <div className={styles.thumbWrap}>
+    <article className={styles.card}>
+      <div className={styles.thumbWrap} onClick={onClick}>
         {item?.image ? (
           <img className={styles.thumb} src={item.image} alt={item.title || "image"} />
         ) : (
@@ -12,7 +12,7 @@ export default function SalesHistoryCard({ item, onClick, onChatClick }) {
         )}
       </div>
       <div className={styles.body}>
-        <h4 className={styles.title}>{item?.title}</h4>
+        <h4 className={styles.title} onClick={onClick}>{item?.title}</h4>
         <div className={styles.metaRow}>
           <span className={styles.label}>거래방식</span>
           <span className={styles.value}>{item?.tradeType || "직거래"}</span>
@@ -22,9 +22,17 @@ export default function SalesHistoryCard({ item, onClick, onChatClick }) {
           <strong className={styles.price}>₩ {item?.finalPrice?.toLocaleString?.() || "-"}</strong>
         </div>
         <div className={styles.footer}>
-          <div />
-          <button className={styles.detailBtn} type="button" onClick={(e) => { e.stopPropagation(); onClick?.(item); }} aria-label="상품 상세보기">
-            <Icon icon="solar:login-3-linear" />
+          <button
+            className={styles.reviewBtn}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onReviewClick?.(item);
+            }}
+            aria-label="후기 작성"
+          >
+            <Icon icon="solar:pen-new-square-linear" />
+            후기 작성
           </button>
         </div>
       </div>
