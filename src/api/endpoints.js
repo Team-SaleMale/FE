@@ -69,9 +69,14 @@ const endpoints = {
   CHAT: {
     CREATE_ROOM: (itemId) => `/items/${itemId}/chat`, // 채팅방 생성
     LIST: "/chats", // 채팅방 목록 조회
-    ENTER: (chatId) => `/chats/${chatId}/enter", // 채팅방 입장
+    ENTER: (chatId) => `/chats/${chatId}/enter`, // 채팅방 입장
     EXIT: (chatId) => `/chats/${chatId}/exit`, // 채팅방 나가기
     SEND_MESSAGE: "/messages", // 메시지 보내기
+  },
+  EXPERIMENTAL: {
+    PRODUCT_ANALYSIS: "/experimental/analysis/product", // 상품 분석
+    BRAND_ANALYSIS:   "/experimental/analysis/brand",   // 브랜드 분석
+    VIRTUAL_TRYON: "/experimental/virtual-tryon",
   },
 };
 
