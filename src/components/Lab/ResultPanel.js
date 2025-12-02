@@ -11,6 +11,7 @@ function ResultPanel({
   hasMockResult = false,
   resultUrl,
   maskedUrl,
+  originalBeforeUrl,   // 🔹 업로드한 전신 원본 이미지 URL
   loading = false,
   error = "",
 }) {
@@ -52,8 +53,18 @@ function ResultPanel({
   };
 
   // 🔹 비교 탭에서 사용할 이미지
-  const compareBeforeImg = hasRealResult ? maskedUrl || LabWearBefore1 : hasMockResult ? LabWearBefore1 : null;
-  const compareAfterImg = hasRealResult ? resultUrl : hasMockResult ? LabWearResult : null;
+  //    → Before: 가능하면 항상 “업로드한 전신 원본” 사용
+  const compareBeforeImg = originalBeforeUrl
+    ? originalBeforeUrl
+    : hasMockResult
+    ? LabWearBefore1
+    : null;
+
+  const compareAfterImg = hasRealResult
+    ? resultUrl
+    : hasMockResult
+    ? LabWearResult
+    : null;
 
   return (
     <div className="lab-result-panel">
@@ -91,7 +102,7 @@ function ResultPanel({
             <div className="lab-result-image lab-result-image--compare">
               {compareBeforeImg && compareAfterImg ? (
                 <ImageCompareSlider
-                  beforeLabel="원본 / 마스크"
+                  beforeLabel="원본 이미지"
                   afterLabel={isWear ? "착용 이미지" : isDecor ? "배치 이미지" : "After"}
                   beforeImage={compareBeforeImg}
                   afterImage={compareAfterImg}
@@ -110,10 +121,11 @@ function ResultPanel({
             {/* BEFORE 뷰 */}
             {view === "before" && (
               <div className="lab-result-image lab-result-image--before">
-                {hasRealResult && maskedUrl ? (
+                {originalBeforeUrl ? (
+                  // 🔹 항상 업로드한 전신 원본을 최우선으로 사용
                   <img
-                    src={maskedUrl}
-                    alt="마스크/원본 이미지"
+                    src={originalBeforeUrl}
+                    alt="업로드한 전신 원본 이미지"
                     className="lab-result-image-inner"
                   />
                 ) : hasMockResult ? (
@@ -157,13 +169,10 @@ function ResultPanel({
       </div>
 
       <div className="lab-result-footer">
-        {error && (
-          <p className="lab-result-error">
-            {error}
-          </p>
-        )}
+        {error && <p className="lab-result-error">{error}</p>}
         <p className="lab-result-note">
-          ※ 본 기능은 실험실(BETA) 단계의 AI 가상 피팅 결과입니다. 실제 착용감, 핏, 색감은 이미지와 다를 수 있습니다.
+          ※ 본 기능은 실험실(BETA) 단계의 AI 가상 피팅 결과입니다. 실제 착용감, 핏, 색감은
+          이미지와 다를 수 있습니다.
         </p>
       </div>
     </div>
@@ -171,4 +180,3 @@ function ResultPanel({
 }
 
 export default ResultPanel;
-                                                          

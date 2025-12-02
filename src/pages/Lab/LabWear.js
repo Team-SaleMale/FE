@@ -12,19 +12,30 @@ function LabWear() {
   // 🔹 결과 유무 (기존 mock용)
   const [hasMockResult, setHasMockResult] = useState(false);
 
-  // 🔹 NEW: 실제 API 결과 상태
+  // 🔹 실제 API 결과 상태
   const [resultUrl, setResultUrl] = useState("");
   const [maskedUrl, setMaskedUrl] = useState("");
+
+  // 🔹 Before에 보여줄 “업로드한 전신 사진” 원본 URL
+  const [beforeImageUrl, setBeforeImageUrl] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // "실험해보기" 버튼 눌렀을 때 호출할 함수
-  // UploadPanel에서 onRunExperiment({ backgroundFile, garmentFile }) 형태로 호출
+  // UploadPanel에서 호출
   const handleRunExperiment = async ({ backgroundFile, garmentFile }) => {
     if (!backgroundFile || !garmentFile) {
       setError("사람(배경) 이미지와 옷 이미지를 모두 업로드해주세요.");
       return;
     }
+
+    // 🔹 업로드한 전신 사진을 Before에 그대로 보여주기 위해 URL 생성
+    const beforeUrl = URL.createObjectURL(backgroundFile);
+    // 이전 URL 있었으면 정리
+    setBeforeImageUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return beforeUrl;
+    });
 
     setLoading(true);
     setError("");
@@ -49,10 +60,11 @@ function LabWear() {
       setMaskedUrl(nextMaskedUrl);
       setHasMockResult(true);
 
-      // LabResult에서 최근 결과 다시 보기용
+      // LabResult에서 최근 결과 다시 보기용 (원본도 같이 저장)
       const persisted = {
         resultUrl: nextResultUrl,
         maskedUrl: nextMaskedUrl,
+        beforeUrl: beforeUrl,
         createdAt: Date.now(),
       };
       window.localStorage.setItem(
@@ -96,6 +108,7 @@ function LabWear() {
             hasMockResult={hasMockResult}
             resultUrl={resultUrl}
             maskedUrl={maskedUrl}
+            originalBeforeUrl={beforeImageUrl}   // 🔹 여기!
             loading={loading}
             error={error}
           />
