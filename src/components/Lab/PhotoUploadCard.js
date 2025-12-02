@@ -1,7 +1,12 @@
 // src/components/Lab/PhotoUploadCard.jsx
 import React, { useRef, useState } from "react";
 
-function PhotoUploadCard({ label, description, multiple = false }) {
+function PhotoUploadCard({
+  label,
+  description,
+  multiple = false,
+  onFileChange, // 🔹 상위로 파일을 올려보낼 콜백 추가
+}) {
   const inputRef = useRef(null);
   const [previews, setPreviews] = useState([]);
 
@@ -18,6 +23,15 @@ function PhotoUploadCard({ label, description, multiple = false }) {
       url: URL.createObjectURL(file),
     }));
     setPreviews(nextPreviews);
+
+    // 🔹 선택된 파일을 상위 컴포넌트로 전달
+    if (onFileChange) {
+      if (multiple) {
+        onFileChange(files); // 여러 개 허용 카드면 배열 통째로
+      } else {
+        onFileChange(files[0]); // 한 장만 쓰는 카드면 첫 번째 파일만
+      }
+    }
   };
 
   return (

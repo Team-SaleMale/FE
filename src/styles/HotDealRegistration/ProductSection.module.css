@@ -1,12 +1,238 @@
-/* src/styles/HotDealRegistration/ProductSection.module.css */
-.card{border:1px solid #e5e7eb;border-radius:12px;padding:14px;background:#fff;}
-.h2{margin:0 0 10px 0;font-size:16px;font-weight:800;}
-.label{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;font-size:14px;}
-.input{height:38px;border:1px solid #e5e7eb;border-radius:10px;padding:0 10px;}
-.note{color:#6b7280;font-size:12px;margin-left:6px;}
+.card{
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  padding:14px;
+  background:#fff;
+}
+.h2{
+  margin:0 0 10px 0;
+  font-size:16px;
+  font-weight:800;
+}
+.label{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-bottom:10px;
+  font-size:14px;
+}
+.input{
+  height:38px;
+  border:1px solid #e5e7eb;
+  border-radius:10px;
+  padding:0 10px;
+  font-size:14px;
+}
+
+/* ===== HotDeal 시작가용 가격 입력 + 버튼들 ===== */
+.priceRow{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.priceInput{
+  flex:1;
+}
+
+/* 가격 인풋 포커스 시 파란 아웃라인 제거 + 검은 테두리 */
+.priceInput:focus{
+  outline:none;
+  border-color:#000;
+}
+
+/* 가격 추천 버튼 */
+.recommendBtn{
+  flex-shrink:0;
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid #000;
+  background:#fff;
+  font-size:13px;
+  font-weight:600;
+  color:#000;
+  cursor:pointer;
+  white-space:nowrap;
+  line-height:1;
+  transition:background-color .15s ease, box-shadow .15s ease,
+    transform .06s ease, border-color .15s ease;
+}
+.recommendBtn:hover{
+  background:#f3f4f6;
+  box-shadow:0 2px 10px rgba(15,23,42,.08);
+}
+.recommendBtn:active{
+  transform:translateY(1px);
+}
+
+/* 이전 금액 버튼 (경매와 동일 스타일) */
+.previousBtn{
+  flex-shrink:0;
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid #000;
+  background:#fff;
+  font-size:13px;
+  font-weight:600;
+  color:#000;
+  cursor:pointer;
+  white-space:nowrap;
+  line-height:1;
+  transition:background-color .15s ease, box-shadow .15s ease,
+    transform .06s ease, border-color .15s ease, color .15s ease;
+}
+.previousBtn:hover:not(:disabled){
+  background:#f3f4f6;
+  box-shadow:0 2px 10px rgba(15,23,42,.08);
+}
+.previousBtn:active:not(:disabled){
+  transform:translateY(1px);
+}
+.previousBtn:disabled{
+  opacity:.4;
+  cursor:default;
+  box-shadow:none;
+  background:#f9fafb;
+  border-color:#e5e7eb;
+  color:#9ca3af;
+}
+
+/* 빠른 가격 버튼 줄 */
+.quickButtonsRow{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:4px 0 10px;
+}
+.quickBtn{
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid #e5e7eb;
+  background:#fff;
+  font-size:12px;
+  font-weight:500;
+  color:#374151;
+  cursor:pointer;
+  line-height:1;
+  transition:background-color .15s ease, border-color .15s ease,
+    transform .06s ease, box-shadow .15s ease;
+}
+.quickBtn:hover{
+  background:#f3f5fa;
+  border-color:#000;
+  box-shadow:0 1px 3px rgba(15,23,42,.08);
+}
+.quickBtn:active{
+  transform:translateY(1px);
+}
+
+.labelRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  font-size:13px;
+}
+.note{
+  color:#6b7280;
+  font-size:12px;
+}
+
+/* 파일 인풋 영역 */
+.fileInput{
+  margin-top:4px;
+  border-radius:10px;
+  border:1px dashed #cbd5f5;
+  padding:7px 10px;
+  background:#f9fafb;
+  font-size:13px;
+}
+.fileInput::file-selector-button{
+  margin-right:10px;
+  padding:6px 10px;
+  border:none;
+  border-radius:8px;
+  background:#111827;
+  color:#fff;
+  font-size:12px;
+  font-weight:600;
+  cursor:pointer;
+}
+.fileInput:hover::file-selector-button{
+  background:#020617;
+}
+
+/* 이미지 미리보기 그리드 (썸네일 조금 더 크게) */
+.previewGrid{
+  margin:6px 0 14px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(96px,1fr));
+  gap:10px;
+}
+.previewItem{
+  position:relative;
+  border-radius:12px;
+  overflow:hidden;
+  background:#f3f4f6;
+  border:1px solid #e5e7eb;
+}
+.previewImg{
+  width:100%;
+  height:96px;
+  object-fit:cover;
+  display:block;
+}
+.previewTag{
+  position:absolute;
+  left:6px;
+  top:6px;
+  padding:2px 6px;
+  border-radius:999px;
+  background:rgba(15,23,42,.9);
+  color:#fff;
+  font-size:10px;
+  font-weight:600;
+}
+
+/* X 삭제 버튼 */
+.previewRemove{
+  position:absolute;
+  right:6px;
+  top:6px;
+  width:22px;
+  height:22px;
+  border-radius:999px;
+  border:none;
+  background:rgba(0,0,0,.6);
+  color:#fff;
+  font-size:14px;
+  line-height:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+.previewRemove:hover{
+  background:rgba(0,0,0,.8);
+}
+
 /* 판매자 설명: 고정 크기(스크롤), 리사이즈 금지 */
 .textarea{
-  border:1px solid #e5e7eb;border-radius:10px;padding:10px;
-  height:160px; min-height:160px; max-height:160px;
-  resize:none; overflow:auto;
+  border:1px solid #e5e7eb;
+  border-radius:10px;
+  padding:10px;
+  height:160px;
+  min-height:160px;
+  max-height:160px;
+  resize:none;
+  overflow:auto;
+}
+
+/* 반응형: 좁은 화면에서 가격 영역 세로 정렬 */
+@media (max-width: 640px){
+  .priceRow{
+    flex-direction:column;
+    align-items:stretch;
+  }
 }

@@ -1,3 +1,4 @@
+// src/pages/AuctionProductDetails/AuctionMetrics.js
 import { useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/AuctionProductDetails/AuctionMetrics.module.css";
@@ -9,7 +10,12 @@ import styles from "../../styles/AuctionProductDetails/AuctionMetrics.module.css
  */
 export default function AuctionMetrics({ metrics, loading = false, className = "" }) {
   const [etcOpen, setEtcOpen] = useState(false);
-  const fmt = (n) => (typeof n === "number" ? n.toLocaleString() : "0");
+
+  // ✅ 숫자/문자열 모두 안전하게 처리 (null/undefined → 0)
+  const fmt = (n) => {
+    const num = Number(n);
+    return Number.isFinite(num) ? num.toLocaleString("ko-KR") : "0";
+  };
 
   /** 거래방식 배열 + 기타 상세 */
   const { methods, etcDetail } = useMemo(() => {
@@ -56,7 +62,9 @@ export default function AuctionMetrics({ metrics, loading = false, className = "
             </span>
             <span className={styles.label}>조회</span>
           </div>
-          <b className={styles.value}>{loading ? <i className={styles.skel} /> : fmt(metrics?.views)}</b>
+          <b className={styles.value}>
+            {loading ? <i className={styles.skel} /> : fmt(metrics?.views)}
+          </b>
         </li>
 
         {/* 관심 */}
@@ -67,7 +75,9 @@ export default function AuctionMetrics({ metrics, loading = false, className = "
             </span>
             <span className={styles.label}>관심</span>
           </div>
-          <b className={styles.value}>{loading ? <i className={styles.skel} /> : fmt(metrics?.watchers)}</b>
+          <b className={styles.value}>
+            {loading ? <i className={styles.skel} /> : fmt(metrics?.watchers)}
+          </b>
         </li>
 
         {/* 입찰 */}
@@ -78,7 +88,9 @@ export default function AuctionMetrics({ metrics, loading = false, className = "
             </span>
             <span className={styles.label}>입찰</span>
           </div>
-          <b className={styles.value}>{loading ? <i className={styles.skel} /> : fmt(metrics?.bids)}</b>
+          <b className={styles.value}>
+            {loading ? <i className={styles.skel} /> : fmt(metrics?.bids)}
+          </b>
         </li>
 
         {/* 거래방식 — 한 줄 텍스트 + 기타 클릭 토글 카드 */}
@@ -91,7 +103,9 @@ export default function AuctionMetrics({ metrics, loading = false, className = "
           </div>
 
           {loading ? (
-            <b className={styles.value}><i className={styles.skel} /></b>
+            <b className={styles.value}>
+              <i className={styles.skel} />
+            </b>
           ) : methods.length ? (
             <>
               {/* 한 줄 표시(ellipsis) */}

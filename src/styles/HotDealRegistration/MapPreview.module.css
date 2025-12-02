@@ -17,32 +17,92 @@
   max-width: 320px;
   font-family: inherit;
 }
+
 .cardHead{
-  display:flex; align-items:center; justify-content:space-between;
-  background:#e74b4b; color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:#e74b4b;
+  color:#fff;
   padding:10px 14px;
   border-radius:12px 12px 0 0;
-  font-weight:800; letter-spacing:.1px;
+  font-weight:800;
+  letter-spacing:.1px;
 }
-.cardTitle{ font-size:14px; line-height:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; }
-.cardChev{ font-size:18px; opacity:.95; }
+
+.cardTitle{
+  font-size:14px;
+  line-height:1;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:260px;
+}
+
+.cardChev{
+  font-size:18px;
+  opacity:.95;
+}
+
 .cardBody{
-  display:flex; gap:12px; align-items:center;
-  background:#fff; color:#111827;
+  display:flex;
+  gap:12px;
+  align-items:center;
+  background:#fff;
+  color:#111827;
   padding:12px;
-  border:1px solid #e5e7eb; border-top:none;
+  border:1px solid #e5e7eb;
+  border-top:none;
   border-radius:0 0 12px 12px;
 }
+
 .cardThumb{
-  flex:0 0 72px; height:54px; border-radius:8px;
-  background-size:cover; background-position:center;
+  flex:0 0 72px;
+  height:54px;
+  border-radius:8px;
+  background-size:cover;
+  background-position:center;
   border:1px solid rgba(0,0,0,.08);
 }
-.cardText{ display:flex; flex-direction:column; gap:6px; }
-.cardLine{ font-size:13px; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:210px; }
-.cardMeta{ font-size:12.5px; color:#374151; }
+
+.cardText{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.cardLine{
+  font-size:13px;
+  line-height:1.3;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:210px;
+}
+
+.cardMeta{
+  font-size:12.5px;
+  color:#374151;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+/* "시작가" 같은 라벨용 */
+.label{
+  opacity:.72;
+}
+
+/* 가격 사이 구분점 필요하면 사용 */
+.sep{
+  margin:0 4px;
+  opacity:.6;
+}
+
 .cardPin{
-  width:0; height:0; margin:0 auto;
+  width:0;
+  height:0;
+  margin:0 auto;
   border-left:8px solid transparent;
   border-right:8px solid transparent;
   border-top:10px solid #fff;

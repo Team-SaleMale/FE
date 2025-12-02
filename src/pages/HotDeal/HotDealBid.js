@@ -95,7 +95,7 @@ export default function HotDealBid({
       window.dispatchEvent(
         new CustomEvent("valuebid:bid-submitted", {
           detail: {
-            itemId: item?.id,
+            itemId: item?.itemId ?? item?.id,
             price: n,
             bidder: "나",
             ts: Date.now(),
@@ -105,7 +105,13 @@ export default function HotDealBid({
 
       onClose?.();
     } catch (err) {
-      setError(err?.message || "입찰 처리 중 오류가 발생했습니다.");
+      // ✅ 400 에러일 때는 "본인의 가게에는 입찰 불가합니다" 노출
+      const status = err?.response?.status ?? err?.status;
+      if (status === 400) {
+        setError("본인의 가게에는 입찰 불가합니다");
+      } else {
+        setError(err?.message || "입찰 처리 중 오류가 발생했습니다.");
+      }
     } finally {
       setBusy(false);
     }
