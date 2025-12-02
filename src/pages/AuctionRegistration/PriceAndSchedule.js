@@ -1,4 +1,3 @@
-// src/pages/AuctionRegistration/PriceAndSchedule.js
 import React, { useEffect, useMemo, useState } from "react";
 import styles from "../../styles/AuctionRegistration/PriceAndSchedule.module.css";
 
@@ -14,41 +13,135 @@ import dayjs from "dayjs";
 import "dayjs/locale/ko";
 dayjs.locale("ko");
 
+// 빠른 가격 선택 옵션 (value: 원 단위, label: 버튼 텍스트)
+const QUICK_PRICE_OPTIONS = [
+  { value: 0, label: "0원" },
+  { value: 100, label: "100원" },
+  { value: 500, label: "500원" },
+  { value: 1000, label: "1천원" },
+  { value: 5000, label: "5천원" },
+  { value: 10000, label: "1만원" },
+  { value: 50000, label: "5만원" },
+  { value: 100000, label: "10만원" },
+  { value: 500000, label: "50만원" },
+  { value: 1000000, label: "100만원" },
+  { value: 5000000, label: "500만원" },
+];
+
+// 숫자만 추출 + 12자리 제한 + 비어있으면 "0"
+const normalizePrice = (value) => {
+  const digits = String(value ?? "").replace(/\D/g, "");
+  if (!digits) return "0";
+  return digits.slice(0, 12);
+};
+
 export default function PriceAndSchedule({
   startPrice = "",
   startDate = "",
   endDate = "",
   onChange,
 }) {
-  /* ---------------- 가격 ---------------- */
+  /* ---------------- 가격 상태 ---------------- */
   const [priceInput, setPriceInput] = useState(startPrice || "");
-  useEffect(() => setPriceInput(startPrice || ""), [startPrice]);
+  const [priceHistory, setPriceHistory] = useState([]); // ["0", "1000", "51000", ...]
 
+  // 부모에서 startPrice가 바뀌면 표시 값만 맞춰줌 (히스토리는 유지)
+  useEffect(() => {
+    setPriceInput(startPrice || "");
+  }, [startPrice]);
+
+  // 화면에 표시될 콤마 포함 금액
   const displayPrice = useMemo(() => {
-    if (!priceInput) return "";
+    if (priceInput === "" || priceInput === null || priceInput === undefined)
+      return "";
     const num = String(priceInput).replace(/\D/g, "");
+    if (!num) return "";
     return num.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }, [priceInput]);
 
+  // 부모 상태 반영 공통 함수
+  const syncToParent = (numericString) => {
+    onChange?.("startPrice", numericString);
+  };
+
+  // 버튼(추천/빠른 선택)으로 가격 변경할 때: 히스토리에 현재값을 push
+  const applyButtonPrice = (nextRaw) => {
+    const currentNorm = normalizePrice(priceInput);
+    const nextNorm = normalizePrice(nextRaw);
+
+    if (currentNorm !== nextNorm) {
+      // 현재 값을 히스토리에 저장 (없으면 0으로)
+      setPriceHistory((prev) => [...prev, currentNorm || "0"]);
+    }
+
+    setPriceInput(nextNorm);
+    syncToParent(nextNorm);
+  };
+
+  // 직접 입력(키보드): 히스토리는 쌓지 않음 (이전 금액은 버튼 기준으로만 동작)
   const handlePrice = (e) => {
     const onlyNum = e.target.value.replace(/\D/g, "").slice(0, 12);
     setPriceInput(onlyNum);
-    onChange?.("startPrice", onlyNum);
+    syncToParent(onlyNum);
   };
 
+  // 가격 추천 버튼: 랜덤 추천가 (1천 ~ 100만, 1천 단위)
+  const handleRecommendPrice = () => {
+    const min = 1000;
+    const max = 1000000;
+    const step = 1000;
+
+    const steps = Math.floor((max - min) / step) + 1;
+    const randomStepIndex = Math.floor(Math.random() * steps);
+    const value = min + randomStepIndex * step;
+
+    applyButtonPrice(String(value));
+  };
+
+  // 빠른 가격 버튼
+  // - value === 0  → 0원으로 세팅
+  // - 그 외        → 현재 값에 value 더하기
+  const handleQuickPrice = (value) => {
+    const currentNum = Number(normalizePrice(priceInput));
+
+    if (value === 0) {
+      applyButtonPrice("0");
+      return;
+    }
+
+    const next = currentNum + value;
+    const clamped = Math.min(next, 999999999999); // 최대 12자리
+    applyButtonPrice(String(clamped));
+  };
+
+  // 이전 금액 버튼: 히스토리 스택에서 한 단계씩 되돌리기
+  // 예) 0 → 1천 → 5만1천 → 이전 → 1천 → 이전 → 0
+  const handlePrevPrice = () => {
+    setPriceHistory((history) => {
+      if (!history.length) return history;
+      const prev = history[history.length - 1];
+      const newHistory = history.slice(0, -1);
+
+      setPriceInput(prev);
+      syncToParent(prev);
+
+      return newHistory;
+    });
+  };
+
+  const hasPrev = priceHistory.length > 0;
+
   /* ---------------- 시작/종료 일시 ---------------- */
-  // 시작: 오늘+현재시간 고정(수정 불가). props에 값이 있으면 그 값을 우선 사용.
   const now = dayjs();
   const initialStart = startDate ? dayjs(startDate) : now;
 
-  const [start, setStart] = useState(initialStart);               // 표시용
+  const [start, setStart] = useState(initialStart); // 표시용
   const [end, setEnd] = useState(endDate ? dayjs(endDate) : null);
 
-  // 시작/종료 시간(표시/선택)
-  const [startTime, setStartTime] = useState(initialStart);       // 오늘 현재 시각
-  const [endTime, setEndTime] = useState(null);                   // 기본 null → 선택 유도
+  const [startTime, setStartTime] = useState(initialStart); // 오늘 현재 시각
+  const [endTime, setEndTime] = useState(null); // 기본 null → 선택 유도
 
-  // 마운트 시 부모 상태에 시작 일시(등록 시각) 기록
+  // 마운트 시 시작 일시(등록 시각) 기록
   useEffect(() => {
     const s = startDate ? dayjs(startDate) : dayjs();
     setStart(s);
@@ -74,7 +167,7 @@ export default function PriceAndSchedule({
       .toISOString();
   };
 
-  // 종료 날짜 선택 (시작은 고정)
+  // 종료 날짜 선택
   const handlePickEnd = (value) => {
     setEnd(value);
     onChange?.(
@@ -92,7 +185,7 @@ export default function PriceAndSchedule({
     );
   };
 
-  // 비활성 규칙: 종료일은 오늘 이전 비활성
+  // 종료일은 오늘 이전 비활성
   const disablePastEnd = (date) => date.isBefore(dayjs().startOf("day"));
 
   return (
@@ -101,7 +194,7 @@ export default function PriceAndSchedule({
         초기 가격 설정 <span className={styles.required}>*</span>
       </h2>
 
-      {/* 초기 가격 */}
+      {/* 초기 가격 인풋 + 가격 추천 + 이전 금액 */}
       <div className={styles.priceRow}>
         <OutlinedInput
           className={styles.priceInput}
@@ -109,8 +202,39 @@ export default function PriceAndSchedule({
           onChange={handlePrice}
           placeholder="초기가격(원)"
           inputProps={{ inputMode: "numeric" }}
-          startAdornment={<InputAdornment position="start">₩</InputAdornment>}
+          startAdornment={
+            <InputAdornment position="start">₩</InputAdornment>
+          }
         />
+        <button
+          type="button"
+          className={styles.recommendBtn}
+          onClick={handleRecommendPrice}
+        >
+          가격 추천
+        </button>
+        <button
+          type="button"
+          className={styles.previousBtn}
+          onClick={handlePrevPrice}
+          disabled={!hasPrev}
+        >
+          이전 금액
+        </button>
+      </div>
+
+      {/* 빠른 가격 선택 버튼들 */}
+      <div className={styles.quickButtonsRow}>
+        {QUICK_PRICE_OPTIONS.map((opt) => (
+          <button
+            key={opt.value + opt.label}
+            type="button"
+            className={styles.quickBtn}
+            onClick={() => handleQuickPrice(opt.value)}
+          >
+            {opt.label}
+          </button>
+        ))}
       </div>
 
       <h2 className={styles.sectionTitle}>
@@ -130,9 +254,11 @@ export default function PriceAndSchedule({
           label="종료 날짜"
           value={
             end
-              ? (endTime
-                  ? dayjs(mergeToISO(end, endTime)).format("YYYY.MM.DD HH:mm")
-                  : end.format("YYYY.MM.DD"))
+              ? endTime
+                ? dayjs(mergeToISO(end, endTime)).format(
+                    "YYYY.MM.DD HH:mm"
+                  )
+                : end.format("YYYY.MM.DD")
               : ""
           }
           inputProps={{ readOnly: true }}
@@ -140,16 +266,23 @@ export default function PriceAndSchedule({
         />
       </div>
 
-      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ko">
+      <LocalizationProvider
+        dateAdapter={AdapterDayjs}
+        adapterLocale="ko"
+      >
         <div className={styles.calendars}>
-          {/* 시작 달력: 오늘 날짜 고정(수정 불가) */}
+          {/* 시작 달력: 오늘 고정 */}
           <div className={styles.calendarCol}>
             <div className={styles.monthLabel}>
-              {start ? start.format("MMMM YYYY") : dayjs().format("MMMM YYYY")}
+              {start
+                ? start.format("MMMM YYYY")
+                : dayjs().format("MMMM YYYY")}
             </div>
             <DateCalendar
               value={start}
-              onChange={() => { /* 시작일은 수정 불가 */ }}
+              onChange={() => {
+                /* 시작일 수정 불가 */
+              }}
               sx={calendarSX}
             />
             <div className={styles.timeWrap}>
@@ -178,12 +311,14 @@ export default function PriceAndSchedule({
             </div>
           </div>
 
-          {/* 종료 달력/시간: 사용자 선택 가능 */}
+          {/* 종료 달력 / 시간 */}
           <div className={styles.calendarCol}>
             <div className={styles.monthLabel}>
               {end
                 ? end.format("MMMM YYYY")
-                : (start || dayjs().add(1, "month")).format("MMMM YYYY")}
+                : (start || dayjs().add(1, "month")).format(
+                    "MMMM YYYY"
+                  )}
             </div>
             <DateCalendar
               value={end}
@@ -212,7 +347,8 @@ export default function PriceAndSchedule({
                 />
               </div>
               <div className={styles.timeHint}>
-                * 종료일을 먼저 선택한 뒤 시간을 지정하세요. <br />지정하지 않으면 22:00로 저장됩니다.
+                * 종료일을 먼저 선택한 뒤 시간을 지정하세요. <br />
+                지정하지 않으면 22:00로 저장됩니다.
               </div>
             </div>
           </div>
@@ -225,11 +361,19 @@ export default function PriceAndSchedule({
 /** 캘린더 색상 커스텀 (달력 톤만 유지) */
 const calendarSX = {
   "& .MuiPickersDay-root.Mui-selected": { backgroundColor: "#0057FF" },
-  "& .MuiPickersDay-root.Mui-selected:hover": { backgroundColor: "#0057FF", opacity: 0.9 },
-  "& .MuiPickersDay-root:not(.Mui-selected):hover": { backgroundColor: "#E8EFFC" },
+  "& .MuiPickersDay-root.Mui-selected:hover": {
+    backgroundColor: "#0057FF",
+    opacity: 0.9,
+  },
+  "& .MuiPickersDay-root:not(.Mui-selected):hover": {
+    backgroundColor: "#E8EFFC",
+  },
   "& .MuiPickersDay-root.Mui-disabled": { color: "#8B94A4" },
   "& .MuiDayCalendar-weekDayLabel": { color: "#656F81" },
-  "& .MuiPickersCalendarHeader-label": { fontWeight: 600, color: "#121316" },
+  "& .MuiPickersCalendarHeader-label": {
+    fontWeight: 600,
+    color: "#121316",
+  },
   "& .MuiPickersArrowSwitcher-button": { color: "#454C58" },
 };
 
@@ -237,5 +381,4 @@ const calendarSX = {
 const timeSX = {
   "& .MuiOutlinedInput-root": { borderRadius: "12px" },
   "& .MuiFormLabel-root": { color: "#656F81" },
-  // 포커스 보더 색상을 지정하지 않음 (CSS에서 검은 테두리 처리)
 };

@@ -1,3 +1,4 @@
+// src/pages/AuctionProductDetails/SellerSummary.js
 import { useMemo } from "react";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/AuctionProductDetails/SellerSummary.module.css";
@@ -16,7 +17,19 @@ export default function SellerSummary({ seller }) {
       tradesCount: 27,
       auctionScore: 4.5,
     };
-    return { ...fallback, ...(seller || {}) };
+
+    const merged = { ...fallback, ...(seller || {}) };
+
+    // ✅ 거래 횟수를 랜덤 값으로 강제 설정 (예: 10 ~ 200 사이)
+    const minTrades = 10;
+    const maxTrades = 200;
+    const randomTrades =
+      Math.floor(Math.random() * (maxTrades - minTrades + 1)) + minTrades;
+
+    return {
+      ...merged,
+      tradesCount: randomTrades,
+    };
   }, [seller]);
 
   // ⭐ 별 계산: 0.5 단위 고정

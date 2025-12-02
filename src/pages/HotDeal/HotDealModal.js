@@ -2,20 +2,42 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "../../styles/HotDeal/HotDealModal.module.css";
 
-export default function HotDealModal({ open, item, onClose, onDetail }) {
-  // 1) 훅들: 최상단 고정 (조건문/루프/return 앞)
+export default function HotDealModal({
+  open,
+  item,
+  loading,
+  onClose,
+  onDetail,
+}) {
   const wrapRef = useRef(null);
   const trackRef = useRef(null);
 
   const [hover, setHover] = useState(false);
   const [idx, setIdx] = useState(0);
 
-  // item이 없어도 훅은 호출돼야 하므로, 빈 배열을 반환하도록 처리
+  // 이미지: string / object(imageUrl) / imageUrls 모두 대응
   const imgs = useMemo(() => {
-    const arr = Array.isArray(item?.images) ? item.images.filter(Boolean) : [];
-    if (arr.length) return arr;
-    return item?.coverImg ? [item.coverImg] : [];
+    if (!item) return [];
+
+    if (Array.isArray(item.images) && item.images.length) {
+      return item.images
+        .map((img) => (typeof img === "string" ? img : img.imageUrl))
+        .filter(Boolean);
+    }
+
+    if (Array.isArray(item.imageUrls) && item.imageUrls.length) {
+      return item.imageUrls.filter(Boolean);
+    }
+
+    if (item.coverImg) return [item.coverImg];
+
+    return [];
   }, [item]);
+
+  const go = (d) => {
+    if (imgs.length < 2) return;
+    setIdx((p) => (p + d + imgs.length) % imgs.length);
+  };
 
   // 키보드: ESC/좌우 화살표
   useEffect(() => {
@@ -34,17 +56,24 @@ export default function HotDealModal({ open, item, onClose, onDetail }) {
   useEffect(() => {
     const el = trackRef.current;
     if (!el) return;
-    el.scrollTo({ left: el.clientWidth * idx, behavior: "smooth" });
+    el.scrollTo({
+      left: el.clientWidth * idx,
+      behavior: "smooth",
+    });
   }, [idx]);
 
-  // 2) Guard는 훅 **뒤**에
+  // Guard
   if (!open || !item) return null;
 
   const fmt = (v) => (v ?? 0).toLocaleString();
-
-  const go = (d) => {
-    if (imgs.length < 2) return;
-    setIdx((p) => (p + d + imgs.length) % imgs.length);
+  const fmtTime = (t) => {
+    if (!t) return "-";
+    try {
+      const d = new Date(String(t));
+      return isNaN(d) ? "-" : d.toLocaleString();
+    } catch {
+      return "-";
+    }
   };
 
   const goDetail = () => {
@@ -52,19 +81,41 @@ export default function HotDealModal({ open, item, onClose, onDetail }) {
     onDetail?.(item);
   };
 
+  const startsAt = item.startsAt ?? item.createdAt ?? null;
+  const endsAt = item.endsAt ?? item.endTime ?? null;
+
+  const startPrice = item.startPrice ?? item.auctionInfo?.startPrice;
+  const currentPrice = item.currentPrice ?? item.auctionInfo?.currentPrice;
+  const bidCount =
+    item.bidCount ?? item.bidderCount ?? item.auctionInfo?.bidCount;
+
+  const storeName =
+    item.storeName ?? item.sellerNickname ?? item.sellerInfo?.nickname ?? "";
+
+  // ✅ 화면에 보여줄 상품 제목: name 우선, 없으면 title 사용
+  const itemTitle = item.name ?? item.title ?? "";
+
   return (
     <div className={styles.modal} role="dialog" aria-modal="true">
       <div className={styles.backdrop} onClick={onClose} />
       <div className={styles.card}>
-        <button className={styles.close} onClick={onClose} aria-label="닫기">✕</button>
+        <button
+          className={styles.close}
+          onClick={onClose}
+          aria-label="닫기"
+        >
+          ✕
+        </button>
 
         <div className={styles.header}>
-          <div className={styles.title}>{item.title}</div>
-          <div className={styles.store}>{item.storeName}</div>
+          <div className={styles.title}>{itemTitle}</div>
+          {storeName && (
+            <div className={styles.store}>{storeName}</div>
+          )}
         </div>
 
         <div className={styles.body}>
-          {/* 이미지 캐러셀 (AuctionCardVertical hover UX) */}
+          {/* 이미지 캐러셀 */}
           <div
             ref={wrapRef}
             className={styles.thumb}
@@ -73,7 +124,14 @@ export default function HotDealModal({ open, item, onClose, onDetail }) {
           >
             <div ref={trackRef} className={styles.carousel}>
               {imgs.length ? (
-                imgs.map((src, i) => <img key={i} className={styles.thumbImg} src={src} alt="" />)
+                imgs.map((src, i) => (
+                  <img
+                    key={i}
+                    className={styles.thumbImg}
+                    src={src}
+                    alt=""
+                  />
+                ))
               ) : (
                 <div className={styles.empty} />
               )}
@@ -82,21 +140,31 @@ export default function HotDealModal({ open, item, onClose, onDetail }) {
             {imgs.length > 1 && (
               <>
                 <button
-                  className={`${styles.nav} ${styles.prev} ${hover ? styles.show : ""}`}
+                  className={`${styles.nav} ${styles.prev} ${
+                    hover ? styles.show : ""
+                  }`}
                   onClick={() => go(-1)}
                   aria-label="이전"
-                >‹</button>
+                >
+                  ‹
+                </button>
                 <button
-                  className={`${styles.nav} ${styles.next} ${hover ? styles.show : ""}`}
+                  className={`${styles.nav} ${styles.next} ${
+                    hover ? styles.show : ""
+                  }`}
                   onClick={() => go(1)}
                   aria-label="다음"
-                >›</button>
+                >
+                  ›
+                </button>
 
                 <div className={styles.dots}>
                   {imgs.map((_, i) => (
                     <button
                       key={i}
-                      className={`${styles.dot} ${i === idx ? styles.activeDot : ""}`}
+                      className={`${styles.dot} ${
+                        i === idx ? styles.activeDot : ""
+                      }`}
                       aria-selected={i === idx}
                       onClick={() => setIdx(i)}
                     />
@@ -104,17 +172,43 @@ export default function HotDealModal({ open, item, onClose, onDetail }) {
                 </div>
               </>
             )}
+
+            {loading && (
+              <div className={styles.loading}>
+                상세 정보를 불러오는 중...
+              </div>
+            )}
           </div>
 
           {/* 정보 */}
           <div className={styles.meta}>
-            <div className={styles.row}><span>경매 시작</span><b>{item.startsAt}</b></div>
-            <div className={styles.row}><span>경매 마감</span><b>{item.endsAt}</b></div>
-            <div className={styles.row}><span>시작가</span><b>₩{fmt(item.startPrice)}</b></div>
-            <div className={styles.row}><span>현재가</span><b>₩{fmt(item.currentPrice)}</b></div>
-            <div className={styles.row}><span>입찰수</span><b>{fmt(item.bidCount)}</b></div>
+            <div className={styles.row}>
+              <span>경매 시작</span>
+              <b>{fmtTime(startsAt)}</b>
+            </div>
+            <div className={styles.row}>
+              <span>경매 마감</span>
+              <b>{fmtTime(endsAt)}</b>
+            </div>
+            <div className={styles.row}>
+              <span>시작가</span>
+              <b>₩{fmt(startPrice)}</b>
+            </div>
+            <div className={styles.row}>
+              <span>현재가</span>
+              <b>₩{fmt(currentPrice)}</b>
+            </div>
+            <div className={styles.row}>
+              <span>입찰수</span>
+              <b>{fmt(bidCount)}</b>
+            </div>
             <div className={styles.cta}>
-              <button className={styles.detail} onClick={goDetail}>상세보기</button>
+              <button
+                className={styles.detail}
+                onClick={goDetail}
+              >
+                상세보기
+              </button>
             </div>
           </div>
         </div>
