@@ -186,3 +186,46 @@
   border-radius: 10px;
   font-weight: 600;
 }
+
+/* ============================
+   로그인 하단 링크
+   "비밀번호 찾기 | 회원가입"
+============================ */
+.auth-bottom-links {
+  margin-top: 16px;
+
+  /* 가운데 |를 카드 가로 정중앙에 두기 위한 그리드 */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  text-align: center;
+
+  /* 글자들 사이 공백 문자 영향 제거 + 간격 직접 제어 */
+  column-gap: 0;
+  font-size: 0;
+}
+
+/* 좌우 텍스트 버튼 */
+.auth-link-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font-size: 14px;         /* font-size 0에서 다시 복원 */
+  color: var(--muted);
+  cursor: pointer;
+  line-height: 1;
+}
+
+/* 호버해도 색/밑줄 변화 없음 */
+.auth-link-btn:hover,
+.auth-link-btn:active {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+/* 가운데 | */
+.auth-divider {
+  font-size: 14px;         /* font-size 0에서 다시 복원 */
+  color: #d1d5db;
+}

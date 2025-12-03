@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import { requestProductAnalysis } from "../../api/experimental/service";
-import "../../styles/Lab/Lab.css"; // 이미 쓰고 있는 lab 스타일 있으면 그대로 사용
+import LabModeTabs from "../../components/Lab/LabModeTabs";
+import "../../styles/Lab/Lab.css";
 
 const LabProductAnalysis = () => {
   const [productName, setProductName] = useState("");
@@ -22,7 +23,6 @@ const LabProductAnalysis = () => {
       const response = await requestProductAnalysis(productName);
       console.log("상품 분석 응답:", response);
 
-      // response 모양이 어떻게 오든 다 커버
       const reportText =
         response?.data?.result?.report ??
         response?.data?.report ??
@@ -39,43 +39,67 @@ const LabProductAnalysis = () => {
     }
   };
 
-
   return (
     <div className="lab-page">
-      <header className="lab-header">
+      {/* 상단 탭 */}
+      <LabModeTabs active="product" />
+
+      {/* 헤더 */}
+      <header className="lab-header lab-header--compact">
         <div className="lab-title-wrap">
           <h1 className="lab-title">상품 분석</h1>
           <span className="lab-badge">EXPERIMENTAL</span>
         </div>
         <p className="lab-subtitle">
-          특정 상품명을 입력하면 예상 가치와 1~3년 추세를 텍스트로 제공합니다.
+          특정 상품명을 입력하면 예상 가치와 1~3년 추세를 AI가 텍스트로 분석해 드립니다.
         </p>
       </header>
 
-      <form className="lab-form" onSubmit={handleSubmit}>
-        <label className="lab-label">
-          상품 이름
-          <input
-            className="lab-input"
-            type="text"
-            placeholder="예: 나이키 덩크 로우 판다 270"
-            value={productName}
-            onChange={(e) => setProductName(e.target.value)}
-          />
-        </label>
-        <button className="lab-button" type="submit" disabled={loading}>
-          {loading ? "분석 중..." : "상품 분석하기"}
-        </button>
-      </form>
+      {/* 메인 카드 레이아웃 */}
+      <div className="lab-analysis-layout">
+        {/* 입력 카드 */}
+        <section className="lab-card lab-card--primary">
+            <form className="lab-form lab-form--horizontal" onSubmit={handleSubmit}>
+              <div className="lab-form-row">
+                <label className="lab-label">
+                  <span className="lab-label-text">상품 이름</span>
+                  <input
+                    className="lab-input"
+                    type="text"
+                    placeholder="예: 나이키 덩크 로우 판다 270"
+                    value={productName}
+                    onChange={(e) => setProductName(e.target.value)}
+                  />
+                </label>
 
-      {error && <p className="lab-error">{error}</p>}
+                <button
+                  className="lab-button lab-button--primary"
+                  type="submit"
+                  disabled={loading}
+                >
+                  {loading ? "분석 중..." : "상품 분석하기"}
+                </button>
+              </div>
+            </form>
 
-      {report && (
-        <section className="lab-result">
-          <h2 className="lab-result-title">분석 결과</h2>
-          <pre className="lab-result-content">{report}</pre>
+
+
+          <p className="lab-hint">
+            예시) <span>뉴발란스 530 회색 240</span>,{" "}
+            <span>스톤아일랜드 쉐도우 프로젝트 후드 XL</span>
+          </p>
+
+          {error && <p className="lab-error">{error}</p>}
         </section>
-      )}
+
+        {/* 결과 카드 */}
+        {report && (
+          <section className="lab-card lab-card--result">
+            <h2 className="lab-result-title">분석 결과</h2>
+            <pre className="lab-result-content">{report}</pre>
+          </section>
+        )}
+      </div>
     </div>
   );
 };

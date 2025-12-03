@@ -2,14 +2,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Bell } from "lucide-react";
 import "../../styles/common/Header.css";
-import api, { get, del, patch } from "../../api/client";
+import { get, del, patch } from "../../api/client";
 
 const unifiedTop = 40;
 
 export default function NotificationBell({ user }) {
-  // 백엔드 프로필 스키마가 어떻게 올지 몰라서 몇 가지 후보 다 봐줌
-  const userId =
-    user?.id ?? user?.userId ?? user?.user?.id ?? null;
+  // 백엔드 프로필 스키마 후보들을 다 봐줌 (id, userId 등)
+  const userId = user?.id ?? user?.userId ?? user?.user?.id ?? null;
 
   const [openBell, setOpenBell] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -29,7 +28,9 @@ export default function NotificationBell({ user }) {
     const onDown = (e) => {
       const inBellBtn = bellRef.current?.contains(e.target);
       const inBellPop = bellPopRef.current?.contains?.(e.target);
-      if (!inBellBtn && !inBellPop) setOpenBell(false);
+      if (!inBellBtn && !inBellPop) {
+        setOpenBell(false);
+      }
     };
 
     const onEsc = (e) => {
@@ -51,10 +52,14 @@ export default function NotificationBell({ user }) {
     setErrorMsg("");
 
     try {
-      // GET /alarms  (header: user-id)
-      const res = await get("/alarms", {}, {
-        headers: { "user-id": userId },
-      });
+      // GET /alarms (header: user-id)
+      const res = await get(
+        "/alarms",
+        {},
+        {
+          headers: { "user-id": userId },
+        }
+      );
 
       const list = res?.result ?? [];
       const arr = Array.isArray(list) ? list : [];
@@ -87,12 +92,14 @@ export default function NotificationBell({ user }) {
     if (!userId || !hasNotifications) return;
 
     try {
-      // PATCH /alarms/read-all  (header: user-id)
-      await patch("/alarms/read-all", {}, {
-        headers: { "user-id": userId },
-      });
+      await patch(
+        "/alarms/read-all",
+        {},
+        {
+          headers: { "user-id": userId },
+        }
+      );
 
-      // 클라이언트 상태만 isRead=true 로 업데이트
       const nowIso = new Date().toISOString();
       setNotifications((prev) =>
         prev.map((n) => ({
@@ -112,12 +119,10 @@ export default function NotificationBell({ user }) {
     if (!userId || !alarmId) return;
 
     try {
-      // DELETE /alarms/{alarmId}  (header: user-id)
       await del(`/alarms/${alarmId}`, {
         headers: { "user-id": userId },
       });
 
-      // 클라이언트 상태에서도 제거
       setNotifications((prev) =>
         prev.filter((n) => n.alarmId !== alarmId)
       );
@@ -127,6 +132,22 @@ export default function NotificationBell({ user }) {
     }
   };
 
+  /* ---------------- 전체 삭제 (/alarms/all) ---------------- */
+  const handleDeleteAll = async () => {
+    if (!userId || !hasNotifications) return;
+
+    try {
+      await del("/alarms/all", {
+        headers: { "user-id": userId },
+      });
+      setNotifications([]);
+    } catch (e) {
+      console.error("알림 전체 삭제 실패:", e);
+      alert("알림 전체 삭제에 실패했습니다.");
+    }
+  };
+
+  /* ---------------- 시간 포맷 ---------------- */
   const formatTime = (iso) => {
     if (!iso) return "";
     try {
@@ -142,6 +163,7 @@ export default function NotificationBell({ user }) {
     }
   };
 
+  /* ---------------- 렌더 ---------------- */
   return (
     <>
       <button
@@ -162,71 +184,89 @@ export default function NotificationBell({ user }) {
           className="vb-popover"
           role="dialog"
           aria-label="알림"
-          style={{ position: "absolute", right: 56, top: unifiedTop }}
+          style={{ top: unifiedTop }}
         >
           <div className="vb-popover__arrow" />
 
-          <div
-            className="vb-popover__head"
-            style={{
-              fontWeight: "normal",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <span>알림</span>
-            {hasNotifications && (
-              <button
-                type="button"
-                className="vb-notification__read-all"
-                onClick={handleReadAll}
-              >
-                모두 읽음
-              </button>
-            )}
-          </div>
+          <div className="vb-popover__inner">
+            <div className="vb-popover__head">
+              <span className="vb-popover__title">알림</span>
 
-          <div
-            className="vb-popover__body"
-            style={{ fontWeight: "normal", maxHeight: 320, overflowY: "auto" }}
-          >
-            {loading && <div>알림을 불러오는 중입니다...</div>}
-            {!loading && errorMsg && (
-              <div style={{ color: "red" }}>{errorMsg}</div>
-            )}
-            {!loading && !errorMsg && !hasNotifications && (
-              <div>아직 알림이 없습니다.</div>
-            )}
-
-            {!loading && !errorMsg && hasNotifications && (
-              <ul className="vb-notification-list">
-                {notifications.map((n) => (
-                  <li
-                    key={n.alarmId}
-                    className={`vb-notification-item ${
-                      n.isRead ? "vb-notification-item--read" : ""
-                    }`}
+              {hasNotifications && (
+                <div className="vb-popover__actions">
+                  <button
+                    type="button"
+                    className="vb-notification__action"
+                    onClick={handleReadAll}
                   >
-                    <div className="vb-notification-content">
-                      <div className="vb-notification-text">
-                        {n.content || "알림"}
-                      </div>
-                      <div className="vb-notification-time">
-                        {formatTime(n.createdAt)}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      className="vb-notification-delete"
-                      onClick={() => handleDelete(n.alarmId)}
+                    모두 읽음
+                  </button>
+                  <button
+                    type="button"
+                    className="vb-notification__action vb-notification__action--danger"
+                    onClick={handleDeleteAll}
+                  >
+                    전체 삭제
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="vb-popover__body">
+              {loading && (
+                <div className="vb-notification-state">
+                  알림을 불러오는 중입니다…
+                </div>
+              )}
+
+              {!loading && errorMsg && (
+                <div className="vb-notification-state vb-notification-state--error">
+                  {errorMsg}
+                </div>
+              )}
+
+              {!loading && !errorMsg && !hasNotifications && (
+                <div className="vb-notification-state">
+                  아직 알림이 없습니다.
+                </div>
+              )}
+
+              {!loading && !errorMsg && hasNotifications && (
+                <ul className="vb-notification-list">
+                  {notifications.map((n) => (
+                    <li
+                      key={n.alarmId}
+                      className={
+                        "vb-notification-item" +
+                        (n.isRead ? " vb-notification-item--read" : "")
+                      }
                     >
-                      삭제
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
+                      <div className="vb-notification-left">
+                        {!n.isRead && (
+                          <span className="vb-notification-unread-dot" />
+                        )}
+                        <div className="vb-notification-content">
+                          <div className="vb-notification-text">
+                            {n.content || "알림"}
+                          </div>
+                          <div className="vb-notification-time">
+                            {formatTime(n.createdAt)}
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="vb-notification-delete"
+                        onClick={() => handleDelete(n.alarmId)}
+                      >
+                        삭제
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         </div>
       )}
