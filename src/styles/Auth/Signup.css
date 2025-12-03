@@ -357,3 +357,22 @@
 }
 .region-item:hover { background: #f5f6ff; }
 .region-item.warn  { color: #d14343; cursor: default; }
+
+/* ===== Step2/3 하단 버튼 정렬 통일 ===== */
+.row-2 .auth-submit {
+  /* 이전 버튼(.btn-outline)과 완전 동일하게 맞추기 */
+  height: var(--control-h);
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: none;          /* 그림자 제거 → 높이 차이 느낌 없앰 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: normal;
+}
+
+/* 혹시 line-height 때문에 살짝 어긋나 보이면 같이 넣어줘 */
+.row-2 button {
+  line-height: normal;
+}

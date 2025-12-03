@@ -121,20 +121,27 @@ function Login() {
           </div>
         </form>
 
-        {/* 🔥 비밀번호 찾기 링크 추가 */}
-        <div className="auth-forgot">
+                {/* 🔥 하단 텍스트 링크: 비밀번호 찾기 | 회원가입 */}
+        <div className="auth-bottom-links">
           <button
             type="button"
-            className="auth-text-button"
+            className="auth-link-btn"
             onClick={() => navigate("/password-reset")}
             disabled={loading}
           >
-            비밀번호를 잊으셨나요?
+            비밀번호 찾기
           </button>
-        </div>
 
-        <div className="auth-signup">
-          아직 계정이 없으신가요? <a href="/signup">회원가입</a>
+          <span className="auth-divider">|</span>
+
+          <button
+            type="button"
+            className="auth-link-btn"
+            onClick={() => navigate("/signup")}
+            disabled={loading}
+          >
+            회원가입
+          </button>
         </div>
       </div>
     </div>
