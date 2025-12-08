@@ -14,6 +14,30 @@ export default function ChatDrawer({ open, onClose, onBack, item, userId }) {
   const [imageUploading, setImageUploading] = useState(false);
   const fileInputRef = useRef(null);
 
+  // 날짜+시간 포맷 함수
+  const formatDateTime = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+
+    const timeStr = date.toLocaleTimeString("ko-KR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    if (isToday) {
+      return timeStr; // 오늘이면 시간만
+    }
+
+    const dateStr = date.toLocaleDateString("ko-KR", {
+      month: "short",
+      day: "numeric",
+    });
+
+    return `${dateStr} ${timeStr}`; // 다른 날이면 날짜+시간
+  };
+
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -149,11 +173,7 @@ export default function ChatDrawer({ open, onClose, onBack, item, userId }) {
         id: msg.messageId,
         sender: msg.senderId === userId ? "me" : "other",
         text: msg.content,
-        time: new Date(msg.sentAt).toLocaleTimeString("ko-KR", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }),
+        time: formatDateTime(msg.sentAt),
         read: msg.read,
         type: msg.type,
       }));
@@ -206,11 +226,7 @@ export default function ChatDrawer({ open, onClose, onBack, item, userId }) {
         id: msg.messageId,
         sender: msg.senderId === userId ? "me" : "other",
         text: msg.content,
-        time: new Date(msg.sentAt).toLocaleTimeString("ko-KR", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }),
+        time: formatDateTime(msg.sentAt),
         read: msg.read,
         type: msg.type,
       }));
@@ -286,11 +302,7 @@ export default function ChatDrawer({ open, onClose, onBack, item, userId }) {
         id: data.messageId || Date.now(),
         sender: "me",
         text: messageContent,
-        time: new Date(data.sentAt || new Date()).toLocaleTimeString("ko-KR", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }),
+        time: formatDateTime(data.sentAt || new Date()),
         read: data.read || false,
         type: data.type || "TEXT",
       };
@@ -351,11 +363,7 @@ export default function ChatDrawer({ open, onClose, onBack, item, userId }) {
         id: data.messageId || Date.now(),
         sender: "me",
         text: data.content, // 이미지 URL
-        time: new Date(data.sentAt || new Date()).toLocaleTimeString("ko-KR", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }),
+        time: formatDateTime(data.sentAt || new Date()),
         type: "IMAGE",
       };
 
