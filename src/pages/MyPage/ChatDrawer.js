@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import styles from "../../styles/MyPage/ChatDrawer.module.css";
 import { chatService } from "../../api/chat/service";
 import { fetchAuctionDetail } from "../../api/auctions/service";
+import BlockUserModal from "../../components/modals/BlockUserModal";
 
 export default function ChatDrawer({ open, onClose, onBack, item, userId }) {
   const [message, setMessage] = useState("");
@@ -12,6 +13,10 @@ export default function ChatDrawer({ open, onClose, onBack, item, userId }) {
   const [chatInfo, setChatInfo] = useState(null);
   const [sellerInfo, setSellerInfo] = useState(null);
   const [imageUploading, setImageUploading] = useState(false);
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [blocking, setBlocking] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);           // 내가 상대를 차단했는지
+  const [partnerBlockedMe, setPartnerBlockedMe] = useState(false); // 상대가 나를 차단했는지
   const fileInputRef = useRef(null);
 
   // 날짜+시간 포맷 함수
@@ -52,6 +57,8 @@ export default function ChatDrawer({ open, onClose, onBack, item, userId }) {
           profileImage: item.partner.profileImage,
           location: item.partner.location || "위치 정보 없음",
         });
+        // 차단 상태 설정
+        setIsBlocked(item.partner.isBlocked || item.isBlocked || false);
       }
       // partner 정보가 없고 itemId가 있으면 API로 가져오기 (낙찰 탭에서 온 경우)
       else if (item?.id) {
@@ -61,10 +68,11 @@ export default function ChatDrawer({ open, onClose, onBack, item, userId }) {
         console.warn('⚠️ item에 partner도 id도 없습니다:', item);
       }
 
-      // chatId가 있으면 채팅방 입장
+      // chatId가 있으면 채팅방 입장 및 차단 상태 확인
       if (item?.chatId && userId) {
         console.log('🚪 채팅방 입장 시도:', { chatId: item.chatId, userId });
         enterChat();
+        checkBlockStatus();
       } else {
         console.warn('⚠️ chatId 또는 userId가 없어서 채팅방 입장 불가:', { chatId: item?.chatId, userId });
       }
@@ -135,6 +143,30 @@ export default function ChatDrawer({ open, onClose, onBack, item, userId }) {
         profileImage: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop",
         location: "위치 정보 없음",
       });
+    }
+  };
+
+  // 차단 상태 확인
+  const checkBlockStatus = async () => {
+    if (!item?.chatId || !userId) {
+      return;
+    }
+
+    try {
+      const response = await chatService.checkBlockStatus(item.chatId, userId);
+      console.log('🔒 차단 상태 조회 응답:', response);
+
+      const data = response?.data?.result || response?.result || response?.data;
+      if (data) {
+        setIsBlocked(data.iblockedPartner || false);
+        setPartnerBlockedMe(data.partnerBlockedMe || false);
+        console.log('🔒 차단 상태:', {
+          내가차단: data.iblockedPartner,
+          상대가차단: data.partnerBlockedMe
+        });
+      }
+    } catch (error) {
+      console.error('❌ 차단 상태 조회 실패:', error);
     }
   };
 
@@ -331,6 +363,68 @@ export default function ChatDrawer({ open, onClose, onBack, item, userId }) {
     }
   };
 
+  // 프로필 클릭 시 차단 모달 열기
+  const handleProfileClick = () => {
+    setShowBlockModal(true);
+  };
+
+  // 사용자 차단 처리
+  const handleBlockUser = async () => {
+    if (!chatInfo?.chatId || !userId) {
+      console.error('❌ 차단 실패: chatId 또는 userId가 없습니다.');
+      return;
+    }
+
+    setBlocking(true);
+    try {
+      const response = await chatService.blockUser(chatInfo.chatId, userId);
+      console.log('🚫 차단 API 응답:', response);
+
+      const data = response?.data || response;
+      if (data?.isSuccess || data?.result?.blocked) {
+        alert(`${sellerInfo?.nickname || '사용자'}님을 차단했습니다.`);
+        setIsBlocked(true);
+        setShowBlockModal(false);
+        onClose(); // 채팅창 닫기
+      } else {
+        throw new Error(data?.message || '차단에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('❌ 차단 실패:', error);
+      alert(error?.response?.data?.message || error?.message || '차단에 실패했습니다.');
+    } finally {
+      setBlocking(false);
+    }
+  };
+
+  // 사용자 차단 해제 처리
+  const handleUnblockUser = async () => {
+    if (!chatInfo?.chatId || !userId) {
+      console.error('❌ 차단 해제 실패: chatId 또는 userId가 없습니다.');
+      return;
+    }
+
+    setBlocking(true);
+    try {
+      const response = await chatService.unblockUser(chatInfo.chatId, userId);
+      console.log('✅ 차단 해제 API 응답:', response);
+
+      const data = response?.data || response;
+      if (data?.isSuccess || data?.result?.blocked === false) {
+        alert(`${sellerInfo?.nickname || '사용자'}님의 차단을 해제했습니다.`);
+        setIsBlocked(false);
+        setShowBlockModal(false);
+      } else {
+        throw new Error(data?.message || '차단 해제에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('❌ 차단 해제 실패:', error);
+      alert(error?.response?.data?.message || error?.message || '차단 해제에 실패했습니다.');
+    } finally {
+      setBlocking(false);
+    }
+  };
+
   // 이미지 파일 선택 시
   const handleImageSelect = async (e) => {
     const file = e.target.files?.[0];
@@ -392,7 +486,15 @@ export default function ChatDrawer({ open, onClose, onBack, item, userId }) {
           <button className={styles.close} onClick={onBack} aria-label="뒤로 가기">
             <Icon icon="solar:alt-arrow-left-linear" />
           </button>
-          <div className={styles.headerInfo}>
+          <div
+            className={styles.headerInfo}
+            onClick={handleProfileClick}
+            style={{ cursor: "pointer" }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && handleProfileClick()}
+            aria-label="프로필 클릭하여 차단하기"
+          >
             <div className={styles.avatar}>
               <img
                 src={sellerInfo?.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop"}
@@ -475,7 +577,19 @@ export default function ChatDrawer({ open, onClose, onBack, item, userId }) {
         </div>
 
         {/* 입력 영역 */}
-        {!canSend && (
+        {partnerBlockedMe && (
+          <div className={styles.disabledNotice}>
+            <Icon icon="solar:shield-warning-bold" />
+            <span>상대방이 차단하여 메시지를 보낼 수 없습니다.</span>
+          </div>
+        )}
+        {isBlocked && !partnerBlockedMe && (
+          <div className={styles.disabledNotice}>
+            <Icon icon="solar:shield-cross-bold" />
+            <span>차단한 사용자입니다. 차단 해제 후 대화할 수 있습니다.</span>
+          </div>
+        )}
+        {!canSend && !partnerBlockedMe && !isBlocked && (
           <div className={styles.disabledNotice}>
             <Icon icon="solar:info-circle-bold" />
             <span>이 대화는 종료되었습니다. 메시지를 보낼 수 없습니다.</span>
@@ -492,7 +606,7 @@ export default function ChatDrawer({ open, onClose, onBack, item, userId }) {
           <button
             className={styles.attachButton}
             aria-label="이미지 첨부"
-            disabled={!canSend || imageUploading}
+            disabled={!canSend || imageUploading || partnerBlockedMe || isBlocked}
             onClick={handleAttachClick}
           >
             {imageUploading ? (
@@ -504,22 +618,37 @@ export default function ChatDrawer({ open, onClose, onBack, item, userId }) {
           <input
             type="text"
             className={styles.input}
-            placeholder={canSend ? "메시지를 입력하세요..." : "대화가 종료되었습니다"}
+            placeholder={
+              partnerBlockedMe ? "상대방이 차단하여 메시지를 보낼 수 없습니다" :
+              isBlocked ? "차단한 사용자입니다" :
+              canSend ? "메시지를 입력하세요..." : "대화가 종료되었습니다"
+            }
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyPress={handleKeyPress}
-            disabled={!canSend}
+            disabled={!canSend || partnerBlockedMe || isBlocked}
           />
           <button
             className={styles.sendButton}
             onClick={handleSend}
-            disabled={!message.trim() || !canSend}
+            disabled={!message.trim() || !canSend || partnerBlockedMe || isBlocked}
             aria-label="전송"
           >
             <Icon icon="solar:plain-3-linear" />
           </button>
         </div>
       </div>
+
+      {/* 차단 확인 모달 */}
+      <BlockUserModal
+        open={showBlockModal}
+        onClose={() => setShowBlockModal(false)}
+        onBlock={handleBlockUser}
+        onUnblock={handleUnblockUser}
+        userName={sellerInfo?.nickname}
+        isBlocked={isBlocked}
+        loading={blocking}
+      />
     </>
   );
 }

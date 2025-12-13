@@ -244,14 +244,16 @@ export default function LocationDrawer({ open, onClose, currentLocation, current
 
               console.log('검색어 분리:', { sido, sigungu, eupmyeondong });
 
-              // 시군구로 검색 (handleSearch와 동일한 로직)
-              const searchKeyword = sigungu;
+              // 검색창에 "현재위치로 설정" 표시
+              setSearchKeyword("현재위치로 설정");
 
-              if (searchKeyword) {
+              // 시군구로 검색 (handleSearch와 동일한 로직)
+              const searchTerm = sigungu;
+
+              if (searchTerm) {
                 // 3. 시군구로 백엔드 API 검색
-                console.log('백엔드 API 검색어:', searchKeyword);
-                setSearchKeyword(searchKeyword);
-                const searchResponse = await searchRegions(searchKeyword, 0, 20);
+                console.log('백엔드 API 검색어:', searchTerm);
+                const searchResponse = await searchRegions(searchTerm, 0, 20);
                 console.log('백엔드 API 응답:', searchResponse);
 
                 if (searchResponse.isSuccess && searchResponse.result && searchResponse.result.length > 0) {
