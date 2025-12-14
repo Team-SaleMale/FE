@@ -383,16 +383,28 @@
   margin: 0 0 4px;
 }
 
+/* ✅ 기본 불릿 대신 커스텀 불릿: "박스 테두리 ↔ 점" 간격을 확실히 조절 */
 .lab-info-list {
-  list-style: disc;
-  padding-left: 18px;
-  margin: 0;
+  list-style: none;
+  padding-left: 0;
+  margin: 6px 0 0;
 }
 
 .lab-info-item {
+  position: relative;
   font-size: 11.5px;
   color: #555;
+  margin-left: 12px;  /* 박스 테두리로부터 점(•) 거리 */
+  padding-left: 14px; /* 점(•)과 텍스트 거리 */
 }
+
+.lab-info-item::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  top: 0.05em;
+}
+
 /* ================================
    Before / After 비교 슬라이더 (ImageCompareSlider)
 ================================ */
@@ -412,7 +424,6 @@
 .image-compare-slider__viewport {
   position: relative;
   width: 100%;
-  /* 결과 박스 안에서 적당한 비율로 보이게 */
   aspect-ratio: 3 / 4;
   border-radius: 12px;
   overflow: hidden;
@@ -425,21 +436,17 @@
   );
 }
 
-/* 두 이미지 모두 박스를 꽉 채우되, 크기는 항상 고정 */
 .image-compare-slider__image {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover; /* 필요하면 contain 으로 바꿔도 됨 */
+  object-fit: cover;
 }
 
-/* Before는 clip-path로만 잘라서 보여줌 (크기 X) */
 .image-compare-slider__image--before {
-  /* clip-path 값은 JS에서 style로 덮어씀 */
 }
 
-/* 슬라이더 핸들 */
 .image-compare-slider__handle {
   position: absolute;
   top: 0;
@@ -469,13 +476,11 @@
   box-shadow: 0 0 0 2px rgba(249, 250, 251, 0.8);
 }
 
-/* 슬라이더 바 */
 .image-compare-slider__range {
   margin-top: 10px;
   width: 100%;
 }
 
-/* 결과 박스 안에서 단일 이미지를 맞춰 넣는 용도 (Before/After 탭) */
 .lab-result-image-inner {
   max-width: 100%;
   max-height: 100%;
@@ -484,7 +489,6 @@
   margin: 0 auto;
 }
 
-/* 비교용 결과 박스일 때도 flex로 채워주기 */
 .lab-result-image--compare {
   display: flex;
   flex-direction: column;
@@ -513,30 +517,30 @@
 }
 
 .lab-card--primary {
-  /* 필요하면 살짝 파란 테두리 느낌 줄 수도 있음 */
 }
 
 .lab-card--result {
   margin-top: 4px;
 }
 
-/* 폼 전체: 그냥 래퍼 역할만 */
 .lab-form--horizontal {
   width: 100%;
 }
 
-/* 인풋 + 버튼 한 줄 정렬 (여기서만 옆으로 배치) */
+/* ✅ [입력칸][버튼] "무조건 한 줄" + 겹침 방지 */
 .lab-form-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto; /* 왼쪽: 라벨(인풋), 오른쪽: 버튼 */
-  column-gap: 12px;
+  display: flex;
+  flex-wrap: nowrap;     /* 줄바꿈 금지 */
+  gap: 12px;
   align-items: end;
 }
 
-/* 라벨은 블록으로 전체 폭 차지 */
+/* 라벨은 왼쪽 영역 전부 차지 */
 .lab-label {
   display: block;
   width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;          /* flex에서 입력칸 overflow 방지 */
 }
 
 .lab-label-text {
@@ -547,16 +551,7 @@
   color: #4b5563;
 }
 
-
-.lab-label-text {
-  display: block;
-  margin-bottom: 4px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #4b5563;
-}
-
-/* 인풋/버튼 톤 통일 (이미 있으면 이 값이 살짝 덮어씀) */
+/* 인풋/버튼 톤 통일 */
 .lab-input {
   width: 100%;
   height: 48px;
@@ -566,6 +561,7 @@
   font-size: 14px;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
+  min-width: 0;
 }
 
 .lab-input:focus {
@@ -585,6 +581,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 160px; 
+  flex: 0 0 140px; 
 }
 
 .lab-button--primary {
@@ -622,7 +620,6 @@
   color: #b91c1c;
 }
 
-/* 결과 텍스트 카드 내부 */
 .lab-result-title {
   font-size: 15px;
   font-weight: 700;
