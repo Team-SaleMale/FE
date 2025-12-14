@@ -1,3 +1,5 @@
+// src/pages/AuctionRegistration/AuctionComplete.js
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import PreviewCard from "./PreviewCard";
 import styles from "../../styles/AuctionRegistration/AuctionComplete.module.css";
@@ -10,6 +12,13 @@ export default function AuctionComplete() {
   const navigate = useNavigate();
 
   const itemId = state?.itemId;
+
+  // ✅ 체크 표시 동적 애니메이션용
+  const [checkOn, setCheckOn] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setCheckOn(true), 60);
+    return () => clearTimeout(t);
+  }, []);
 
   const fallbackPreview = {
     imageUrl: "",
@@ -46,7 +55,12 @@ export default function AuctionComplete() {
       <div className={styles.inner}>
         <section className={styles.left}>
           <div className={styles.head}>
-            <div className={styles.check} aria-hidden>✓</div>
+            <div
+              className={`${styles.check} ${checkOn ? styles.checkOn : ""}`}
+              aria-hidden
+            >
+              ✓
+            </div>
             <h1 className={styles.title}>상품이 성공적으로 등록되었습니다!!</h1>
           </div>
 
@@ -58,20 +72,7 @@ export default function AuctionComplete() {
             {" "}까지 진행됩니다
           </p>
 
-          <label className={styles.emailLabel}>
-            경매가 낙찰되면 해당 이메일로 결과를 보내드립니다.
-          </label>
-          <div className={styles.emailInputWrap}>
-            <span className={styles.mailIcon} aria-hidden>✉️</span>
-            <input
-              type="email"
-              className={styles.emailInput}
-              placeholder="email address"
-              aria-label="email address"
-            />
-          </div>
-
-          <p className={styles.status}>작성 완료</p>
+          <p className={styles.status}>등록 완료</p>
 
           <div className={styles.btnRow}>
             <button
@@ -98,7 +99,7 @@ export default function AuctionComplete() {
             <button
               type="button"
               className={styles.linkBtn}
-              onClick={() => navigate("/support")}
+              onClick={() => navigate("/inquiries")}
             >
               고객센터 페이지로 이동
             </button>

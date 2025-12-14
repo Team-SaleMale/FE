@@ -1,3 +1,4 @@
+/* FE/src/styles/AuctionRegistration/AuctionComplete.module.css */
 :root {
   /* Palette */
   --ink-900: #1F2226;
@@ -8,13 +9,11 @@
 
   --white: #FFFFFF;
   --line: #DDDFE3;
-  --line-2: #B5BAC2;
 
   --brand: #0057FF;
   --brand-dark: #0046CC;
-  --brand-deep: #003499;
 
-  /* ✅ 체크 아이콘 컬러 (요청)
+  /* ✅ 체크 아이콘 컬러
      전경: #49C00F / 배경: 15% 불투명 */
   --check-fg: #49C00F;
   --check-bg: rgba(73, 192, 15, 0.15);
@@ -32,10 +31,10 @@
 
 .inner {
   width: min(1180px, 94%);
-  margin: 40px auto 96px; /* 상하 여유 */
+  margin: 40px auto 96px;
   display: grid;
   grid-template-columns: 1.3fr 1fr;
-  gap: 32px; /* 컬럼 간격 확대 */
+  gap: 32px;
 }
 
 .left { padding: 10px 6px; }
@@ -43,78 +42,62 @@
 .head {
   display: flex;
   align-items: center;
-  gap: 14px;               /* ✓와 제목 간격 확대 */
+  gap: 14px;
   margin-bottom: 10px;
 }
 
+/* ✅ 체크 아이콘: 기본은 숨김 → 마운트 후 애니메이션으로 표시 */
 .check {
   width: 48px;
   height: 48px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--check-bg);   /* ✅ 연녹 배경 */
-  color: var(--check-fg);        /* ✅ 진한 녹색 글자 */
+  background: var(--check-bg);
+  color: var(--check-fg);
   font-size: 24px;
   font-weight: 800;
+
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+.checkOn {
+  opacity: 1;
+  transform: scale(1);
+  animation: checkPop 420ms cubic-bezier(.2, .8, .2, 1) both;
+}
+
+@keyframes checkPop {
+  0%   { opacity: 0; transform: scale(0.6); }
+  60%  { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 .title {
-  font-size: 28px;        /* 약간 키움 */
+  font-size: 28px;
   font-weight: 700;
-  letter-spacing: 0.2px;  /* ✅ 글씨 간격(자간) */
-  line-height: 1.25;      /* ✅ 행간 */
+  letter-spacing: 0.2px;
+  line-height: 1.25;
   margin: 0;
 }
 
 .period {
-  margin: 14px 0 20px;    /* ✅ 제목 아래 간격 넓힘 */
+  margin: 14px 0 10px;
   color: var(--ink-600);
   font-size: 15px;
   letter-spacing: 0.1px;
 }
 
-.emailLabel {
-  font-size: 14px;
-  color: var(--ink-600);
-  margin-bottom: 6px;
-  display: block;
-}
-
-.emailInputWrap {
-  margin: 8px 0 20px;
-  display: grid;
-  grid-template-columns: 36px 1fr;
-  align-items: center;
-  background: var(--white);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.mailIcon {
-  text-align: center;
-  font-size: 14px;
-  color: var(--ink-600-50);
-}
-
-.emailInput {
-  height: 46px;
-  border: 0;
-  outline: 0;
-  padding: 0 12px;
-  font-size: 14px;
-}
-
 .status {
-  margin: 12px 0 16px;
+  margin: 10px 0 16px;
   font-size: 12px;
   color: var(--ink-600-50);
 }
 
 .btnRow {
   display: flex;
-  gap: 12px;           /* 버튼 간격 확대 */
+  gap: 12px;
   flex-wrap: wrap;
   margin-bottom: 26px;
 }
@@ -127,7 +110,7 @@
   height: 44px;
   padding: 0 20px;
   font-weight: 500;
-  letter-spacing: 0.2px; /* 버튼 텍스트 자간 살짝 */
+  letter-spacing: 0.2px;
   cursor: pointer;
 }
 .primaryBtn:hover { background: var(--brand-dark); }
@@ -167,7 +150,7 @@
 }
 
 .cardWrap {
-  width: 360px;               /* PreviewCard 최대 폭 */
+  width: 360px;
   border: 1px solid rgba(5,11,32,.08);
   border-radius: var(--radius-lg);
   overflow: hidden;

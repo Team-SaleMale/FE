@@ -1,5 +1,6 @@
-// src/pages/AuctionRegistraion/AuctionRegistraion.js
+// src/pages/AuctionRegistration/AuctionRegistration.js
 // 상품 등록 화면 (JSON POST 버전)
+
 import React, { useMemo, useReducer, useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import styles from "../../styles/AuctionRegistration/AuctionRegistration.module.css";
@@ -65,28 +66,28 @@ export default function AuctionRegistration() {
 
   // 재등록: repost 파라미터가 있으면 상세 정보 로드
   useEffect(() => {
-    const repostId = searchParams.get('repost');
+    const repostId = searchParams.get("repost");
     if (!repostId) return;
 
-    console.log('[AuctionRegistration] repost ID:', repostId);
+    console.log("[AuctionRegistration] repost ID:", repostId);
 
     const loadRepostData = async () => {
       setLoading(true);
       try {
-        console.log('[AuctionRegistration] fetching detail for:', repostId);
+        console.log("[AuctionRegistration] fetching detail for:", repostId);
         const data = await fetchAuctionDetail(repostId);
-        console.log('[AuctionRegistration] received data:', data);
+        console.log("[AuctionRegistration] received data:", data);
 
         if (data?.isSuccess) {
           const detail = data.result;
 
-          console.log('[AuctionRegistration] detail 전체:', detail);
-          console.log('[AuctionRegistration] detail.images:', detail.images);
+          console.log("[AuctionRegistration] detail 전체:", detail);
+          console.log("[AuctionRegistration] detail.images:", detail.images);
 
           // 이미지 URL을 UploadPanel 형식으로 변환
           const imageObjects = (detail.images || []).map((img, index) => {
             const imageUrl = img?.url || img?.imageUrl || img;
-            console.log('[AuctionRegistration] img:', img, 'imageUrl:', imageUrl);
+            console.log("[AuctionRegistration] img:", img, "imageUrl:", imageUrl);
             return {
               id: `repost-${index}`,
               url: imageUrl,
@@ -95,47 +96,72 @@ export default function AuctionRegistration() {
             };
           });
 
-          console.log('[AuctionRegistration] imageObjects:', imageObjects);
+          console.log("[AuctionRegistration] imageObjects:", imageObjects);
 
           // state 채우기
           dispatch({ type: "SET_IMAGES", value: imageObjects });
-          dispatch({ type: "SET_FIELD", key: "title", value: detail.title || "" });
-          dispatch({ type: "SET_FIELD", key: "name", value: detail.name || detail.title || "" });
-          dispatch({ type: "SET_FIELD", key: "description", value: detail.description || "" });
-          dispatch({ type: "SET_FIELD", key: "startPrice", value: detail.auctionInfo?.startPrice || "" });
+          dispatch({
+            type: "SET_FIELD",
+            key: "title",
+            value: detail.title || "",
+          });
+          dispatch({
+            type: "SET_FIELD",
+            key: "name",
+            value: detail.name || detail.title || "",
+          });
+          dispatch({
+            type: "SET_FIELD",
+            key: "description",
+            value: detail.description || "",
+          });
+          dispatch({
+            type: "SET_FIELD",
+            key: "startPrice",
+            value: detail.auctionInfo?.startPrice || "",
+          });
 
           // 카테고리 변환 (대문자 → 소문자-하이픈)
           if (detail.category) {
             const categoryMap = {
-              "WOMEN_ACC": "women-acc",
-              "FOOD_PROCESSED": "food-processed",
-              "SPORTS": "sports",
-              "PLANT": "plant",
-              "GAME_HOBBY": "game-hobby",
-              "TICKET": "ticket",
-              "FURNITURE": "furniture",
-              "BEAUTY": "beauty",
-              "CLOTHES": "clothes",
-              "HEALTH_FOOD": "health-food",
-              "BOOK": "book",
-              "KIDS": "kids",
-              "DIGITAL": "digital",
-              "LIVING_KITCHEN": "living-kitchen",
-              "HOME_APPLIANCE": "home-appliance",
-              "ETC": "etc",
+              WOMEN_ACC: "women-acc",
+              FOOD_PROCESSED: "food-processed",
+              SPORTS: "sports",
+              PLANT: "plant",
+              GAME_HOBBY: "game-hobby",
+              TICKET: "ticket",
+              FURNITURE: "furniture",
+              BEAUTY: "beauty",
+              CLOTHES: "clothes",
+              HEALTH_FOOD: "health-food",
+              BOOK: "book",
+              KIDS: "kids",
+              DIGITAL: "digital",
+              LIVING_KITCHEN: "living-kitchen",
+              HOME_APPLIANCE: "home-appliance",
+              ETC: "etc",
             };
-            const uiCategory = categoryMap[detail.category] || detail.category.toLowerCase();
-            dispatch({ type: "SET_FIELD", key: "categories", value: [uiCategory] });
+            const uiCategory =
+              categoryMap[detail.category] || detail.category.toLowerCase();
+            dispatch({
+              type: "SET_FIELD",
+              key: "categories",
+              value: [uiCategory],
+            });
           }
 
           // 거래 방식
           if (detail.tradeInfo?.tradeMethods) {
-            dispatch({ type: "SET_FIELD", key: "tradeMethods", value: detail.tradeInfo.tradeMethods });
+            dispatch({
+              type: "SET_FIELD",
+              key: "tradeMethods",
+              value: detail.tradeInfo.tradeMethods,
+            });
           }
         }
-      } catch (error) {
-        console.error('재등록 데이터 로드 실패:', error);
-        setError('이전 상품 정보를 불러오는데 실패했습니다.');
+      } catch (err) {
+        console.error("재등록 데이터 로드 실패:", err);
+        setError("이전 상품 정보를 불러오는데 실패했습니다.");
       } finally {
         setLoading(false);
       }
@@ -144,40 +170,48 @@ export default function AuctionRegistration() {
     loadRepostData();
   }, [searchParams]);
 
-  /* 프리뷰 */
-  const previewImages = useMemo(
-    () => (state.images || []).map((it) => it?.url).filter(Boolean),
-    [state.images]
-  );
-  const previewImage = useMemo(
-    () => previewImages[0] || "",
-    [previewImages]
-  );
+  /* ✅ 프리뷰
+     - AuctionComplete에서만 이미지가 안 뜨는 원인 대부분이 blob URL(로컬 ObjectURL)인데,
+       페이지 이동 시 revoke/언마운트로 깨질 수 있음.
+     - 따라서 여기서부터 uploadedUrl(S3) 우선으로 넘겨서 성공 페이지에서도 안정적으로 뜨게 함.
+  */
+  const previewImages = useMemo(() => {
+    return (state.images || [])
+      .map((it) => it?.uploadedUrl || it?.url || it?.imageUrl)
+      .filter(Boolean);
+  }, [state.images]);
+
+  const previewImage = useMemo(() => previewImages[0] || "", [previewImages]);
 
   const previewCurrent = useMemo(() => {
     const p = Number(state.startPrice || 0);
     return p > 0 ? Math.round(p * 1.2) : 0;
   }, [state.startPrice]);
 
-  const previewData = {
-    imageUrl: previewImage,
-    images: previewImages,
-    title:
-      state.title || state.name || "제목을 입력하면 여기에 표시됩니다",
-    views: 1500,
-    bidders: 1260,
-    timeLeftLabel: "01:45:20",
-    startPrice: Number(state.startPrice || 0),
-    currentPrice: previewCurrent,
-  };
+  const previewData = useMemo(() => {
+    return {
+      imageUrl: previewImage,
+      images: previewImages,
+      title: state.title || state.name || "제목을 입력하면 여기에 표시됩니다",
+      views: 1500,
+      bidders: 1260,
+      timeLeftLabel: "01:45:20",
+      startPrice: Number(state.startPrice || 0),
+      currentPrice: previewCurrent,
+    };
+  }, [
+    previewImage,
+    previewImages,
+    state.title,
+    state.name,
+    state.startPrice,
+    previewCurrent,
+  ]);
 
   /** 검증 */
   const validate = (nowISO) => {
-    if (state.images.length < 1)
-      return "이미지를 1장 이상 업로드해주세요.";
-    // ✅ 서버 필수: name은 AI 분석으로만 세팅됨
-    if (!state.name.trim())
-      return "AI 분석으로 상품명을 먼저 인식하세요.";
+    if (state.images.length < 1) return "이미지를 1장 이상 업로드해주세요.";
+    if (!state.name.trim()) return "AI 분석으로 상품명을 먼저 인식하세요.";
 
     const startPriceNum = Number(state.startPrice);
     if (!Number.isFinite(startPriceNum) || startPriceNum <= 0) {
@@ -193,12 +227,10 @@ export default function AuctionRegistration() {
       return "종료 시간이 현재 시각 이후가 되도록 선택해주세요.";
     }
 
-    if (state.categories.length !== 1)
-      return "카테고리를 한 개 선택해주세요.";
+    if (state.categories.length !== 1) return "카테고리를 한 개 선택해주세요.";
 
     const hasTrade =
-      (Array.isArray(state.tradeMethods) &&
-        state.tradeMethods.length > 0) ||
+      (Array.isArray(state.tradeMethods) && state.tradeMethods.length > 0) ||
       (typeof state.tradeMethod === "string" &&
         state.tradeMethod.trim() !== "");
     if (!hasTrade) return "거래 방식을 1개 이상 선택해주세요.";
@@ -225,7 +257,7 @@ export default function AuctionRegistration() {
 
       navigate("/auctions/success", {
         state: {
-          preview: previewData,
+          preview: previewData, // ✅ uploadedUrl 우선으로 생성된 preview
           startDate: nowISO,
           endDate: state.endDate,
           itemId: res?.result?.itemId ?? res?.itemId,
@@ -250,17 +282,19 @@ export default function AuctionRegistration() {
     if (k === "title") {
       const trimmed = String(v ?? "").slice(0, 30);
       if (!state.titleEdited) {
-        dispatch({
-          type: "SET_FIELD",
-          key: "titleEdited",
-          value: true,
-        });
+        dispatch({ type: "SET_FIELD", key: "titleEdited", value: true });
       }
       dispatch({ type: "SET_FIELD", key: "title", value: trimmed });
       return;
     }
     dispatch({ type: "SET_FIELD", key: k, value: v });
   };
+
+  // ✅ 가격 추천/네이버 시세 조회에 사용할 검색어 (AI 인식 name 우선)
+  const priceQuery = useMemo(() => {
+    const q = String(state.name || state.title || "").trim();
+    return q;
+  }, [state.name, state.title]);
 
   return (
     <div className={styles.pageWrap}>
@@ -275,7 +309,7 @@ export default function AuctionRegistration() {
               onMetaChange={(k, v) =>
                 dispatch({ type: "SET_FIELD", key: k, value: v })
               }
-              shouldAutoFillTitle={!state.titleEdited} // 사용자가 수정 전이면 AI가 title을 채움
+              shouldAutoFillTitle={!state.titleEdited}
             />
           </section>
 
@@ -292,6 +326,7 @@ export default function AuctionRegistration() {
               startPrice={state.startPrice}
               startDate={state.startDate}
               endDate={state.endDate}
+              productName={priceQuery}
               onChange={(k, v) =>
                 dispatch({ type: "SET_FIELD", key: k, value: v })
               }
@@ -339,18 +374,11 @@ export default function AuctionRegistration() {
         </div>
 
         <aside className={styles.rightCol}>
-          <PreviewCard
-            key={previewImages.join("|")}
-            {...previewData}
-          />
+          <PreviewCard key={previewImages.join("|")} {...previewData} />
         </aside>
       </div>
 
-      <SubmitBar
-        onSubmit={handleSubmit}
-        loading={submitting}
-        error={error}
-      />
+      <SubmitBar onSubmit={handleSubmit} loading={submitting} error={error} />
     </div>
   );
 }
