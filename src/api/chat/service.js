@@ -129,6 +129,60 @@ export const chatService = {
       }
     });
   },
+
+  /**
+   * 대화 상대 차단
+   * POST /{chatId}/block
+   *
+   * 상대방을 차단하고 상대방이 경매 등록한 물품이 보이지 않게 됩니다.
+   *
+   * @param {number} chatId - 채팅방 ID
+   * @param {number} userId - 사용자 ID (헤더에 포함)
+   * @returns {Promise} 차단 응답 { isSuccess, code, message, result: { blockedUserId, blocked } }
+   */
+  blockUser: (chatId, userId) => {
+    return apiClient.post(endpoints.CHAT.BLOCK(chatId), null, {
+      headers: {
+        'user-id': String(userId)
+      }
+    });
+  },
+
+  /**
+   * 대화 상대 차단 해제
+   * POST /{chatId}/unblock
+   *
+   * 상대방을 차단 해제합니다.
+   *
+   * @param {number} chatId - 채팅방 ID
+   * @param {number} userId - 사용자 ID (헤더에 포함)
+   * @returns {Promise} 차단 해제 응답 { isSuccess, code, message, result: { blockedUserId, blocked } }
+   */
+  unblockUser: (chatId, userId) => {
+    return apiClient.post(endpoints.CHAT.UNBLOCK(chatId), null, {
+      headers: {
+        'user-id': String(userId)
+      }
+    });
+  },
+
+  /**
+   * 대화 상대 차단 여부 조회
+   * GET /chats/{chatId}/block
+   *
+   * 상대방과의 차단 여부를 조회합니다.
+   *
+   * @param {number} chatId - 채팅방 ID
+   * @param {number} userId - 사용자 ID (헤더에 포함)
+   * @returns {Promise} 차단 여부 응답 { isSuccess, code, message, result: { partnerBlockedMe, iblockedPartner } }
+   */
+  checkBlockStatus: (chatId, userId) => {
+    return apiClient.get(endpoints.CHAT.CHECK_BLOCK(chatId), {
+      headers: {
+        'user-id': String(userId)
+      }
+    });
+  },
 };
 
 export default chatService;

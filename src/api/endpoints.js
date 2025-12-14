@@ -72,10 +72,14 @@ const endpoints = {
     ENTER: (chatId) => `/chats/${chatId}/enter`, // 채팅방 입장
     EXIT: (chatId) => `/chats/${chatId}/exit`, // 채팅방 나가기
     SEND_MESSAGE: "/messages", // 메시지 보내기
+    BLOCK: (chatId) => `/chats/${chatId}/block`, // 대화 상대 차단
+    UNBLOCK: (chatId) => `/chats/${chatId}/unblock`, // 대화 상대 차단 해제
+    CHECK_BLOCK: (chatId) => `/chats/${chatId}/block`, // 대화 상대 차단 여부 조회
   },
+
   EXPERIMENTAL: {
     PRODUCT_ANALYSIS: "/experimental/analysis/product", // 상품 분석
-    BRAND_ANALYSIS:   "/experimental/analysis/brand",   // 브랜드 분석
+    BRAND_ANALYSIS: "/experimental/analysis/brand", // 브랜드 분석
     VIRTUAL_TRYON: "/experimental/virtual-tryon",
   },
 };
