@@ -485,14 +485,25 @@ function Signup() {
 
               <div className="row-2">
                 {!isSocial && (
-                  <button type="button" className="btn-outline" onClick={() => setStep(1)} disabled={disabled}>
+                  <button
+                    type="button"
+                    className="btn-outline"
+                    onClick={() => setStep(1)}
+                    disabled={disabled}
+                  >
                     이전
                   </button>
                 )}
-                <button type="button" className="auth-submit" onClick={goNextFromNickname} disabled={disabled}>
+                <button
+                  type="button"
+                  className="btn-outline"
+                  onClick={goNextFromNickname}
+                  disabled={disabled}
+                >
                   {isSocial ? "회원가입 완료" : "다음"}
                 </button>
               </div>
+
             </form>
           </>
         )}
@@ -520,13 +531,23 @@ function Signup() {
               />
 
               <div className="row-2">
-                <button type="button" className="btn-outline" onClick={() => setStep(2)} disabled={disabled}>
+                <button
+                  type="button"
+                  className="btn-outline"
+                  onClick={() => setStep(2)}
+                  disabled={disabled}
+                >
                   이전
                 </button>
-                <button type="submit" className="auth-submit" disabled={disabled}>
+                <button
+                  type="submit"
+                  className="btn-outline"
+                  disabled={disabled}
+                >
                   회원가입
                 </button>
               </div>
+
             </form>
           </>
         )}

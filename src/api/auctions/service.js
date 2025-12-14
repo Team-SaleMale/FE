@@ -539,6 +539,28 @@ export async function fetchCompletedAuctionsForMain({
   return { isSuccess: true, code: "200", message: "OK", result: fixed };
 }
 
+/* ---------- 추천(상세 페이지용, 항상 radius=ALL) ---------- */
+export async function fetchRecommendedAuctionsForDetail({
+  page = 1,
+  size = 8,
+  categories,
+  minPrice,
+  maxPrice,
+  q,
+} = {}) {
+  // 목록 공통 로직 재사용 + status / radius 고정
+  return fetchAuctionList({
+    status: "RECOMMENDED",
+    range: "ALL",   // ➜ /search/items?radius=ALL
+    page,
+    size,
+    categories,
+    minPrice,
+    maxPrice,
+    q,
+  });
+}
+
 /* ---------- 리스트(메인 섹션용 래퍼) ---------- */
 export async function fetchPopularAuctions({ page = 1, size = 12, categories, minPrice, maxPrice } = {}) {
   return fetchAuctionList({

@@ -15,7 +15,8 @@ export default function ScheduleSection({ value, onChange, maxEndsAt }) {
             type="datetime-local"
             className={styles.input}
             value={value.startsAt}
-            onChange={(e) => set("startsAt", e.target.value)}
+            readOnly
+            disabled
           />
         </label>
 
@@ -33,7 +34,8 @@ export default function ScheduleSection({ value, onChange, maxEndsAt }) {
       </div>
 
       <p className={styles.hint}>
-        시작 시각으로부터 최대 3일 이내로만 설정할 수 있어요. 마감이 시작보다 빠를 수 없습니다.
+        시작 시간은 페이지에 접속한 시각으로 자동 고정되며, 마감만 조정할 수 있어요.
+        시작 시각으로부터 최대 3일 이내로만 설정할 수 있습니다.
       </p>
     </div>
   );

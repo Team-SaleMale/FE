@@ -7,7 +7,8 @@ function LabModeTabs({ active }) {
 
   const goHome = () => navigate("/lab");
   const goWear = () => navigate("/lab/wear");
-  const goDecor = () => navigate("/lab/decor");
+  const goProduct = () => navigate("/lab/product");
+  const goBrand = () => navigate("/lab/brand");
 
   return (
     <div className="lab-tabs">
@@ -18,6 +19,7 @@ function LabModeTabs({ active }) {
       >
         실험실 홈
       </button>
+
       <button
         type="button"
         className={`lab-tab ${active === "wear" ? "lab-tab--active" : ""}`}
@@ -25,12 +27,21 @@ function LabModeTabs({ active }) {
       >
         입어보기
       </button>
+
       <button
         type="button"
-        className={`lab-tab ${active === "decor" ? "lab-tab--active" : ""}`}
-        onClick={goDecor}
+        className={`lab-tab ${active === "product" ? "lab-tab--active" : ""}`}
+        onClick={goProduct}
       >
-        집에 배치해보기
+        상품 분석
+      </button>
+
+      <button
+        type="button"
+        className={`lab-tab ${active === "brand" ? "lab-tab--active" : ""}`}
+        onClick={goBrand}
+      >
+        브랜드 분석
       </button>
     </div>
   );

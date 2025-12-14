@@ -1,15 +1,28 @@
 // src/components/Lab/UploadPanel.jsx
-import React from "react";
+import React, { useState } from "react";
 import SectionTitle from "./SectionTitle";
 import PhotoUploadCard from "./PhotoUploadCard";
 
-function UploadPanel({ mode }) {
+function UploadPanel({ mode, onRunExperiment, loading = false }) {
   const isWear = mode === "wear";
   const isDecor = mode === "decor";
 
+  // 🔹 실제 API로 보낼 파일 상태 (입어보기 기준)
+  const [backgroundFile, setBackgroundFile] = useState(null); // 내 전신 사진
+  const [garmentFile, setGarmentFile] = useState(null); // 입어볼 옷(하의 기준)
+
   const handleExperiment = () => {
-    // [추가 주석] API 연동 전까지는 안내만
-    alert("실험 기능은 현재 UI 미리보기 상태입니다. 추후 AI API 연동 예정입니다.");
+    if (!onRunExperiment) return;
+
+    if (isWear) {
+      onRunExperiment({
+        backgroundFile,
+        garmentFile,
+      });
+    } else {
+      // decor 모드는 지금은 안 쓰이니까 기존처럼만 동작
+      onRunExperiment();
+    }
   };
 
   return (
@@ -24,6 +37,8 @@ function UploadPanel({ mode }) {
           <PhotoUploadCard
             label="내 전신 사진"
             description="정면으로 찍은 전신 사진이 가장 좋아요."
+            // 🔹 전신 사진 File을 상태에 저장
+            onFileChange={(file) => setBackgroundFile(file || null)}
           />
 
           <SectionTitle
@@ -34,10 +49,13 @@ function UploadPanel({ mode }) {
           <PhotoUploadCard
             label="하의 (바지 등)"
             description="상품 상세 이미지 또는 전체 실루엣이 보이는 이미지를 추천합니다."
+            // 🔹 하의(주요 착용 대상) File을 상태에 저장
+            onFileChange={(file) => setGarmentFile(file || null)}
           />
           <PhotoUploadCard
             label="상의 (선택)"
             description="추가로 상의까지 입혀보고 싶다면 업로드해주세요."
+            // 상의는 지금 API에는 안 보내지만, 필요하면 여기서 따로 상태 추가 가능
           />
         </>
       )}
@@ -76,8 +94,13 @@ function UploadPanel({ mode }) {
         title="실험하기"
         subtitle="준비가 되었다면 아래 버튼을 눌러 결과를 확인해보세요."
       />
-      <button type="button" className="lab-experiment-button" onClick={handleExperiment}>
-        실험해보기
+      <button
+        type="button"
+        className="lab-experiment-button"
+        onClick={handleExperiment}
+        disabled={loading}
+      >
+        {loading ? "가상 피팅 중..." : "실험해보기"}
       </button>
     </div>
   );
