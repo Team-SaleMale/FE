@@ -56,6 +56,12 @@ export default function MyPage() {
   const [error, setError] = useState(null);
   const [purchaseHistoryItems, setPurchaseHistoryItems] = useState([]);
   const [salesHistoryItems, setSalesHistoryItems] = useState([]);
+  // 판매내역 검색/필터
+  const [salesSearchValue, setSalesSearchValue] = useState("");
+  const [salesFilterData, setSalesFilterData] = useState({ period: "최근 1년" });
+  // 구매내역 검색/필터
+  const [purchaseSearchValue, setPurchaseSearchValue] = useState("");
+  const [purchaseFilterData, setPurchaseFilterData] = useState({ period: "최근 1년" });
 
   // 프로필 조회
   useEffect(() => {
@@ -202,6 +208,8 @@ export default function MyPage() {
             startPrice: item.startPrice,
             currentPrice: item.currentPrice,
             viewCount: item.viewCount,
+            endTime: item.endTime,
+            likedAt: item.likedAt,
           }));
 
           console.log('💖 변환된 찜한 상품:', transformedItems);
@@ -527,12 +535,116 @@ export default function MyPage() {
     [items]
   );
 
+  // 찜한 목록 정렬
+  const sortedWishlistItems = useMemo(() => {
+    if (!wishlistItems || wishlistItems.length === 0) return [];
+
+    const sorted = [...wishlistItems];
+    switch (wishlistSortValue) {
+      case "deadline":
+        // 마감임박순: 종료 시간이 빠른 순 (종료된 것은 맨 뒤로)
+        return sorted.sort((a, b) => {
+          const aEnded = !a.endTime || new Date(a.endTime) <= new Date();
+          const bEnded = !b.endTime || new Date(b.endTime) <= new Date();
+          if (aEnded && !bEnded) return 1;
+          if (!aEnded && bEnded) return -1;
+          if (aEnded && bEnded) return 0;
+          return new Date(a.endTime) - new Date(b.endTime);
+        });
+      case "price-high":
+        // 높은가격순: 현재 입찰가 기준 내림차순
+        return sorted.sort((a, b) => (b.currentPrice || 0) - (a.currentPrice || 0));
+      case "price-low":
+        // 낮은가격순: 현재 입찰가 기준 오름차순
+        return sorted.sort((a, b) => (a.currentPrice || 0) - (b.currentPrice || 0));
+      case "latest":
+        // 최신순: 찜한 시간 기준 내림차순 (최근에 찜한 것이 먼저)
+        return sorted.sort((a, b) => {
+          if (!a.likedAt && !b.likedAt) return 0;
+          if (!a.likedAt) return 1;
+          if (!b.likedAt) return -1;
+          return new Date(b.likedAt) - new Date(a.likedAt);
+        });
+      default:
+        return sorted;
+    }
+  }, [wishlistItems, wishlistSortValue]);
+
+  // 기간 필터 계산 함수
+  const getPeriodDate = (period) => {
+    const now = new Date();
+    switch (period) {
+      case "1주일":
+        return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      case "1개월":
+        return new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+      case "3개월":
+        return new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+      case "6개월":
+        return new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
+      case "최근 1년":
+      default:
+        return new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+    }
+  };
+
+  // 판매내역 필터링
+  const filteredSalesItems = useMemo(() => {
+    let filtered = [...salesHistoryItems];
+
+    // 검색어 필터
+    if (salesSearchValue.trim()) {
+      const keyword = salesSearchValue.trim().toLowerCase();
+      filtered = filtered.filter((item) =>
+        item.title?.toLowerCase().includes(keyword)
+      );
+    }
+
+    // 기간 필터
+    const periodDate = getPeriodDate(salesFilterData.period);
+    filtered = filtered.filter((item) => {
+      if (!item.createdAt) return true;
+      return new Date(item.createdAt) >= periodDate;
+    });
+
+    return filtered;
+  }, [salesHistoryItems, salesSearchValue, salesFilterData]);
+
+  // 구매내역 필터링
+  const filteredPurchaseItems = useMemo(() => {
+    let filtered = [...purchaseHistoryItems];
+
+    // 검색어 필터
+    if (purchaseSearchValue.trim()) {
+      const keyword = purchaseSearchValue.trim().toLowerCase();
+      filtered = filtered.filter((item) =>
+        item.title?.toLowerCase().includes(keyword)
+      );
+    }
+
+    // 기간 필터
+    const periodDate = getPeriodDate(purchaseFilterData.period);
+    filtered = filtered.filter((item) => {
+      if (!item.createdAt) return true;
+      return new Date(item.createdAt) >= periodDate;
+    });
+
+    return filtered;
+  }, [purchaseHistoryItems, purchaseSearchValue, purchaseFilterData]);
+
   return (
     <div className={styles.page}>
       <div className={styles.container}>
-        <SellingDrawer open={isSellingDrawerOpen} onClose={closeSellingDrawer} title="판매내역">
+        <SellingDrawer
+          open={isSellingDrawerOpen}
+          onClose={closeSellingDrawer}
+          title="판매내역"
+          searchValue={salesSearchValue}
+          onSearchChange={setSalesSearchValue}
+          onFilterApply={setSalesFilterData}
+        >
           <SalesHistoryList
-            items={salesHistoryItems.map((item) => ({
+            items={filteredSalesItems.map((item) => ({
               id: item.itemId,
               image: item.thumbnailUrl,
               title: item.title,
@@ -544,9 +656,16 @@ export default function MyPage() {
           />
         </SellingDrawer>
 
-        <PurchaseDrawer open={isPurchaseDrawerOpen} onClose={closePurchaseDrawer} title="구매내역">
+        <PurchaseDrawer
+          open={isPurchaseDrawerOpen}
+          onClose={closePurchaseDrawer}
+          title="구매내역"
+          searchValue={purchaseSearchValue}
+          onSearchChange={setPurchaseSearchValue}
+          onFilterApply={setPurchaseFilterData}
+        >
           <PurchaseHistoryList
-            items={purchaseHistoryItems.map((item) => ({
+            items={filteredPurchaseItems.map((item) => ({
               id: item.itemId,
               image: item.thumbnailUrl,
               title: item.title,
@@ -607,7 +726,7 @@ export default function MyPage() {
           sortValue={wishlistSortValue}
           onSortChange={setWishlistSortValue}
         >
-          <WishlistList items={wishlistItems} onItemClick={(item) => console.log("Item clicked:", item)} onRemoveWishlist={handleRemoveWishlist} />
+          <WishlistList items={sortedWishlistItems} onItemClick={(item) => navigate(`/auction/${item.id}`)} onRemoveWishlist={handleRemoveWishlist} />
         </WishlistDrawer>
 
         {/* 사이드바 */}
