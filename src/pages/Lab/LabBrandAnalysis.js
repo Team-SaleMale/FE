@@ -60,24 +60,26 @@ const LabBrandAnalysis = () => {
         {/* 입력 카드 */}
         <section className="lab-card lab-card--primary">
           <form className="lab-form lab-form--horizontal" onSubmit={handleSubmit}>
-            <label className="lab-label lab-label--block">
-              <span className="lab-label-text">브랜드 이름</span>
-              <input
-                className="lab-input"
-                type="text"
-                placeholder="예: Louis Vuitton"
-                value={brandName}
-                onChange={(e) => setBrandName(e.target.value)}
-              />
-            </label>
+            <div className="lab-form-row">
+              <label className="lab-label">
+                <span className="lab-label-text">브랜드 이름</span>
+                <input
+                  className="lab-input"
+                  type="text"
+                  placeholder="예: Louis Vuitton"
+                  value={brandName}
+                  onChange={(e) => setBrandName(e.target.value)}
+                />
+              </label>
 
-            <button
-              className="lab-button lab-button--primary"
-              type="submit"
-              disabled={loading}
-            >
-              {loading ? "분석 중..." : "브랜드 분석하기"}
-            </button>
+              <button
+                className="lab-button lab-button--primary"
+                type="submit"
+                disabled={loading || !brandName.trim()}
+              >
+                {loading ? "분석 중..." : "브랜드 분석하기"}
+              </button>
+            </div>
           </form>
 
           <p className="lab-hint">

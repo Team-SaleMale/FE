@@ -1,5 +1,11 @@
+// src/pages/AuctionRegistration/PriceAndSchedule.js
+// "가격 추천" 버튼을 누르면 모달을 열고, (네이버 시세 → 그래프)와 (서버 추천가 → 적용) 흐름을 제공합니다.
+
 import React, { useEffect, useMemo, useState } from "react";
 import styles from "../../styles/AuctionRegistration/PriceAndSchedule.module.css";
+
+import PriceSuggestionModal from "./PriceSuggestionModal";
+import { fetchNaverShoppingPrices, fetchPriceSuggestion } from "../../api/priceSuggestion/service";
 
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -13,7 +19,7 @@ import dayjs from "dayjs";
 import "dayjs/locale/ko";
 dayjs.locale("ko");
 
-// 빠른 가격 선택 옵션 (value: 원 단위, label: 버튼 텍스트)
+// 빠른 가격 선택 옵션
 const QUICK_PRICE_OPTIONS = [
   { value: 0, label: "0원" },
   { value: 100, label: "100원" },
@@ -40,37 +46,49 @@ export default function PriceAndSchedule({
   startDate = "",
   endDate = "",
   onChange,
+  productName = "", // ✅ 가격 추천에 사용할 상품명
 }) {
   /* ---------------- 가격 상태 ---------------- */
   const [priceInput, setPriceInput] = useState(startPrice || "");
-  const [priceHistory, setPriceHistory] = useState([]); // ["0", "1000", "51000", ...]
+  const [priceHistory, setPriceHistory] = useState([]); // ["0", "1000", ...]
 
-  // 부모에서 startPrice가 바뀌면 표시 값만 맞춰줌 (히스토리는 유지)
+  // ✅ 모달 상태
+  const [modalOpen, setModalOpen] = useState(false);
+
+  // ✅ 네이버(빠른) 결과
+  const [naverLoading, setNaverLoading] = useState(false);
+  const [naverError, setNaverError] = useState("");
+  const [naverData, setNaverData] = useState(null);
+
+  // ✅ 추천가(느린) 결과
+  const [suggestionLoading, setSuggestionLoading] = useState(false);
+  const [suggestionError, setSuggestionError] = useState("");
+  const [suggestionData, setSuggestionData] = useState(null);
+
+  // 부모에서 startPrice가 바뀌면 표시 값만 맞춰줌
   useEffect(() => {
     setPriceInput(startPrice || "");
   }, [startPrice]);
 
-  // 화면에 표시될 콤마 포함 금액
+  // 콤마 포함 표시
   const displayPrice = useMemo(() => {
-    if (priceInput === "" || priceInput === null || priceInput === undefined)
-      return "";
+    if (priceInput === "" || priceInput === null || priceInput === undefined) return "";
     const num = String(priceInput).replace(/\D/g, "");
     if (!num) return "";
     return num.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }, [priceInput]);
 
-  // 부모 상태 반영 공통 함수
+  // 부모 반영
   const syncToParent = (numericString) => {
     onChange?.("startPrice", numericString);
   };
 
-  // 버튼(추천/빠른 선택)으로 가격 변경할 때: 히스토리에 현재값을 push
+  // 버튼 기반 변경: 히스토리 push
   const applyButtonPrice = (nextRaw) => {
     const currentNorm = normalizePrice(priceInput);
     const nextNorm = normalizePrice(nextRaw);
 
     if (currentNorm !== nextNorm) {
-      // 현재 값을 히스토리에 저장 (없으면 0으로)
       setPriceHistory((prev) => [...prev, currentNorm || "0"]);
     }
 
@@ -78,44 +96,74 @@ export default function PriceAndSchedule({
     syncToParent(nextNorm);
   };
 
-  // 직접 입력(키보드): 히스토리는 쌓지 않음 (이전 금액은 버튼 기준으로만 동작)
+  // 직접 입력
   const handlePrice = (e) => {
     const onlyNum = e.target.value.replace(/\D/g, "").slice(0, 12);
     setPriceInput(onlyNum);
     syncToParent(onlyNum);
   };
 
-  // 가격 추천 버튼: 랜덤 추천가 (1천 ~ 100만, 1천 단위)
-  const handleRecommendPrice = () => {
-    const min = 1000;
-    const max = 1000000;
-    const step = 1000;
+  // ✅ 가격 추천 버튼 클릭: 모달 오픈 + (네이버 먼저) + (추천가 병렬)
+  const handleRecommendPrice = async () => {
+    const q = String(productName ?? "").trim();
 
-    const steps = Math.floor((max - min) / step) + 1;
-    const randomStepIndex = Math.floor(Math.random() * steps);
-    const value = min + randomStepIndex * step;
+    // 상품명이 없으면 UX상 안내
+    if (!q) {
+      setModalOpen(true);
+      setNaverError("상품명이 비어 있어 네이버 시세 검색을 할 수 없습니다.");
+      setSuggestionError("상품명이 비어 있어 가격 추천을 할 수 없습니다.");
+      return;
+    }
 
-    applyButtonPrice(String(value));
+    setModalOpen(true);
+
+    // 상태 초기화
+    setNaverData(null);
+    setSuggestionData(null);
+    setNaverError("");
+    setSuggestionError("");
+
+    // 1) 네이버 시세 (빠른 편) - ✅ limit=50
+    setNaverLoading(true);
+    const naverPromise = fetchNaverShoppingPrices(q, 50)
+      .then((res) => {
+        setNaverData(res);
+      })
+      .catch((e) => {
+        const msg = e?.friendlyMessage || e?.message || "네이버 시세 조회 실패";
+        setNaverError(msg);
+      })
+      .finally(() => setNaverLoading(false));
+
+    // 2) 서버 가격 추천 (느릴 수 있음)
+    setSuggestionLoading(true);
+    const suggestPromise = fetchPriceSuggestion(q)
+      .then((res) => {
+        setSuggestionData(res);
+      })
+      .catch((e) => {
+        const msg = e?.friendlyMessage || e?.message || "가격 추천 조회 실패";
+        setSuggestionError(msg);
+      })
+      .finally(() => setSuggestionLoading(false));
+
+    // 둘 다 병렬 실행 (모달은 열린 상태에서 각각 도착하는대로 렌더)
+    await Promise.allSettled([naverPromise, suggestPromise]);
   };
 
-  // 빠른 가격 버튼
-  // - value === 0  → 0원으로 세팅
-  // - 그 외        → 현재 값에 value 더하기
+  // 빠른 가격 버튼: 0이면 세팅, 그 외에는 더하기
   const handleQuickPrice = (value) => {
     const currentNum = Number(normalizePrice(priceInput));
-
     if (value === 0) {
       applyButtonPrice("0");
       return;
     }
-
     const next = currentNum + value;
-    const clamped = Math.min(next, 999999999999); // 최대 12자리
+    const clamped = Math.min(next, 999999999999);
     applyButtonPrice(String(clamped));
   };
 
-  // 이전 금액 버튼: 히스토리 스택에서 한 단계씩 되돌리기
-  // 예) 0 → 1천 → 5만1천 → 이전 → 1천 → 이전 → 0
+  // 이전 금액
   const handlePrevPrice = () => {
     setPriceHistory((history) => {
       if (!history.length) return history;
@@ -138,23 +186,21 @@ export default function PriceAndSchedule({
   const [start, setStart] = useState(initialStart); // 표시용
   const [end, setEnd] = useState(endDate ? dayjs(endDate) : null);
 
-  const [startTime, setStartTime] = useState(initialStart); // 오늘 현재 시각
-  const [endTime, setEndTime] = useState(null); // 기본 null → 선택 유도
+  const [startTime, setStartTime] = useState(initialStart);
+  const [endTime, setEndTime] = useState(null);
 
-  // 마운트 시 시작 일시(등록 시각) 기록
   useEffect(() => {
     const s = startDate ? dayjs(startDate) : dayjs();
     setStart(s);
     setStartTime(s);
     onChange?.("startDate", s.second(0).millisecond(0).toISOString());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // 최초 한 번
+  }, []);
 
   useEffect(() => {
     if (endDate) setEnd(dayjs(endDate));
   }, [endDate]);
 
-  // 날짜+시간 병합 → ISO
   const mergeToISO = (date, time, fallback) => {
     if (!date) return "";
     const base = dayjs(date);
@@ -167,7 +213,6 @@ export default function PriceAndSchedule({
       .toISOString();
   };
 
-  // 종료 날짜 선택
   const handlePickEnd = (value) => {
     setEnd(value);
     onChange?.(
@@ -176,7 +221,6 @@ export default function PriceAndSchedule({
     );
   };
 
-  // 종료 시간 선택
   const onPickEndTime = (t) => {
     setEndTime(t);
     onChange?.(
@@ -185,7 +229,6 @@ export default function PriceAndSchedule({
     );
   };
 
-  // 종료일은 오늘 이전 비활성
   const disablePastEnd = (date) => date.isBefore(dayjs().startOf("day"));
 
   return (
@@ -202,9 +245,7 @@ export default function PriceAndSchedule({
           onChange={handlePrice}
           placeholder="초기가격(원)"
           inputProps={{ inputMode: "numeric" }}
-          startAdornment={
-            <InputAdornment position="start">₩</InputAdornment>
-          }
+          startAdornment={<InputAdornment position="start">₩</InputAdornment>}
         />
         <button
           type="button"
@@ -241,7 +282,6 @@ export default function PriceAndSchedule({
         경매 시작/끝 시간 정하기 <span className={styles.required}>*</span>
       </h2>
 
-      {/* 상단 날짜 표시(읽기전용) */}
       <div className={styles.dateInputs}>
         <TextField
           className={styles.dateField}
@@ -255,9 +295,7 @@ export default function PriceAndSchedule({
           value={
             end
               ? endTime
-                ? dayjs(mergeToISO(end, endTime)).format(
-                    "YYYY.MM.DD HH:mm"
-                  )
+                ? dayjs(mergeToISO(end, endTime)).format("YYYY.MM.DD HH:mm")
                 : end.format("YYYY.MM.DD")
               : ""
           }
@@ -266,17 +304,11 @@ export default function PriceAndSchedule({
         />
       </div>
 
-      <LocalizationProvider
-        dateAdapter={AdapterDayjs}
-        adapterLocale="ko"
-      >
+      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ko">
         <div className={styles.calendars}>
-          {/* 시작 달력: 오늘 고정 */}
           <div className={styles.calendarCol}>
             <div className={styles.monthLabel}>
-              {start
-                ? start.format("MMMM YYYY")
-                : dayjs().format("MMMM YYYY")}
+              {start ? start.format("MMMM YYYY") : dayjs().format("MMMM YYYY")}
             </div>
             <DateCalendar
               value={start}
@@ -311,14 +343,11 @@ export default function PriceAndSchedule({
             </div>
           </div>
 
-          {/* 종료 달력 / 시간 */}
           <div className={styles.calendarCol}>
             <div className={styles.monthLabel}>
               {end
                 ? end.format("MMMM YYYY")
-                : (start || dayjs().add(1, "month")).format(
-                    "MMMM YYYY"
-                  )}
+                : (start || dayjs().add(1, "month")).format("MMMM YYYY")}
             </div>
             <DateCalendar
               value={end}
@@ -354,11 +383,31 @@ export default function PriceAndSchedule({
           </div>
         </div>
       </LocalizationProvider>
+
+      {/* ✅ 가격 추천 모달 */}
+      <PriceSuggestionModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        productName={String(productName ?? "").trim()}
+
+        naverResponse={naverData}
+        naverLoading={naverLoading}
+        naverError={naverError}
+
+        suggestionResponse={suggestionData}
+        suggestionLoading={suggestionLoading}
+        suggestionError={suggestionError}
+
+        onApplyRecommended={(priceStr) => {
+          applyButtonPrice(priceStr);
+          setModalOpen(false);
+        }}
+      />
     </div>
   );
 }
 
-/** 캘린더 색상 커스텀 (달력 톤만 유지) */
+/** 캘린더 색상 커스텀 */
 const calendarSX = {
   "& .MuiPickersDay-root.Mui-selected": { backgroundColor: "#0057FF" },
   "& .MuiPickersDay-root.Mui-selected:hover": {
@@ -377,7 +426,7 @@ const calendarSX = {
   "& .MuiPickersArrowSwitcher-button": { color: "#454C58" },
 };
 
-/** TimePicker 기본 톤 (포커스 색상 지정 없음: 파란 포커스 제거) */
+/** TimePicker 기본 톤 */
 const timeSX = {
   "& .MuiOutlinedInput-root": { borderRadius: "12px" },
   "& .MuiFormLabel-root": { color: "#656F81" },

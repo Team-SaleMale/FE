@@ -25,10 +25,10 @@ const fmt = (s) => (s ? Number(s).toLocaleString("ko-KR") : "");
 
 /** 활동 반경(5단계) — ALL의 short는 ‘전체’ */
 const RANGES = [
-  { key: "VERY_NEAR", km:  0.5,      short: " 0.5km",   caption: "동네",  icon: "solar:home-2-linear" },
-  { key: "NEAR",      km: 1,      short: "1km",   caption: "근처",  icon: "solar:buildings-2-linear" },
-  { key: "MEDIUM",    km: 3,     short: "3km",  caption: "중간",  icon: "solar:map-point-wave-linear" },
-  { key: "FAR",       km: 5,     short: "5km",  caption: "멀리",  icon: "solar:plain-linear" },
+  { key: "VERY_NEAR", km:  2,      short: "2km",   caption: "동네",  icon: "solar:home-2-linear" },
+  { key: "NEAR",      km: 5,      short: "5km",   caption: "근처",  icon: "solar:buildings-2-linear" },
+  { key: "MEDIUM",    km: 20,     short: "20km",  caption: "중간",  icon: "solar:map-point-wave-linear" },
+  { key: "FAR",       km: 50,     short: "50km",  caption: "멀리",  icon: "solar:plain-linear" },
   { key: "ALL",       km: 20000000000,  short: "전체",  caption: "전국",  icon: "solar:planet-linear" },
 ];
 

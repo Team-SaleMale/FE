@@ -87,7 +87,7 @@ function LabWear() {
           <span className="lab-badge">BETA</span>
         </div>
         <p className="lab-subtitle">
-          내 전신 사진과 입어보고 싶은 바지·상의 사진을 업로드해서 착용 이미지를 미리
+          내 전신 사진과 입어보고 싶은 옷 사진을 업로드해서 착용 이미지를 미리
           확인해보는 실험입니다.
         </p>
       </header>
@@ -108,7 +108,7 @@ function LabWear() {
             hasMockResult={hasMockResult}
             resultUrl={resultUrl}
             maskedUrl={maskedUrl}
-            originalBeforeUrl={beforeImageUrl}   // 🔹 여기!
+            originalBeforeUrl={beforeImageUrl} 
             loading={loading}
             error={error}
           />

@@ -1,3 +1,4 @@
+// src/api/auctions/buildRegistrationPayload.js
 import { CATEGORY_TO_ENUM, TRADE_TO_ENUM } from "../constants/mapping";
 
 // "YYYY-MM-DDTHH:mm" (분까지) 로 포맷

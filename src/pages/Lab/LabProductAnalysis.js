@@ -59,30 +59,28 @@ const LabProductAnalysis = () => {
       <div className="lab-analysis-layout">
         {/* 입력 카드 */}
         <section className="lab-card lab-card--primary">
-            <form className="lab-form lab-form--horizontal" onSubmit={handleSubmit}>
-              <div className="lab-form-row">
-                <label className="lab-label">
-                  <span className="lab-label-text">상품 이름</span>
-                  <input
-                    className="lab-input"
-                    type="text"
-                    placeholder="예: 나이키 덩크 로우 판다 270"
-                    value={productName}
-                    onChange={(e) => setProductName(e.target.value)}
-                  />
-                </label>
+          <form className="lab-form lab-form--horizontal" onSubmit={handleSubmit}>
+            <div className="lab-form-row">
+              <label className="lab-label">
+                <span className="lab-label-text">상품 이름</span>
+                <input
+                  className="lab-input"
+                  type="text"
+                  placeholder="예: 나이키 덩크 로우 판다 270"
+                  value={productName}
+                  onChange={(e) => setProductName(e.target.value)}
+                />
+              </label>
 
-                <button
-                  className="lab-button lab-button--primary"
-                  type="submit"
-                  disabled={loading}
-                >
-                  {loading ? "분석 중..." : "상품 분석하기"}
-                </button>
-              </div>
-            </form>
-
-
+              <button
+                className="lab-button lab-button--primary"
+                type="submit"
+                disabled={loading || !productName.trim()}
+              >
+                {loading ? "분석 중..." : "상품 분석하기"}
+              </button>
+            </div>
+          </form>
 
           <p className="lab-hint">
             예시) <span>뉴발란스 530 회색 240</span>,{" "}
