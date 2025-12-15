@@ -52,6 +52,8 @@ const endpoints = {
     UPLOAD_IMAGES: "/auctions/images",
     SUGGEST_TITLE: "/auctions/registration/suggest-title",
     CREATE_REVIEW: (itemId) => `/auctions/${itemId}/reviews`, // 거래 후기 작성
+    // ✅ 추가: 초기 가격 추천(느린 API)
+    PRICE_SUGGESTION: "/auctions/price-suggestion",
   },
 
   // Hotdeal 전용 엔드포인트
@@ -64,6 +66,9 @@ const endpoints = {
   SEARCH: {
     ITEMS: "/search/items",
     PRICE_HISTORY: "/search/price-history",
+
+    // ✅ 추가: 네이버쇼핑 가격 검색(빠른 API)
+    NAVER_SHOPPING: "/api/v1/search/naver",
   },
 
   CHAT: {

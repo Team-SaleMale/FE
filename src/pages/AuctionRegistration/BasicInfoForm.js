@@ -1,3 +1,4 @@
+// src/pages/AuctionRegistration/BasicInfoForm.js
 import React, { memo, useMemo } from "react";
 import styles from "../../styles/AuctionRegistration/BasicInfoForm.module.css";
 

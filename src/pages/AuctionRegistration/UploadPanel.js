@@ -1,3 +1,4 @@
+// src/pages/AuctionRegistration/UploadPanel.js
 import React, { useMemo, useRef, useState } from "react";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/AuctionRegistration/UploadPanel.module.css";
