@@ -1,13 +1,18 @@
-/* eslint-disable no-unused-vars */
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 import styles from "../../styles/MyPage/SellingDrawer.module.css";
 import DetailFilter from "./DetailFilter";
 
-export default function SellingDrawer({ open, onClose, children, title = "판매내역" }) {
-  const [searchValue, setSearchValue] = useState("");
+export default function SellingDrawer({
+  open,
+  onClose,
+  children,
+  title = "판매내역",
+  searchValue = "",
+  onSearchChange,
+  onFilterApply,
+}) {
   const [filterOpen, setFilterOpen] = useState(false);
-  const [filterData, setFilterData] = useState({ period: "최근 1년" });
 
   return (
     <div className={`${styles.root} ${open ? styles.open : ""}`} aria-hidden={!open}>
@@ -28,7 +33,7 @@ export default function SellingDrawer({ open, onClose, children, title = "판매
               type="text"
               placeholder="상품명 검색"
               value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
+              onChange={(e) => onSearchChange?.(e.target.value)}
               className={styles.searchInput}
             />
           </div>
@@ -45,8 +50,7 @@ export default function SellingDrawer({ open, onClose, children, title = "판매
             open={filterOpen}
             onClose={() => setFilterOpen(false)}
             onApply={(data) => {
-              setFilterData(data);
-              console.log("Filter applied:", data);
+              onFilterApply?.(data);
             }}
           />
         </div>
