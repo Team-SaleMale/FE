@@ -95,8 +95,14 @@ export default function MyPageAuctionCard({ item, onChatClick }) {
           <div className={styles.empty} />
         )}
 
-        {/* 유찰 배지만 표시 */}
+        {/* 유찰 배지 */}
         {item?.isFailedBid && <span className={styles.failedBadge}>유찰</span>}
+        {/* 차단된 판매자 배지 */}
+        {item?.blockedSeller && (
+          <span className={styles.blockedBadge}>
+            <Icon icon="solar:shield-cross-bold" /> 차단된 판매자
+          </span>
+        )}
 
         {/* 슬라이더 컨트롤 */}
         {images.length > 1 && (

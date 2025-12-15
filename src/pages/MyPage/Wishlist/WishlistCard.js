@@ -44,17 +44,6 @@ export default function WishlistCard({ item, onClick, onRemoveWishlist }) {
           >
             <Icon icon="solar:heart-bold" />
           </button>
-          <button
-            className={styles.detailBtn}
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onClick?.(item);
-            }}
-            aria-label="상품 상세보기"
-          >
-            <Icon icon="solar:login-3-linear" />
-          </button>
         </div>
       </div>
     </article>
