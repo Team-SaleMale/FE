@@ -229,3 +229,19 @@
   font-size: 14px;         /* font-size 0에서 다시 복원 */
   color: #d1d5db;
 }
+
+/* 비밀번호 정책 경고 문구 */
+.pw-rules {
+  margin-top: 8px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.pw-rules--error {
+  color: #dc2626; /* 빨강 */
+}
+
+.pw-rules__item {
+  margin: 2px 0;
+}

@@ -65,6 +65,23 @@ function Signup() {
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
 
+  // ✅ 비밀번호 정책 체크 (입력할 때마다 실시간)
+  const pwRules = useMemo(() => {
+    const hasMinLen = pw.length >= 8;
+    const hasSpecial = /[^\w\s]/.test(pw); // 특수문자(문자/숫자/언더스코어/공백 제외)
+    const hasUpper = /[A-Z]/.test(pw);     // 영어 대문자 포함
+    return { hasMinLen, hasSpecial, hasUpper };
+  }, [pw]);
+
+  // ✅ 어떤 조건이 부족한지 메시지 목록 만들기
+  const pwMissingMessages = useMemo(() => {
+    const msgs = [];
+    if (!pwRules.hasMinLen) msgs.push("비밀번호는 8자 이상이어야 합니다.");
+    if (!pwRules.hasSpecial) msgs.push("특수문자를 1개 이상 포함해야 합니다.");
+    if (!pwRules.hasUpper) msgs.push("영어 대문자를 1개 이상 포함해야 합니다.");
+    return msgs;
+  }, [pwRules]);
+
   const [loading, setLoading] = useState(false);
   const disabled = loading;
 
@@ -260,7 +277,12 @@ function Signup() {
       return alert("지역을 선택하세요. (지역명을 검색 후 목록에서 선택)");
     }
     if (!pw) return alert("비밀번호를 입력하세요");
-    if (pw.length < 8) return alert("비밀번호는 8자 이상이어야 합니다");
+
+    // ✅ 정책 체크 추가
+    if (!pwRules.hasMinLen || !pwRules.hasSpecial || !pwRules.hasUpper) {
+      return alert("비밀번호 조건을 확인해주세요.");
+    }
+
     if (pw !== pw2) return alert("비밀번호가 일치하지 않습니다");
     try {
       setLoading(true);
@@ -521,6 +543,16 @@ function Signup() {
                 onChange={(e) => setPw(e.target.value)}
                 disabled={disabled}
               />
+
+              {/* ✅ 여기: 비밀번호 조건 미충족 경고(빨간 글씨) */}
+              {pw.length > 0 && pwMissingMessages.length > 0 && (
+                <div className="pw-rules pw-rules--error" aria-live="polite">
+                  {pwMissingMessages.map((msg) => (
+                    <div key={msg} className="pw-rules__item">• {msg}</div>
+                  ))}
+                </div>
+              )}
+
               <input
                 type="password"
                 className="auth-input"

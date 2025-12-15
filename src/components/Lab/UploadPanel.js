@@ -9,7 +9,7 @@ function UploadPanel({ mode, onRunExperiment, loading = false }) {
 
   // 🔹 실제 API로 보낼 파일 상태 (입어보기 기준)
   const [backgroundFile, setBackgroundFile] = useState(null); // 내 전신 사진
-  const [garmentFile, setGarmentFile] = useState(null); // 입어볼 옷(하의 기준)
+  const [garmentFile, setGarmentFile] = useState(null); // 입어볼 옷(단일)
 
   const handleExperiment = () => {
     if (!onRunExperiment) return;
@@ -47,15 +47,10 @@ function UploadPanel({ mode, onRunExperiment, loading = false }) {
             subtitle="경매·입찰을 고민 중인 상품 이미지를 업로드해주세요."
           />
           <PhotoUploadCard
-            label="하의 (바지 등)"
+            label="옷 이미지"
             description="상품 상세 이미지 또는 전체 실루엣이 보이는 이미지를 추천합니다."
-            // 🔹 하의(주요 착용 대상) File을 상태에 저장
+            // 🔹 옷(단일) File을 상태에 저장
             onFileChange={(file) => setGarmentFile(file || null)}
-          />
-          <PhotoUploadCard
-            label="상의 (선택)"
-            description="추가로 상의까지 입혀보고 싶다면 업로드해주세요."
-            // 상의는 지금 API에는 안 보내지만, 필요하면 여기서 따로 상태 추가 가능
           />
         </>
       )}
