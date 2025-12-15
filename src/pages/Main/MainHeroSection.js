@@ -35,10 +35,10 @@ const CAT_TO_ENUM = {
 
 /* 반경 옵션 */
 const RADIUS_OPTIONS = [
-  { value: "VERY_NEAR", label: "0.5km" },
-  { value: "NEAR",      label: "1km"   },
-  { value: "MEDIUM",    label: "3km"   },
-  { value: "FAR",       label: "5km"   },
+  { value: "VERY_NEAR", label: "2km" },
+  { value: "NEAR",      label: "5km"   },
+  { value: "MEDIUM",    label: "20km"   },
+  { value: "FAR",       label: "50km"   },
   { value: "ALL",       label: "전국"  },
 ];
 
